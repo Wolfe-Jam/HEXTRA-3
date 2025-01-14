@@ -1,6 +1,6 @@
-# HEXTRA - Image Color Application
+# HEXTRA-3 Colorize | VIsualize | Memerize
 
-HEXTRA is a React-based web application that allows users to apply colors to images while preserving shadows, highlights, and transparency.
+HEXTRA-3 is a React-based web application that allows users to apply colors to images while preserving shadows, highlights, and transparency.
 
 ## Features
 
