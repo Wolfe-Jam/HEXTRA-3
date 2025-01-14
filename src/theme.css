@@ -1,0 +1,62 @@
+:root[data-theme="light"] {
+    --bg-primary: #ffffff;
+    --text-primary: rgb(20, 20, 20);
+    --text-secondary: #666666;
+    --button-bg: rgb(20, 20, 20);
+    --button-text: #ffffff;
+    --button-hover: #333333;
+    --border-color: rgb(20, 20, 20);
+}
+
+:root[data-theme="dark"] {
+    --bg-primary: rgb(20, 20, 20);
+    --text-primary: #ffffff;
+    --text-secondary: #999999;
+    --button-bg: #ffffff;
+    --button-text: rgb(20, 20, 20);
+    --button-hover: #cccccc;
+    --border-color: #ffffff;
+}
+
+/* Base styles */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.3s, color 0.3s;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.button:hover {
+    background-color: var(--button-hover);
+}
+
+/* Theme toggle button */
+#themeToggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+#themeToggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}

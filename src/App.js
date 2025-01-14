@@ -1,38 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, TextField, Button, Typography } from '@mui/material';
+import { Box, Container, TextField, Button, Typography, IconButton } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import Jimp from 'jimp';
+import Banner from './components/Banner';
+import ThemeToggleIcon from './components/ThemeToggleIcon';
+import themeManager from './theme.js';
+import './theme.css';
 
 const DEFAULT_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0804/1136/1573/files/HEXTRA-Master-1800.png?v=1736817806';
 const DEFAULT_COLOR = '#dd0000';
+const VERSION = '1.1.0'; // Updated version
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
 
 function App() {
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [imageFile, setImageFile] = useState(null);
   const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGE_URL);
   const [processedImage, setProcessedImage] = useState(null);
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.getAttribute('data-theme') === 'dark');
 
   const handleColorChange = (color) => {
-    const hex = color.hex;
-    if (/^#[0-9A-F]{6}$/i.test(hex)) {
-      setSelectedColor(hex);
-      setError('');
-    } else {
-      setError('Invalid HEX color code');
-    }
+    setSelectedColor(color.hex);
+    setRgbColor(hexToRgb(color.hex));
+    setError('');
   };
 
   const handleHexInput = (event) => {
     const hex = event.target.value;
-    if (hex.startsWith('#') && hex.length <= 7) {
+    if (hex.match(/^#[0-9A-Fa-f]{6}$/)) {
       setSelectedColor(hex);
-      if (hex.length === 7 && !/^#[0-9A-F]{6}$/i.test(hex)) {
-        setError('Invalid HEX color code');
-      } else {
-        setError('');
-      }
+      setRgbColor(hexToRgb(hex));
+      setError('');
+    } else {
+      setError('Invalid HEX color');
     }
   };
 
@@ -113,89 +124,278 @@ function App() {
   };
 
   useEffect(() => {
+    themeManager.init();
+    setIsDarkMode(themeManager.getCurrentTheme() === 'dark');
     // Process the default image when the component mounts
     if (imageUrl) {
       applyColor();
     }
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
+
+  // Theme toggle handler
+  const toggleTheme = () => {
+    const newTheme = themeManager.toggle();
+    setIsDarkMode(newTheme === 'dark');
+  };
+
+  const theme = {
+    typography: {
+      fontFamily: "'Inter', sans-serif",
+      button: {
+        textTransform: 'none',
+        fontWeight: 500
+      }
+    }
+  };
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <Typography variant="h4" component="h1">
-          HEXTRA Color Application
+    <Box
+      sx={{
+        backgroundColor: 'var(--bg-primary)',
+        minHeight: '100vh',
+        width: '100%',
+        maxWidth: '100%',
+        pt: '50px',
+        color: 'var(--text-primary)',
+        transition: 'background-color 0.3s, color 0.3s'
+      }}
+    >
+      <Banner 
+        version={VERSION}
+        isDarkMode={isDarkMode}
+        onThemeToggle={toggleTheme}
+      />
+      
+      <Box sx={{ p: 1 }}>
+        <Typography 
+          variant="subtitle1" 
+          component="h2" 
+          sx={{ 
+            mb: 3,
+            textAlign: 'center',
+            fontWeight: 500,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '0.75rem',
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            color: 'var(--text-secondary)'
+          }}
+        >
+          Colorize | Visualize | Mesmerize
         </Typography>
 
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Box sx={{ width: 200, height: 200 }}>
+        {/* Main content in vertical layout */}
+        <Box sx={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          maxWidth: '600px',
+          margin: '0 auto'
+        }}>
+          {/* Color wheel section */}
+          <Box sx={{ 
+            display: 'flex',
+            justifyContent: 'center',
+            mb: 1,
+            position: 'relative',
+            width: '280px',
+            height: '280px',
+            margin: '0 auto'
+          }}>
             <Wheel
               color={selectedColor}
               onChange={(color) => handleColorChange(color)}
-              style={{ width: '100%', height: '100%' }}
-            />
-          </Box>
-          
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label="HEX Color"
-              value={selectedColor}
-              onChange={handleHexInput}
-              error={!!error}
-              helperText={error}
-            />
-            <Box
-              sx={{
-                width: 50,
-                height: 50,
-                backgroundColor: selectedColor,
-                border: '1px solid #ccc',
-                borderRadius: '4px'
+              width={280}
+              height={280}
+              style={{ 
+                position: 'absolute',
+                top: 0,
+                left: 0
               }}
             />
           </Box>
-        </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-          />
-          <Typography>OR</Typography>
-          <TextField
-            label="Image URL"
-            value={imageUrl}
-            onChange={handleUrlChange}
-            fullWidth
-          />
-        </Box>
+          {/* Color input and apply button */}
+          <Box sx={{ 
+            display: 'flex',
+            gap: 1,
+            alignItems: 'flex-start'
+          }}>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <TextField
+                label="HEX Color"
+                value={selectedColor}
+                onChange={handleHexInput}
+                error={!!error}
+                helperText={error}
+                sx={{ 
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: 'var(--border-color)',
+                      borderWidth: '1px'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'var(--border-color)',
+                      borderWidth: '2px'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'var(--border-color)',
+                      borderWidth: '2px'
+                    }
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'var(--text-secondary)',
+                    fontFamily: "'Inter', sans-serif"
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'var(--text-primary)'
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'var(--text-primary)',
+                    fontFamily: "'Inter', sans-serif"
+                  }
+                }}
+                InputProps={{
+                  sx: { fontFamily: "'Inter', sans-serif" },
+                  endAdornment: (
+                    <Box
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        backgroundColor: selectedColor,
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '4px',
+                        mr: 1
+                      }}
+                    />
+                  )
+                }}
+              />
+              <Typography sx={{ 
+                fontFamily: "'Inter', sans-serif",
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem'
+              }}>
+                RGB: {rgbColor ? `${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}` : 'Invalid'}
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              onClick={applyColor}
+              disabled={isProcessing || !selectedColor || (!imageFile && !imageUrl)}
+              sx={{ 
+                bgcolor: 'var(--button-bg)',
+                color: 'var(--button-text)',
+                '&:hover': {
+                  bgcolor: 'var(--button-hover)'
+                },
+                '&:disabled': {
+                  bgcolor: 'var(--button-hover)',
+                  color: 'var(--button-text)',
+                  opacity: 0.5
+                },
+                height: '40px',
+                minWidth: 'auto',
+                px: 2,
+                boxShadow: 'none',
+                alignSelf: 'flex-start',
+                fontFamily: "'Inter', sans-serif"
+              }}
+            >
+              Apply
+            </Button>
+          </Box>
 
-        <Button
-          variant="contained"
-          onClick={applyColor}
-          disabled={isProcessing || !selectedColor || (!imageFile && !imageUrl)}
-        >
-          {isProcessing ? 'Processing...' : 'Apply Color'}
-        </Button>
-
-        {error && (
-          <Typography color="error">
-            {error}
-          </Typography>
-        )}
-
-        {processedImage && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h6">Processed Image:</Typography>
-            <img
-              src={processedImage}
-              alt="Processed"
-              style={{ maxWidth: '100%', marginTop: '1rem' }}
+          {/* Image input section */}
+          <Box sx={{ 
+            display: 'flex',
+            gap: 1,
+            alignItems: 'center'
+          }}>
+            <Button
+              component="label"
+              sx={{ 
+                flex: 1,
+                bgcolor: 'var(--button-bg)',
+                color: 'var(--button-text)',
+                '&:hover': {
+                  bgcolor: 'var(--button-hover)'
+                },
+                boxShadow: 'none',
+                fontFamily: "'Inter', sans-serif"
+              }}
+            >
+              Load Image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                hidden
+              />
+            </Button>
+            <Typography sx={{ mx: 1, fontFamily: "'Inter', sans-serif" }}>OR URL:</Typography>
+            <TextField
+              placeholder="Image URL"
+              value={imageUrl}
+              onChange={handleUrlChange}
+              size="small"
+              sx={{ 
+                flex: 2,
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'var(--border-color)',
+                    borderWidth: '1px'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'var(--border-color)',
+                    borderWidth: '2px'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'var(--border-color)',
+                    borderWidth: '2px'
+                  }
+                },
+                '& .MuiInputBase-input': {
+                  color: 'var(--text-primary)',
+                  fontFamily: "'Inter', sans-serif"
+                },
+                '& .MuiInputBase-input::placeholder': {
+                  color: 'var(--text-secondary)',
+                  opacity: 0.7
+                }
+              }}
             />
           </Box>
-        )}
+
+          {error && (
+            <Typography 
+              color="error" 
+              sx={{ 
+                mt: 1,
+                fontSize: '0.875rem',
+                fontFamily: "'Inter', sans-serif"
+              }}
+            >
+              {error}
+            </Typography>
+          )}
+
+          {/* Result section */}
+          {processedImage && (
+            <Box sx={{ mt: 2 }}>
+              <img
+                src={processedImage}
+                alt="Processed"
+                style={{ 
+                  width: '100%',
+                  display: 'block'
+                }}
+              />
+            </Box>
+          )}
+        </Box>
       </Box>
-    </Container>
+    </Box>
   );
 }
 

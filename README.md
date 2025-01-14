@@ -33,6 +33,14 @@ The application will be available at `http://localhost:3000`
 
 ## Version History
 
+### v1.1.0 - Complete UI redesign with modern aesthetics
+- Complete UI redesign with modern aesthetics
+- Added RGB color display
+- Improved color wheel interaction
+- Updated typography with Inter and League Spartan fonts
+- Enhanced dark/light theme implementation
+- Optimized layout and spacing
+
 ### v1.0.0 - Initial Release
 - Basic color application functionality
 - Transparency preservation
