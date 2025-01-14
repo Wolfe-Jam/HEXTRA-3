@@ -2,6 +2,9 @@
   "name": "hextra-3",
   "version": "1.1.2",
   "private": true,
+  "vercel": {
+    "version": 2
+  },
   "engines": {
     "node": ">=18.0.0"
   },
