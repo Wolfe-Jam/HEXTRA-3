@@ -1,6 +1,6 @@
 {
   "name": "hextra-3",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "engines": {
     "node": ">=18.0.0"
@@ -9,7 +9,7 @@
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^6.3.1",
-    "@mui/material": "^5.13.0",
+    "@mui/material": "^6.3.1",
     "@uiw/react-color": "^1.4.2",
     "assert": "^2.0.0",
     "browserify-zlib": "^0.2.0",
@@ -27,7 +27,8 @@
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "url": "^0.11.0",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "vercel": "^39.3.0"
   },
   "scripts": {
     "start": "react-app-rewired start",
