@@ -13,8 +13,8 @@
   "dependencies": {
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^6.3.1",
-    "@mui/material": "^6.3.1",
+    "@mui/icons-material": "^5.14.19",
+    "@mui/material": "^5.14.20",
     "@uiw/react-color": "^1.4.2",
     "assert": "^2.0.0",
     "browserify-zlib": "^0.2.0",
