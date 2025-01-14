@@ -1,4 +1,4 @@
-# HEXTRA-3 Colorize | VIsualize | Memerize
+# HEXTRA-3 Colorize | Visualize | Memerize
 
 HEXTRA-3 is a React-based web application that allows users to apply colors to images while preserving shadows, highlights, and transparency.
 
