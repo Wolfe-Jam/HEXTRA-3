@@ -6,6 +6,7 @@ import Banner from './components/Banner';
 import ThemeToggleIcon from './components/ThemeToggleIcon';
 import themeManager from './theme.js';
 import './theme.css';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 const DEFAULT_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0804/1136/1573/files/printify-t-shirt-white-xs-hextra-master-white-t-shirt-49101104120101.png?v=1736860133';
 const DEFAULT_COLOR = '#dd0000';
@@ -30,6 +31,7 @@ function App() {
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.getAttribute('data-theme') === 'dark');
+  const [canDownload, setCanDownload] = useState(false);
 
   const handleColorChange = (color) => {
     setSelectedColor(color.hex);
@@ -148,10 +150,12 @@ function App() {
 
       const base64 = await image.getBase64Async(Jimp.MIME_PNG);
       setProcessedImage(base64);
+      setCanDownload(true);
       setError('');
     } catch (err) {
       console.error('Error applying color:', err);
       setError(err.message || 'Error applying color');
+      setCanDownload(false);
     } finally {
       setIsProcessing(false);
     }
@@ -194,6 +198,67 @@ function App() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleQuickDownload = () => {
+    const filename = generateFilename();
+    const byteString = atob(processedImage.split(',')[1]);
+    const mimeString = processedImage.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename + '.png';
+    link.style.display = 'none';
+    link.click();
+    
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleSaveAs = () => {
+    const filename = generateFilename();
+    const link = document.createElement('a');
+    link.href = processedImage;
+    link.download = filename + '.png';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const dataURLtoBlob = (dataURL) => {
+    const arr = dataURL.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
+
+  const generateFilename = () => {
+    const now = new Date();
+    const dateString = now.getFullYear().toString() +
+                      (now.getMonth() + 1).toString().padStart(2, '0') +
+                      now.getDate().toString().padStart(2, '0');
+    const hexColor = rgbToHex(rgbColor.r, rgbColor.g, rgbColor.b);
+    return `HEXTRA-3-${dateString}-HEX-${hexColor.substring(1)}`;
+  };
+
+  const rgbToHex = (r, g, b) => {
+    const toHex = (c) => {
+      const hex = c.toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
   };
 
   useEffect(() => {
@@ -517,6 +582,33 @@ function App() {
                   display: 'block'
                 }}
               />
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end',
+                mt: 1
+              }}>
+                <IconButton
+                  onClick={handleQuickDownload}
+                  disabled={!canDownload}
+                  sx={{
+                    bgcolor: canDownload ? 'var(--button-bg)' : 'rgba(0, 0, 0, 0.12)',
+                    color: canDownload ? 'var(--button-text)' : 'rgba(0, 0, 0, 0.26)',
+                    '&:hover': {
+                      bgcolor: canDownload ? 'var(--button-hover)' : 'rgba(0, 0, 0, 0.12)'
+                    },
+                    padding: '8px',
+                    borderRadius: '50%',
+                    width: 36,
+                    height: 36,
+                    '& svg': {
+                      fontSize: '1.25rem'
+                    }
+                  }}
+                  aria-label="Download image"
+                >
+                  <FileDownloadIcon />
+                </IconButton>
+              </Box>
             </Box>
           )}
         </Box>
