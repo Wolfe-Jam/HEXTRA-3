@@ -36,6 +36,7 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.getAttribute('data-theme') === 'dark');
   const [canDownload, setCanDownload] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
 
   const handleColorChange = (color) => {
     setSelectedColor(color.hex);
@@ -114,10 +115,6 @@ function App() {
     }
   };
 
-  const handleUrlChange = (event) => {
-    setImageUrl(event.target.value);
-  };
-
   const handleUrlKeyPress = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
@@ -126,14 +123,31 @@ function App() {
   };
 
   const handleLoadUrl = () => {
-    const urlInput = imageUrl.trim();
-    if (!urlInput) {
+    if (!urlInput.trim()) {
       // Open a new tab for user to find an image URL
       window.open('https://www.google.com/search?q=white+t-shirt+png&tbm=isch', '_blank');
       return;
     }
+    setImageUrl(urlInput);
     setImageFile(null);
     loadImage(urlInput);
+  };
+
+  const loadImage = async (url) => {
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = url;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      setImageUrl(url);
+      setError('');
+    } catch (err) {
+      setError('Failed to load image. Please try a different URL.');
+      setImageUrl(DEFAULT_IMAGE_URL);
+    }
   };
 
   const applyColor = async () => {
@@ -177,45 +191,6 @@ function App() {
       console.error('Error applying color:', err);
       setError(err.message || 'Error applying color');
       setCanDownload(false);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const loadImage = async (url) => {
-    try {
-      setIsProcessing(true);
-      setError('');
-      const image = await Jimp.read(url);
-      setImageUrl(url);
-      
-      // Process the image directly without using applyColor
-      if (!image.hasAlpha()) {
-        image.rgba(true);
-      }
-      
-      image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
-        const red = this.bitmap.data[idx + 0];
-        const green = this.bitmap.data[idx + 1];
-        const blue = this.bitmap.data[idx + 2];
-        const alpha = this.bitmap.data[idx + 3];
-        
-        const luminance = (red * 0.299 + green * 0.587 + blue * 0.114) / 255;
-        
-        if (alpha > 0) {
-          this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
-          this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
-          this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
-          this.bitmap.data[idx + 3] = alpha;
-        }
-      });
-
-      const base64 = await image.getBase64Async(Jimp.MIME_PNG);
-      setProcessedImage(base64);
-      setError('');
-    } catch (err) {
-      console.error('Error loading image:', err);
-      setError(err.message || 'Error loading image');
     } finally {
       setIsProcessing(false);
     }
@@ -515,14 +490,12 @@ function App() {
             </Button>
             <Typography sx={{ mx: 1, fontFamily: "'Inter', sans-serif" }}>OR URL:</Typography>
             <TextField
-              placeholder="Image URL"
-              value={imageUrl}
-              onChange={handleUrlChange}
+              fullWidth
+              placeholder="Enter image URL"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
               onKeyPress={handleUrlKeyPress}
-              onDoubleClick={(event) => event.target.select()}
-              size="small"
-              sx={{ 
-                flex: 2,
+              sx={{
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': {
                     borderColor: 'var(--border-color)',
@@ -540,10 +513,6 @@ function App() {
                 '& .MuiInputBase-input': {
                   color: 'var(--text-primary)',
                   fontFamily: "'Inter', sans-serif"
-                },
-                '& .MuiInputBase-input::placeholder': {
-                  color: 'var(--text-secondary)',
-                  opacity: 0.7
                 }
               }}
             />
