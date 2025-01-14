@@ -9,16 +9,20 @@ import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 const DEFAULT_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0804/1136/1573/files/printify-t-shirt-white-xs-hextra-master-white-t-shirt-49101104120101.png?v=1736860133';
-const DEFAULT_COLOR = '#dd0000';
-const VERSION = '1.1.1'; // Updated version
+const DEFAULT_COLOR = '#FFA500';
+const VERSION = '1.1.2'; // Updated version
 
 function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
+  // Remove # if present
+  hex = hex.replace(/^#/, '');
+  
+  // Parse hex values
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  
+  return { r, g, b };
 }
 
 function App() {
@@ -35,18 +39,25 @@ function App() {
 
   const handleColorChange = (color) => {
     setSelectedColor(color.hex);
-    setRgbColor(hexToRgb(color.hex));
-    setError('');
+    const rgb = hexToRgb(color.hex);
+    if (rgb) {
+      setRgbColor(rgb);
+    }
   };
 
-  const handleHexInput = (event) => {
-    const hex = event.target.value;
-    if (hex.match(/^#[0-9A-Fa-f]{6}$/)) {
-      setSelectedColor(hex);
-      setRgbColor(hexToRgb(hex));
-      setError('');
-    } else {
-      setError('Invalid HEX color');
+  const handleHexInputChange = (event) => {
+    let hex = event.target.value;
+    setSelectedColor(hex);
+    
+    // Only update RGB if it's a valid hex code
+    if (/^#?[0-9A-Fa-f]{6}$/.test(hex)) {
+      if (!hex.startsWith('#')) {
+        hex = '#' + hex;
+      }
+      const rgb = hexToRgb(hex);
+      if (rgb) {
+        setRgbColor(rgb);
+      }
     }
   };
 
@@ -110,9 +121,19 @@ function App() {
   const handleUrlKeyPress = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      setImageFile(null);
-      loadImage(event.target.value);
+      handleLoadUrl();
     }
+  };
+
+  const handleLoadUrl = () => {
+    const urlInput = imageUrl.trim();
+    if (!urlInput) {
+      // Open a new tab for user to find an image URL
+      window.open('https://www.google.com/search?q=white+t-shirt+png&tbm=isch', '_blank');
+      return;
+    }
+    setImageFile(null);
+    loadImage(urlInput);
   };
 
   const applyColor = async () => {
@@ -350,20 +371,55 @@ function App() {
             />
           </Box>
 
-          {/* Color input and apply button */}
+          {/* Color input section with separator */}
           <Box sx={{ 
             display: 'flex',
-            gap: 1,
-            alignItems: 'flex-start'
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '100%',
+            mb: 3,
+            mt: 4
           }}>
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {/* Color controls */}
+            <Box sx={{ 
+              display: 'flex',
+              gap: 2,
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              mb: 3
+            }}>
+              {/* RGB Display */}
+              <Typography sx={{ 
+                fontFamily: "'Inter', sans-serif",
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                whiteSpace: 'nowrap',
+                width: '140px',  
+                textAlign: 'right'
+              }}>
+                RGB: {rgbColor ? `${rgbColor.r.toString().padStart(3, ' ')}, ${rgbColor.g.toString().padStart(3, ' ')}, ${rgbColor.b.toString().padStart(3, ' ')}` : '  0,   0,   0'}
+              </Typography>
+
+              {/* Color Swatch */}
+              <Box
+                sx={{
+                  width: '48px',
+                  height: '48px',
+                  backgroundColor: selectedColor,
+                  borderRadius: '50%',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  flexShrink: 0
+                }}
+              />
+
+              {/* HEX Input */}
               <TextField
                 label="HEX Color"
                 value={selectedColor}
-                onChange={handleHexInput}
-                error={!!error}
-                helperText={error}
+                onChange={handleHexInputChange}
                 sx={{ 
+                  width: '160px',
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
                       borderColor: 'var(--border-color)',
@@ -390,55 +446,37 @@ function App() {
                     fontFamily: "'Inter', sans-serif"
                   }
                 }}
-                InputProps={{
-                  sx: { fontFamily: "'Inter', sans-serif" },
-                  endAdornment: (
-                    <Box
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        backgroundColor: selectedColor,
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '4px',
-                        mr: 1
-                      }}
-                    />
-                  )
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    applyColor();
+                  }
                 }}
               />
-              <Typography sx={{ 
-                fontFamily: "'Inter', sans-serif",
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem'
-              }}>
-                RGB: {rgbColor ? `${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}` : 'Invalid'}
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              onClick={applyColor}
-              disabled={isProcessing || !selectedColor || (!imageFile && !imageUrl)}
-              sx={{ 
-                bgcolor: 'var(--button-bg)',
-                color: 'var(--button-text)',
-                '&:hover': {
-                  bgcolor: 'var(--button-hover)'
-                },
-                '&:disabled': {
-                  bgcolor: 'var(--button-hover)',
+
+              {/* Apply Button */}
+              <Button
+                variant="contained"
+                onClick={applyColor}
+                sx={{
+                  bgcolor: 'var(--button-bg)',
                   color: 'var(--button-text)',
-                  opacity: 0.5
-                },
-                height: '40px',
-                minWidth: 'auto',
-                px: 2,
-                boxShadow: 'none',
-                alignSelf: 'flex-start',
-                fontFamily: "'Inter', sans-serif"
-              }}
-            >
-              Apply
-            </Button>
+                  '&:hover': {
+                    bgcolor: 'var(--button-hover)'
+                  },
+                  fontFamily: "'Inter', sans-serif",
+                  boxShadow: 'none'
+                }}
+              >
+                Apply
+              </Button>
+            </Box>
+
+            {/* Bottom separator */}
+            <Box sx={{ 
+              width: '100%', 
+              height: '1px', 
+              bgcolor: 'var(--border-color)'
+            }} />
           </Box>
 
           {/* Image input section */}
@@ -511,10 +549,7 @@ function App() {
             />
             <Button
               data-testid="load-url-button"
-              onClick={() => {
-                setImageFile(null);
-                loadImage(imageUrl);
-              }}
+              onClick={handleLoadUrl}
               sx={{ 
                 bgcolor: 'var(--button-bg)',
                 color: 'var(--button-text)',
