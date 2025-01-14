@@ -7,7 +7,7 @@ import ThemeToggleIcon from './components/ThemeToggleIcon';
 import themeManager from './theme.js';
 import './theme.css';
 
-const DEFAULT_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0804/1136/1573/files/HEXTRA-Master-1800.png?v=1736817806';
+const DEFAULT_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0804/1136/1573/files/printify-t-shirt-white-xs-hextra-master-white-t-shirt-49101104120101.png?v=1736860133';
 const DEFAULT_COLOR = '#dd0000';
 const VERSION = '1.1.0'; // Updated version
 
@@ -25,6 +25,7 @@ function App() {
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [imageFile, setImageFile] = useState(null);
   const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGE_URL);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [processedImage, setProcessedImage] = useState(null);
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -47,18 +48,69 @@ function App() {
     }
   };
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      setImageFile(file);
-      setImageUrl('');
-      setError('');
+      try {
+        setIsProcessing(true);
+        setImageFile(file);
+        setImageUrl('');
+        setError('');
+        
+        console.log('Starting file processing...');
+        const buffer = await file.arrayBuffer();
+        console.log('File buffer created');
+        
+        const image = await Jimp.read(Buffer.from(buffer));
+        console.log('Image loaded into Jimp');
+        
+        if (!image.hasAlpha()) {
+          image.rgba(true);
+          console.log('Alpha channel added');
+        }
+        
+        console.log('Starting image processing...');
+        image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
+          const red = this.bitmap.data[idx + 0];
+          const green = this.bitmap.data[idx + 1];
+          const blue = this.bitmap.data[idx + 2];
+          const alpha = this.bitmap.data[idx + 3];
+          
+          const luminance = (red * 0.299 + green * 0.587 + blue * 0.114) / 255;
+          
+          if (alpha > 0) {
+            this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
+            this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
+            this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
+            this.bitmap.data[idx + 3] = alpha;
+          }
+        });
+        console.log('Image processing complete');
+
+        const base64 = await image.getBase64Async(Jimp.MIME_PNG);
+        console.log('Base64 conversion complete');
+        setProcessedImage(base64);
+        console.log('Image set to state');
+      } catch (err) {
+        console.error('Error processing uploaded file:', err);
+        setError(`Error processing image: ${err.message}`);
+      } finally {
+        setIsProcessing(false);
+        console.log('Processing complete');
+      }
     }
   };
 
   const handleUrlChange = (event) => {
     setImageUrl(event.target.value);
-    setImageFile(null);
+  };
+
+  const handleUrlKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      setImageFile(null);
+      loadImage(event.target.value);
+    }
   };
 
   const applyColor = async () => {
@@ -70,54 +122,75 @@ function App() {
       if (imageFile) {
         const buffer = await imageFile.arrayBuffer();
         image = await Jimp.read(Buffer.from(buffer));
-      } else if (imageUrl) {
-        image = await Jimp.read(imageUrl);
       } else {
-        throw new Error('Please upload an image or provide an image URL');
+        image = await Jimp.read(imageUrl);
       }
 
-      const processImage = async (image) => {
-        // Ensure image has alpha channel
-        if (!image.hasAlpha()) {
-          image.rgba(true);
-        }
+      if (!image.hasAlpha()) {
+        image.rgba(true);
+      }
+      
+      image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
+        const red = this.bitmap.data[idx + 0];
+        const green = this.bitmap.data[idx + 1];
+        const blue = this.bitmap.data[idx + 2];
+        const alpha = this.bitmap.data[idx + 3];
         
-        image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
-          // Get the current pixel's RGBA values
-          const red = this.bitmap.data[idx + 0];
-          const green = this.bitmap.data[idx + 1];
-          const blue = this.bitmap.data[idx + 2];
-          const alpha = this.bitmap.data[idx + 3];
-          
-          // Calculate luminance (brightness)
-          const luminance = (red * 0.299 + green * 0.587 + blue * 0.114) / 255;
-          
-          // Only modify pixels that aren't fully transparent
-          if (alpha > 0) {
-            // Convert hex color to RGB
-            const r = parseInt(selectedColor.slice(1, 3), 16);
-            const g = parseInt(selectedColor.slice(3, 5), 16);
-            const b = parseInt(selectedColor.slice(5, 7), 16);
-            
-            // Apply color while preserving luminance
-            this.bitmap.data[idx + 0] = Math.round(r * luminance);
-            this.bitmap.data[idx + 1] = Math.round(g * luminance);
-            this.bitmap.data[idx + 2] = Math.round(b * luminance);
-            // Preserve original alpha
-            this.bitmap.data[idx + 3] = alpha;
-          }
-        });
+        const luminance = (red * 0.299 + green * 0.587 + blue * 0.114) / 255;
+        
+        if (alpha > 0) {
+          this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
+          this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
+          this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
+          this.bitmap.data[idx + 3] = alpha;
+        }
+      });
 
-        // Convert to base64
-        const base64 = await image.getBase64Async(Jimp.MIME_PNG);
-        setProcessedImage(base64);
-        setError('');
-      };
-
-      await processImage(image);
+      const base64 = await image.getBase64Async(Jimp.MIME_PNG);
+      setProcessedImage(base64);
+      setError('');
     } catch (err) {
-      console.error('Error processing image:', err);
-      setError(err.message || 'Error processing image');
+      console.error('Error applying color:', err);
+      setError(err.message || 'Error applying color');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const loadImage = async (url) => {
+    try {
+      setIsProcessing(true);
+      setError('');
+      const image = await Jimp.read(url);
+      setImageUrl(url);
+      
+      // Process the image directly without using applyColor
+      if (!image.hasAlpha()) {
+        image.rgba(true);
+      }
+      
+      image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
+        const red = this.bitmap.data[idx + 0];
+        const green = this.bitmap.data[idx + 1];
+        const blue = this.bitmap.data[idx + 2];
+        const alpha = this.bitmap.data[idx + 3];
+        
+        const luminance = (red * 0.299 + green * 0.587 + blue * 0.114) / 255;
+        
+        if (alpha > 0) {
+          this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
+          this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
+          this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
+          this.bitmap.data[idx + 3] = alpha;
+        }
+      });
+
+      const base64 = await image.getBase64Async(Jimp.MIME_PNG);
+      setProcessedImage(base64);
+      setError('');
+    } catch (err) {
+      console.error('Error loading image:', err);
+      setError(err.message || 'Error loading image');
     } finally {
       setIsProcessing(false);
     }
@@ -126,10 +199,7 @@ function App() {
   useEffect(() => {
     themeManager.init();
     setIsDarkMode(themeManager.getCurrentTheme() === 'dark');
-    // Process the default image when the component mounts
-    if (imageUrl) {
-      applyColor();
-    }
+    loadImage(DEFAULT_IMAGE_URL);
   }, []);
 
   // Theme toggle handler
@@ -314,22 +384,29 @@ function App() {
           }}>
             <Button
               component="label"
+              disabled={isProcessing}
               sx={{ 
                 flex: 1,
                 bgcolor: 'var(--button-bg)',
-                color: 'var(--button-text)',
+                color: 'var(--button-text) !important',
                 '&:hover': {
                   bgcolor: 'var(--button-hover)'
+                },
+                '&.Mui-disabled': {
+                  color: 'var(--button-text) !important',
+                  bgcolor: 'var(--button-bg)',
+                  opacity: 0.7
                 },
                 boxShadow: 'none',
                 fontFamily: "'Inter', sans-serif"
               }}
             >
-              Load Image
+              {isProcessing ? 'Loading...' : 'Load Image'}
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleFileUpload}
+                disabled={isProcessing}
                 hidden
               />
             </Button>
@@ -338,6 +415,8 @@ function App() {
               placeholder="Image URL"
               value={imageUrl}
               onChange={handleUrlChange}
+              onKeyPress={handleUrlKeyPress}
+              onDoubleClick={(event) => event.target.select()}
               size="small"
               sx={{ 
                 flex: 2,
@@ -365,6 +444,25 @@ function App() {
                 }
               }}
             />
+            <Button
+              data-testid="load-url-button"
+              onClick={() => {
+                setImageFile(null);
+                loadImage(imageUrl);
+              }}
+              sx={{ 
+                bgcolor: 'var(--button-bg)',
+                color: 'var(--button-text)',
+                '&:hover': {
+                  bgcolor: 'var(--button-hover)'
+                },
+                boxShadow: 'none',
+                fontFamily: "'Inter', sans-serif",
+                minWidth: 'auto'
+              }}
+            >
+              Load URL
+            </Button>
           </Box>
 
           {error && (
@@ -382,7 +480,35 @@ function App() {
 
           {/* Result section */}
           {processedImage && (
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ mt: 2, position: 'relative' }}>
+              {isProcessing && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '10px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    bgcolor: 'rgba(0, 0, 0, 0.8)',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    zIndex: 1000,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontFamily: "'Inter', sans-serif"
+                    }}
+                  >
+                    Processing image...
+                  </Typography>
+                </Box>
+              )}
               <img
                 src={processedImage}
                 alt="Processed"
