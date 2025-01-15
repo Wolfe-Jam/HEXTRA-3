@@ -8,7 +8,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
 const DEFAULT_COLOR = '#FFA500';
-const VERSION = '1.1.2'; // Updated version
+const VERSION = '1.2.1'; // Updated version
 
 function hexToRgb(hex) {
   // Remove # if present
