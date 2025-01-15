@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, TextField, Typography, IconButton, Tooltip, Button } from '@mui/material';
+import { Box, Container, TextField, Button, Typography, IconButton } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import Jimp from 'jimp';
 import Banner from './components/Banner';
@@ -7,10 +7,8 @@ import ThemeToggleIcon from './components/ThemeToggleIcon';
 import themeManager from './theme.js';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import ImageIcon from '@mui/icons-material/Image';
-import LinkIcon from '@mui/icons-material/Link';
 
-const DEFAULT_IMAGE_URL = '/images/default-tshirt.svg';
+const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
 const DEFAULT_COLOR = '#FFA500';
 const VERSION = '1.1.2'; // Updated version
 
@@ -39,6 +37,11 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.getAttribute('data-theme') === 'dark');
   const [canDownload, setCanDownload] = useState(false);
   const [urlInput, setUrlInput] = useState('');
+
+  // Load default image on mount
+  useEffect(() => {
+    loadImage(DEFAULT_IMAGE_URL);
+  }, []);
 
   const handleColorChange = (color) => {
     setSelectedColor(color.hex);
@@ -125,7 +128,7 @@ function App() {
 
   const handleLoadUrl = () => {
     if (!urlInput.trim()) {
-      window.open('https://www.google.com/search?tbm=isch', '_blank');
+      window.open('https://www.google.com/search?q=white+t-shirt+png+transparent+background&tbm=isch', '_blank');
       return;
     }
     
@@ -263,7 +266,6 @@ function App() {
   useEffect(() => {
     themeManager.init();
     setIsDarkMode(themeManager.getCurrentTheme() === 'dark');
-    loadImage(DEFAULT_IMAGE_URL);
   }, []);
 
   // Theme toggle handler
@@ -300,7 +302,15 @@ function App() {
         onThemeToggle={toggleTheme}
       />
       
-      <Box sx={{ p: 1 }}>
+      <Box sx={{ 
+        width: '100%',
+        maxWidth: '800px',
+        margin: '0 auto',
+        padding: '36px 16px 32px',  
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         <Typography 
           variant="subtitle1" 
           component="h2" 
@@ -336,15 +346,17 @@ function App() {
             height: '280px',
             margin: '0 auto'
           }}>
-            <Tooltip title="Click and drag to adjust color">
-              <Box sx={{ display: 'inline-block' }}>
-                <Wheel
-                  color={selectedColor}
-                  onChange={(color) => handleColorChange(color)}
-                  style={{ margin: '0 auto' }}
-                />
-              </Box>
-            </Tooltip>
+            <Wheel
+              color={selectedColor}
+              onChange={(color) => handleColorChange(color)}
+              width={280}
+              height={280}
+              style={{ 
+                position: 'absolute',
+                top: 0,
+                left: 0
+              }}
+            />
           </Box>
 
           {/* Color input section with separator */}
@@ -430,22 +442,21 @@ function App() {
               />
 
               {/* Apply Button */}
-              <Tooltip title="Apply Color">
-                <IconButton
-                  onClick={applyColor}
-                  sx={{
-                    bgcolor: 'var(--button-bg)',
-                    color: 'var(--button-text)',
-                    '&:hover': {
-                      bgcolor: 'var(--button-hover)'
-                    },
-                    boxShadow: 'none',
-                    fontFamily: "'Inter', sans-serif"
-                  }}
-                >
-                  Apply
-                </IconButton>
-              </Tooltip>
+              <Button
+                variant="contained"
+                onClick={applyColor}
+                sx={{ 
+                  bgcolor: 'var(--button-bg)',
+                  color: 'var(--button-text)',
+                  '&:hover': {
+                    bgcolor: 'var(--button-hover)'
+                  },
+                  boxShadow: 'none',
+                  fontFamily: "'Inter', sans-serif"
+                }}
+              >
+                Apply
+              </Button>
             </Box>
 
             {/* Bottom separator */}
@@ -458,90 +469,99 @@ function App() {
 
           {/* Image input section */}
           <Box sx={{ 
-            display: 'flex',
+            display: 'flex', 
             gap: 1,
-            alignItems: 'center'
+            alignItems: 'center',
+            mb: 2
           }}>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-              <TextField
-                fullWidth
-                label="Image URL"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                onKeyPress={handleUrlKeyPress}
-                error={!!error}
-                helperText={error}
-                sx={{ flexGrow: 1 }}
+            <Button
+              component="label"
+              variant="contained"
+              disabled={isProcessing}
+              sx={{ 
+                bgcolor: 'var(--button-bg)',
+                color: 'var(--button-text)',
+                '&:hover': {
+                  bgcolor: 'var(--button-hover)'
+                },
+                boxShadow: 'none',
+                fontFamily: "'Inter', sans-serif"
+              }}
+            >
+              Load Image
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleFileUpload}
+                disabled={isProcessing}
               />
-              <Tooltip title="Load URL (Empty for Google Images)">
-                <IconButton 
-                  onClick={handleLoadUrl}
-                  color="primary"
-                  sx={{ p: 1 }}
-                >
-                  <LinkIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Load Image from Device">
-                <IconButton
-                  component="label"
-                  color="primary"
-                  sx={{ p: 1 }}
-                >
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                  />
-                  <ImageIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
+            </Button>
 
-            {isProcessing && (
-              <Button
-                disabled
-                sx={{
-                  width: 'auto',
-                  minWidth: '120px',
-                  px: 3,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Processing...
-              </Button>
-            )}
+            <Typography sx={{ mx: 1, fontFamily: "'Inter', sans-serif" }}>OR</Typography>
+            
+            <TextField
+              placeholder="Enter image URL"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyPress={handleUrlKeyPress}
+              sx={{
+                flexGrow: 1,
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'var(--border-color)',
+                    borderWidth: '1px'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'var(--border-color)',
+                    borderWidth: '2px'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'var(--border-color)',
+                    borderWidth: '2px'
+                  }
+                },
+                '& .MuiInputBase-input': {
+                  color: 'var(--text-primary)',
+                  fontFamily: "'Inter', sans-serif"
+                }
+              }}
+            />
 
-            <Box sx={{ position: 'relative', width: '100%', textAlign: 'center' }}>
-              {imageLoaded && processedImage && (
-                <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                  <img
-                    src={processedImage}
-                    alt="Processed"
-                    style={{ maxWidth: '100%', height: 'auto' }}
-                  />
-                  <Tooltip title="Download Image">
-                    <IconButton
-                      onClick={handleQuickDownload}
-                      disabled={!canDownload}
-                      sx={{
-                        position: 'absolute',
-                        bottom: 16,
-                        right: 16,
-                        backgroundColor: 'background.paper',
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <FileDownloadIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              )}
-            </Box>
+            <Button
+              onClick={handleLoadUrl}
+              variant="contained"
+              sx={{ 
+                bgcolor: 'var(--button-bg)',
+                color: 'var(--button-text)',
+                '&:hover': {
+                  bgcolor: 'var(--button-hover)'
+                },
+                boxShadow: 'none',
+                fontFamily: "'Inter', sans-serif"
+              }}
+            >
+              Load URL
+            </Button>
           </Box>
+
+          {/* Download button */}
+          <IconButton
+            onClick={handleQuickDownload}
+            disabled={!canDownload}
+            sx={{
+              position: 'fixed',
+              bottom: 16,
+              right: 16,
+              bgcolor: canDownload ? 'var(--button-bg)' : 'rgba(0, 0, 0, 0.12)',
+              color: canDownload ? 'var(--button-text)' : 'rgba(0, 0, 0, 0.26)',
+              '&:hover': {
+                bgcolor: canDownload ? 'var(--button-hover)' : 'rgba(0, 0, 0, 0.12)'
+              }
+            }}
+          >
+            <FileDownloadIcon />
+          </IconButton>
 
           {/* Result section */}
           {processedImage && (

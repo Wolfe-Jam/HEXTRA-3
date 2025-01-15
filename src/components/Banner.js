@@ -10,7 +10,7 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
         top: 0,
         left: 0,
         right: 0,
-        height: '50px',
+        height: '64px',
         backgroundColor: 'var(--bg-primary)',
         borderBottom: '1px solid var(--border-color)',
         display: 'flex',
@@ -32,30 +32,31 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
       </Typography>
 
       {/* Logo */}
-      <Typography
+      <Box
+        component="img"
+        src={isDarkMode ? '/images/HEXTRA-3-logo-Blk.svg' : '/images/HEXTRA-3-logo-Wht.svg'}
+        alt="HEXTRA-3"
         sx={{
-          fontSize: '1.25rem',
-          fontWeight: 600,
-          letterSpacing: '0.5px',
-          color: 'var(--text-primary)',
-          fontFamily: "'League Spartan', sans-serif"
+          height: '90px',
+          width: 'auto',
+          objectFit: 'contain',
+          display: 'block',
+          paddingTop: '9px',
+          zIndex: 1200
         }}
-      >
-        HEXTRA-3
-      </Typography>
+      />
 
       {/* Theme toggle */}
       <IconButton
         onClick={onThemeToggle}
         sx={{
           color: 'var(--text-primary)',
-          padding: '8px',
           '&:hover': {
             backgroundColor: 'var(--button-hover)'
           }
         }}
       >
-        <ThemeToggleIcon isDark={isDarkMode} />
+        <ThemeToggleIcon isDarkMode={isDarkMode} />
       </IconButton>
     </Box>
   );
