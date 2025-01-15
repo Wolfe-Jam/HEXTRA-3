@@ -83,50 +83,24 @@ function App() {
     if (file) {
       try {
         setIsProcessing(true);
-        setImageFile(file);
-        setImageUrl('');
         setError('');
         
-        console.log('Starting file processing...');
         const buffer = await file.arrayBuffer();
-        console.log('File buffer created');
+        const img = await Jimp.read(Buffer.from(buffer));
         
-        const image = await Jimp.read(Buffer.from(buffer));
-        console.log('Image loaded into Jimp');
-        
-        if (!image.hasAlpha()) {
-          image.rgba(true);
-          console.log('Alpha channel added');
+        if (!img.hasAlpha()) {
+          img.rgba(true);
         }
         
-        console.log('Starting image processing...');
-        image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
-          const red = this.bitmap.data[idx + 0];
-          const green = this.bitmap.data[idx + 1];
-          const blue = this.bitmap.data[idx + 2];
-          const alpha = this.bitmap.data[idx + 3];
-          
-          const luminance = (red * 0.299 + green * 0.587 + blue * 0.114) / 255;
-          
-          if (alpha > 0) {
-            this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
-            this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
-            this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
-            this.bitmap.data[idx + 3] = alpha;
-          }
-        });
-        console.log('Image processing complete');
-
-        const base64 = await image.getBase64Async(Jimp.MIME_PNG);
-        console.log('Base64 conversion complete');
-        setProcessedImage(base64);
-        console.log('Image set to state');
+        setOriginalImage(img);
+        setProcessedImage(img.clone());
+        setImageLoaded(true);
+        setError('');
       } catch (err) {
-        console.error('Error processing uploaded file:', err);
-        setError(`Error processing image: ${err.message}`);
+        console.error('Error processing file:', err);
+        setError('Failed to process image. Please try a different file.');
       } finally {
         setIsProcessing(false);
-        console.log('Processing complete');
       }
     }
   };
@@ -137,16 +111,33 @@ function App() {
     }
   };
 
-  const handleLoadUrl = () => {
+  const handleLoadUrl = async () => {
     if (!urlInput.trim()) {
-      window.open('https://www.google.com/search?q=white+t-shirt+png+transparent+background&tbm=isch', '_blank');
+      window.open('https://www.google.com/search?q=white+t-shirt+transparent+background&tbm=isch', '_blank');
       return;
     }
-    
-    setImageUrl(urlInput);
-    setImageLoaded(false);
-    setError('');
-    loadImage(urlInput);
+
+    try {
+      setIsProcessing(true);
+      setError('');
+      
+      const img = await Jimp.read(urlInput);
+      
+      if (!img.hasAlpha()) {
+        img.rgba(true);
+      }
+      
+      setOriginalImage(img);
+      setProcessedImage(img.clone());
+      setImageLoaded(true);
+      setError('');
+      setUrlInput('');
+    } catch (err) {
+      console.error('Error loading image from URL:', err);
+      setError('Failed to load image. Please try a different URL.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const loadImage = async (url) => {
