@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, TextField, Button, Typography, IconButton } from '@mui/material';
+import { Box, Container, TextField, Typography, IconButton, Tooltip } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import Jimp from 'jimp';
 import Banner from './components/Banner';
@@ -7,6 +7,8 @@ import ThemeToggleIcon from './components/ThemeToggleIcon';
 import themeManager from './theme.js';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import ImageIcon from '@mui/icons-material/Image';
+import LinkIcon from '@mui/icons-material/Link';
 
 const DEFAULT_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0804/1136/1573/files/printify-t-shirt-white-xs-hextra-master-white-t-shirt-49101104120101.png?v=1736860133';
 const DEFAULT_COLOR = '#FFA500';
@@ -117,19 +119,19 @@ function App() {
 
   const handleUrlKeyPress = (event) => {
     if (event.key === 'Enter') {
-      event.preventDefault();
       handleLoadUrl();
     }
   };
 
   const handleLoadUrl = () => {
     if (!urlInput.trim()) {
-      // Open a new tab for user to find an image URL
-      window.open('https://www.google.com/search?q=white+t-shirt+png&tbm=isch', '_blank');
+      window.open('https://www.google.com/search?tbm=isch', '_blank');
       return;
     }
+    
     setImageUrl(urlInput);
-    setImageFile(null);
+    setImageLoaded(false);
+    setError('');
     loadImage(urlInput);
   };
 
@@ -143,6 +145,7 @@ function App() {
         img.onerror = reject;
       });
       setImageUrl(url);
+      setImageLoaded(true);
       setError('');
     } catch (err) {
       setError('Failed to load image. Please try a different URL.');
@@ -333,17 +336,15 @@ function App() {
             height: '280px',
             margin: '0 auto'
           }}>
-            <Wheel
-              color={selectedColor}
-              onChange={(color) => handleColorChange(color)}
-              width={280}
-              height={280}
-              style={{ 
-                position: 'absolute',
-                top: 0,
-                left: 0
-              }}
-            />
+            <Tooltip title="Click and drag to adjust color">
+              <Box sx={{ display: 'inline-block' }}>
+                <Wheel
+                  color={selectedColor}
+                  onChange={(color) => handleColorChange(color)}
+                  style={{ margin: '0 auto' }}
+                />
+              </Box>
+            </Tooltip>
           </Box>
 
           {/* Color input section with separator */}
@@ -429,21 +430,22 @@ function App() {
               />
 
               {/* Apply Button */}
-              <Button
-                variant="contained"
-                onClick={applyColor}
-                sx={{
-                  bgcolor: 'var(--button-bg)',
-                  color: 'var(--button-text)',
-                  '&:hover': {
-                    bgcolor: 'var(--button-hover)'
-                  },
-                  fontFamily: "'Inter', sans-serif",
-                  boxShadow: 'none'
-                }}
-              >
-                Apply
-              </Button>
+              <Tooltip title="Apply Color">
+                <IconButton
+                  onClick={applyColor}
+                  sx={{
+                    bgcolor: 'var(--button-bg)',
+                    color: 'var(--button-text)',
+                    '&:hover': {
+                      bgcolor: 'var(--button-hover)'
+                    },
+                    boxShadow: 'none',
+                    fontFamily: "'Inter', sans-serif"
+                  }}
+                >
+                  Apply
+                </IconButton>
+              </Tooltip>
             </Box>
 
             {/* Bottom separator */}
@@ -460,92 +462,86 @@ function App() {
             gap: 1,
             alignItems: 'center'
           }}>
-            <Button
-              component="label"
-              disabled={isProcessing}
-              sx={{ 
-                flex: 1,
-                bgcolor: 'var(--button-bg)',
-                color: 'var(--button-text) !important',
-                '&:hover': {
-                  bgcolor: 'var(--button-hover)'
-                },
-                '&.Mui-disabled': {
-                  color: 'var(--button-text) !important',
-                  bgcolor: 'var(--button-bg)',
-                  opacity: 0.7
-                },
-                boxShadow: 'none',
-                fontFamily: "'Inter', sans-serif"
-              }}
-            >
-              {isProcessing ? 'Loading...' : 'Load Image'}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                disabled={isProcessing}
-                hidden
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+              <TextField
+                fullWidth
+                label="Image URL"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onKeyPress={handleUrlKeyPress}
+                error={!!error}
+                helperText={error}
+                sx={{ flexGrow: 1 }}
               />
-            </Button>
-            <Typography sx={{ mx: 1, fontFamily: "'Inter', sans-serif" }}>OR URL:</Typography>
-            <TextField
-              fullWidth
-              placeholder="Enter image URL"
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              onKeyPress={handleUrlKeyPress}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: 'var(--border-color)',
-                    borderWidth: '1px'
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'var(--border-color)',
-                    borderWidth: '2px'
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'var(--border-color)',
-                    borderWidth: '2px'
-                  }
-                },
-                '& .MuiInputBase-input': {
-                  color: 'var(--text-primary)',
-                  fontFamily: "'Inter', sans-serif"
-                }
-              }}
-            />
-            <Button
-              data-testid="load-url-button"
-              onClick={handleLoadUrl}
-              sx={{ 
-                bgcolor: 'var(--button-bg)',
-                color: 'var(--button-text)',
-                '&:hover': {
-                  bgcolor: 'var(--button-hover)'
-                },
-                boxShadow: 'none',
-                fontFamily: "'Inter', sans-serif",
-                minWidth: 'auto'
-              }}
-            >
-              Load URL
-            </Button>
-          </Box>
+              <Tooltip title="Load URL (Empty for Google Images)">
+                <IconButton 
+                  onClick={handleLoadUrl}
+                  color="primary"
+                  sx={{ p: 1 }}
+                >
+                  <LinkIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Load Image from Device">
+                <IconButton
+                  component="label"
+                  color="primary"
+                  sx={{ p: 1 }}
+                >
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                  />
+                  <ImageIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
 
-          {error && (
-            <Typography 
-              color="error" 
-              sx={{ 
-                mt: 1,
-                fontSize: '0.875rem',
-                fontFamily: "'Inter', sans-serif"
-              }}
-            >
-              {error}
-            </Typography>
-          )}
+            {isProcessing && (
+              <Button
+                disabled
+                sx={{
+                  width: 'auto',
+                  minWidth: '120px',
+                  px: 3,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Processing...
+              </Button>
+            )}
+
+            <Box sx={{ position: 'relative', width: '100%', textAlign: 'center' }}>
+              {imageLoaded && processedImage && (
+                <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                  <img
+                    src={processedImage}
+                    alt="Processed"
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
+                  <Tooltip title="Download Image">
+                    <IconButton
+                      onClick={handleQuickDownload}
+                      disabled={!canDownload}
+                      sx={{
+                        position: 'absolute',
+                        bottom: 16,
+                        right: 16,
+                        backgroundColor: 'background.paper',
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <FileDownloadIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+            </Box>
+          </Box>
 
           {/* Result section */}
           {processedImage && (
@@ -578,41 +574,6 @@ function App() {
                   </Typography>
                 </Box>
               )}
-              <img
-                src={processedImage}
-                alt="Processed"
-                style={{ 
-                  width: '100%',
-                  display: 'block'
-                }}
-              />
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'flex-end',
-                mt: 1
-              }}>
-                <IconButton
-                  onClick={handleQuickDownload}
-                  disabled={!canDownload}
-                  sx={{
-                    bgcolor: canDownload ? 'var(--button-bg)' : 'rgba(0, 0, 0, 0.12)',
-                    color: canDownload ? 'var(--button-text)' : 'rgba(0, 0, 0, 0.26)',
-                    '&:hover': {
-                      bgcolor: canDownload ? 'var(--button-hover)' : 'rgba(0, 0, 0, 0.12)'
-                    },
-                    padding: '8px',
-                    borderRadius: '50%',
-                    width: 36,
-                    height: 36,
-                    '& svg': {
-                      fontSize: '1.25rem'
-                    }
-                  }}
-                  aria-label="Download image"
-                >
-                  <FileDownloadIcon />
-                </IconButton>
-              </Box>
             </Box>
           )}
         </Box>
