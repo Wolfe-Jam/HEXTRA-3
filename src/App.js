@@ -38,6 +38,27 @@ function App() {
   const [canDownload, setCanDownload] = useState(false);
   const [urlInput, setUrlInput] = useState('');
 
+  // Luminance calculation methods
+  const LUMINANCE_METHODS = {
+    NATURAL: {
+      label: 'Natural',
+      tooltip: 'Uses ITU-R BT.709 standard weights for most accurate color perception',
+      calculate: (r, g, b) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+    },
+    VIBRANT: {
+      label: 'Vibrant',
+      tooltip: 'Maximizes color saturation for bold, vivid results',
+      calculate: (r, g, b) => (r + g + b) / (3 * 255)
+    },
+    BALANCED: {
+      label: 'Balanced',
+      tooltip: 'Uses NTSC/PAL standard for a middle-ground approach',
+      calculate: (r, g, b) => (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    }
+  };
+
+  const [luminanceMethod, setLuminanceMethod] = useState('NATURAL');
+
   // Load default image on mount
   useEffect(() => {
     loadImage(DEFAULT_IMAGE_URL);
@@ -207,6 +228,7 @@ function App() {
     setIsProcessing(true);
     try {
       const colorized = originalImage.clone();
+      const calculateLuminance = LUMINANCE_METHODS[luminanceMethod].calculate;
       
       // Process each pixel to maintain luminance
       colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
@@ -215,8 +237,8 @@ function App() {
         const blue = this.bitmap.data[idx + 2];
         const alpha = this.bitmap.data[idx + 3];
         
-        // Calculate luminance
-        const luminance = (red + green + blue) / (3 * 255);
+        // Calculate luminance using selected method
+        const luminance = calculateLuminance(red, green, blue);
         
         if (alpha > 0) {
           // Apply color while preserving luminance
@@ -491,177 +513,209 @@ function App() {
               </Button>
             </Box>
 
-            {/* Bottom separator */}
+            {/* Separator after Apply button */}
             <Box sx={{ 
               width: '100%', 
               height: '1px', 
-              bgcolor: 'var(--border-color)'
+              bgcolor: 'var(--text-primary)',
+              opacity: 0.3,
+              mb: 2
             }} />
-          </Box>
 
-          {/* Error message */}
-          {error && (
-            <Typography 
-              color="error" 
-              sx={{ 
-                mt: 2,
-                textAlign: 'center',
-                fontFamily: "'Inter', sans-serif"
-              }}
-            >
-              {error}
-            </Typography>
-          )}
-
-          {/* Image input section */}
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 1,
-            alignItems: 'center',
-            mb: 2
-          }}>
-            <Button
-              component="label"
-              variant="contained"
-              disabled={isProcessing}
-              sx={{ 
-                bgcolor: 'var(--button-bg)',
-                color: 'var(--button-text)',
-                '&:hover': {
-                  bgcolor: 'var(--button-hover)'
-                },
-                boxShadow: 'none',
-                fontFamily: "'Inter', sans-serif"
-              }}
-            >
-              Load Image
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={handleFileUpload}
-                disabled={isProcessing}
-              />
-            </Button>
-
-            <Typography sx={{ mx: 1, fontFamily: "'Inter', sans-serif" }}>OR</Typography>
-            
-            <TextField
-              placeholder="Enter image URL"
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              onKeyPress={handleUrlKeyPress}
-              sx={{
-                flexGrow: 1,
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: 'var(--border-color)',
-                    borderWidth: '1px'
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'var(--border-color)',
-                    borderWidth: '2px'
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'var(--border-color)',
-                    borderWidth: '2px'
-                  }
-                },
-                '& .MuiInputBase-input': {
-                  color: 'var(--text-primary)',
+            {/* Error message */}
+            {error && (
+              <Typography 
+                color="error" 
+                sx={{ 
+                  mb: 2,
+                  textAlign: 'center',
                   fontFamily: "'Inter', sans-serif"
-                }
-              }}
-            />
-
-            <Button
-              onClick={handleLoadUrl}
-              variant="contained"
-              sx={{ 
-                bgcolor: 'var(--button-bg)',
-                color: 'var(--button-text)',
-                '&:hover': {
-                  bgcolor: 'var(--button-hover)'
-                },
-                boxShadow: 'none',
-                fontFamily: "'Inter', sans-serif"
-              }}
-            >
-              Load URL
-            </Button>
-          </Box>
-
-          {/* Download button */}
-          <IconButton
-            onClick={handleQuickDownload}
-            disabled={!canDownload}
-            sx={{
-              position: 'fixed',
-              bottom: 16,
-              right: 16,
-              bgcolor: canDownload ? 'var(--button-bg)' : 'rgba(0, 0, 0, 0.12)',
-              color: canDownload ? 'var(--button-text)' : 'rgba(0, 0, 0, 0.26)',
-              '&:hover': {
-                bgcolor: canDownload ? 'var(--button-hover)' : 'rgba(0, 0, 0, 0.12)'
-              }
-            }}
-          >
-            <FileDownloadIcon />
-          </IconButton>
-
-          {/* Result section */}
-          <Box sx={{ mt: 2, position: 'relative' }}>
-            {isProcessing && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '10px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  bgcolor: 'rgba(0, 0, 0, 0.8)',
-                  color: 'white',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  zIndex: 1000,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: '0.875rem',
+                {error}
+              </Typography>
+            )}
+
+            {/* Image input section */}
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 1,
+              alignItems: 'center',
+              mb: 2,
+              '& .MuiButton-root': {
+                minWidth: '120px'  // Align button widths
+              }
+            }}>
+              <Button
+                component="label"
+                variant="contained"
+                disabled={isProcessing}
+                sx={{ 
+                  bgcolor: 'var(--button-bg)',
+                  color: 'var(--button-text)',
+                  '&:hover': {
+                    bgcolor: 'var(--button-hover)'
+                  },
+                  boxShadow: 'none',
+                  fontFamily: "'Inter', sans-serif"
+                }}
+              >
+                Load Image
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={isProcessing}
+                />
+              </Button>
+
+              <Typography sx={{ mx: 1, fontFamily: "'Inter', sans-serif" }}>OR</Typography>
+              
+              <TextField
+                placeholder="Enter image URL"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onKeyPress={handleUrlKeyPress}
+                sx={{
+                  flexGrow: 1,
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: 'var(--border-color)',
+                      borderWidth: '1px'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'var(--border-color)',
+                      borderWidth: '2px'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'var(--border-color)',
+                      borderWidth: '2px'
+                    }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'var(--text-primary)',
                     fontFamily: "'Inter', sans-serif"
+                  }
+                }}
+              />
+
+              <Button
+                onClick={handleLoadUrl}
+                variant="contained"
+                sx={{ 
+                  bgcolor: 'var(--button-bg)',
+                  color: 'var(--button-text)',
+                  '&:hover': {
+                    bgcolor: 'var(--button-hover)'
+                  },
+                  boxShadow: 'none',
+                  fontFamily: "'Inter', sans-serif"
+                }}
+              >
+                Load URL
+              </Button>
+            </Box>
+
+            {/* Separator before image */}
+            <Box sx={{ 
+              width: '100%', 
+              height: '1px', 
+              bgcolor: 'var(--text-primary)',
+              opacity: 0.3,
+              mb: 2
+            }} />
+
+            {/* Color Mode Toggle */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center',
+              gap: 1, 
+              mb: 2
+            }}>
+              {Object.entries(LUMINANCE_METHODS).map(([key, method]) => (
+                <Button
+                  key={key}
+                  variant={luminanceMethod === key ? "contained" : "outlined"}
+                  size="small"
+                  onClick={() => {
+                    setLuminanceMethod(key);
+                    if (processedImage) {
+                      colorize();
+                    }
+                  }}
+                  title={method.tooltip}
+                  sx={{
+                    bgcolor: luminanceMethod === key ? 'var(--button-bg)' : 'transparent',
+                    color: luminanceMethod === key ? 'var(--button-text)' : 'var(--text-primary)',
+                    borderColor: 'var(--border-color)',
+                    '&:hover': {
+                      bgcolor: luminanceMethod === key ? 'var(--button-hover)' : 'var(--button-hover-light)'
+                    },
+                    fontFamily: "'Inter', sans-serif",
+                    textTransform: 'none',
+                    minWidth: '80px'
                   }}
                 >
-                  Processing image...
-                </Typography>
-              </Box>
-            )}
-            <Box
-              sx={{
-                width: '100%',
-                height: 'auto',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginTop: 2
-              }}
-            >
-              {processedImageUrl ? (
-                <img
-                  src={processedImageUrl}
-                  alt="Processed T-shirt"
-                  style={{
-                    maxWidth: '100%',
-                    height: 'auto',
-                    borderRadius: '4px'
+                  {method.label}
+                </Button>
+              ))}
+            </Box>
+
+            {/* Result section */}
+            <Box sx={{ position: 'relative' }}>
+              {isProcessing && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '10px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    bgcolor: 'rgba(0, 0, 0, 0.8)',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    zIndex: 1000,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
                   }}
-                />
-              ) : (
-                <Typography>Loading image...</Typography>
+                >
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontFamily: "'Inter', sans-serif"
+                    }}
+                  >
+                    Processing image...
+                  </Typography>
+                </Box>
               )}
+              <Box
+                sx={{
+                  width: '100%',
+                  height: 'auto',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: 2
+                }}
+              >
+                {processedImageUrl ? (
+                  <img
+                    src={processedImageUrl}
+                    alt="Processed T-shirt"
+                    style={{
+                      maxWidth: '100%',
+                      height: 'auto',
+                      borderRadius: '4px'
+                    }}
+                  />
+                ) : (
+                  <Typography>Loading image...</Typography>
+                )}
+              </Box>
             </Box>
           </Box>
         </Box>
