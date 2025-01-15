@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, TextField, Button, Typography, IconButton } from '@mui/material';
+import { Box, TextField, Button, Typography, IconButton, Tooltip } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import Jimp from 'jimp';
 import Banner from './components/Banner';
@@ -7,7 +7,15 @@ import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
-const DEFAULT_COLOR = '#FFA500';
+const DEFAULT_COLOR = '#D50032';
+const DEFAULT_COLORS = [
+  '#D50032',  // Red
+  '#00805E',  // Green
+  '#224D8F',  // Blue
+  '#FED141',  // Yellow
+  '#FF4400',  // Orange
+  '#CABFAD'   // Neutral
+];
 const VERSION = '1.2.1'; // Updated version
 
 function hexToRgb(hex) {
@@ -23,6 +31,18 @@ function hexToRgb(hex) {
   return { r, g, b };
 }
 
+function normalizeHex(hex) {
+  // Remove #
+  hex = hex.replace('#', '');
+  
+  // Handle short forms like #000 -> #000000
+  if (hex.length === 3) {
+    hex = hex.split('').map(char => char + char).join('');
+  }
+  
+  return '#' + hex;
+}
+
 function App() {
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
@@ -34,9 +54,40 @@ function App() {
   const [processedImageUrl, setProcessedImageUrl] = useState('');
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.getAttribute('data-theme') === 'dark');
   const [canDownload, setCanDownload] = useState(false);
   const [urlInput, setUrlInput] = useState('');
+  const [recentColors, setRecentColors] = useState(() => {
+    const saved = localStorage.getItem('recentHexColors');
+    return saved ? JSON.parse(saved) : DEFAULT_COLORS;
+  });
+
+  // Theme handling
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('hextraTheme');
+    return savedTheme || 'dark'; // Default to dark if no saved preference
+  });
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('hextraTheme', newTheme);
+  };
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  // Add color to recent list
+  const addToRecentColors = (color) => {
+    // Only add valid 6-digit hex codes
+    if (/^#[0-9a-f]{6}$/i.test(color)) {
+      setRecentColors(prev => {
+        const newColors = [color, ...prev.filter(c => c !== color)].slice(0, 6);
+        localStorage.setItem('recentHexColors', JSON.stringify(newColors));
+        return newColors;
+      });
+    }
+  };
 
   // Luminance calculation methods
   const LUMINANCE_METHODS = {
@@ -59,19 +110,29 @@ function App() {
 
   const [luminanceMethod, setLuminanceMethod] = useState('NATURAL');
 
-  // Load default image on mount
   useEffect(() => {
-    loadImage(DEFAULT_IMAGE_URL);
+    // Load default image
+    Jimp.read(DEFAULT_IMAGE_URL)
+      .then(image => {
+        setOriginalImage(image);
+        setImageLoaded(true);
+        // Get initial base64 for display
+        image.getBase64(Jimp.MIME_PNG, (err, base64) => {
+          if (!err) {
+            setProcessedImage(base64);
+          }
+        });
+      })
+      .catch(err => {
+        console.error('Error loading default image:', err);
+        setError('Failed to load default image');
+      });
   }, []);
 
   useEffect(() => {
     if (processedImage) {
-      processedImage.getBase64Async(Jimp.MIME_PNG)
-        .then(base64 => {
-          setProcessedImageUrl(base64);
-          setCanDownload(true);
-        })
-        .catch(err => console.error('Error converting to base64:', err));
+      setProcessedImageUrl(processedImage);
+      setCanDownload(true);
     }
   }, [processedImage]);
 
@@ -84,45 +145,74 @@ function App() {
   };
 
   const handleHexInputChange = (event) => {
-    let hex = event.target.value;
-    setSelectedColor(hex);
+    let value = event.target.value;
     
-    // Only update RGB if it's a valid hex code
-    if (/^#?[0-9A-Fa-f]{6}$/.test(hex)) {
-      if (!hex.startsWith('#')) {
-        hex = '#' + hex;
-      }
-      const rgb = hexToRgb(hex);
+    // Always keep # at start
+    if (!value.startsWith('#')) {
+      value = '#' + value;
+    }
+    
+    // Remove any non-hex characters after #
+    value = '#' + value.slice(1).replace(/[^0-9a-f]/gi, '');
+    
+    // Limit to 6 characters after #
+    value = '#' + value.slice(1).slice(0, 6);
+    
+    setSelectedColor(value);
+    
+    // Update RGB if we have a valid hex
+    if (/^#[0-9a-f]{6}$/i.test(value)) {
+      const rgb = hexToRgb(value);
       if (rgb) {
         setRgbColor(rgb);
       }
     }
   };
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      try {
-        setIsProcessing(true);
-        setError('');
-        
-        const buffer = await file.arrayBuffer();
-        const img = await Jimp.read(Buffer.from(buffer));
-        
-        if (!img.hasAlpha()) {
-          img.rgba(true);
-        }
-        
-        setOriginalImage(img);
-        setProcessedImage(img.clone());
-        setImageLoaded(true);
-        setError('');
-      } catch (err) {
-        console.error('Error processing file:', err);
-        setError('Failed to process image. Please try a different file.');
-      } finally {
-        setIsProcessing(false);
+  const handleHexInputKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      let value = event.target.value;
+      if (!value.startsWith('#')) {
+        value = '#' + value;
       }
+      value = '#' + value.slice(1).padEnd(6, '0');
+      setSelectedColor(value);
+      
+      if (/^#[0-9a-f]{6}$/i.test(value)) {
+        const rgb = hexToRgb(value);
+        if (rgb) {
+          setRgbColor(rgb);
+          applyColor(); // This will add to history only after applying
+        }
+      }
+      event.preventDefault();
+    }
+  };
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setImageFile(file);
+    setError('');
+    
+    try {
+      const buffer = await file.arrayBuffer();
+      const image = await Jimp.read(Buffer.from(buffer));
+      setOriginalImage(image);
+      setImageLoaded(true);
+      
+      // Get initial base64 for display
+      image.getBase64(Jimp.MIME_PNG, (err, base64) => {
+        if (!err) {
+          setProcessedImage(base64);
+          setCanDownload(true);
+        }
+      });
+    } catch (err) {
+      console.error('Error loading image:', err);
+      setError('Failed to load image');
+      setImageLoaded(false);
     }
   };
 
@@ -149,10 +239,17 @@ function App() {
       }
       
       setOriginalImage(img);
-      setProcessedImage(img.clone());
       setImageLoaded(true);
       setError('');
       setUrlInput('');
+      
+      // Get initial base64 for display
+      img.getBase64(Jimp.MIME_PNG, (err, base64) => {
+        if (!err) {
+          setProcessedImage(base64);
+          setCanDownload(true);
+        }
+      });
     } catch (err) {
       console.error('Error loading image from URL:', err);
       setError('Failed to load image. Please try a different URL.');
@@ -165,10 +262,16 @@ function App() {
     try {
       const img = await Jimp.read(url);
       setOriginalImage(img);
-      setProcessedImage(img.clone());  // Set the processed image initially
-      setImageUrl(url);
       setImageLoaded(true);
       setError('');
+      
+      // Get initial base64 for display
+      img.getBase64(Jimp.MIME_PNG, (err, base64) => {
+        if (!err) {
+          setProcessedImage(base64);
+          setCanDownload(true);
+        }
+      });
     } catch (err) {
       console.error('Error loading image:', err);
       setError('Failed to load image. Please try a different URL.');
@@ -176,24 +279,16 @@ function App() {
     }
   };
 
-  const applyColor = async () => {
+  const colorize = async () => {
+    if (!imageLoaded || !originalImage) return;
+    
+    setIsProcessing(true);
+    setError('');
+    
     try {
-      setIsProcessing(true);
-      setError('');
+      const colorized = originalImage.clone();
       
-      let image;
-      if (imageFile) {
-        const buffer = await imageFile.arrayBuffer();
-        image = await Jimp.read(Buffer.from(buffer));
-      } else {
-        image = await Jimp.read(imageUrl);
-      }
-
-      if (!image.hasAlpha()) {
-        image.rgba(true);
-      }
-      
-      image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
+      colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
         const red = this.bitmap.data[idx + 0];
         const green = this.bitmap.data[idx + 1];
         const blue = this.bitmap.data[idx + 2];
@@ -209,53 +304,65 @@ function App() {
         }
       });
 
-      const base64 = await image.getBase64Async(Jimp.MIME_PNG);
-      setProcessedImage(base64);
-      setCanDownload(true);
-      setError('');
+      colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
+        if (err) {
+          console.error('Error converting to base64:', err);
+          setError('Error processing image');
+          setCanDownload(false);
+        } else {
+          setProcessedImage(base64);
+          setCanDownload(true);
+          setError('');
+        }
+        setIsProcessing(false);
+      });
     } catch (err) {
-      console.error('Error applying color:', err);
-      setError(err.message || 'Error applying color');
+      console.error('Error in colorize:', err);
+      setError('Error processing image');
       setCanDownload(false);
-    } finally {
       setIsProcessing(false);
     }
   };
 
-  const colorize = async () => {
-    if (!originalImage) return;
-    
-    setIsProcessing(true);
-    try {
-      const colorized = originalImage.clone();
-      const calculateLuminance = LUMINANCE_METHODS[luminanceMethod].calculate;
-      
-      // Process each pixel to maintain luminance
-      colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-        const red = this.bitmap.data[idx + 0];
-        const green = this.bitmap.data[idx + 1];
-        const blue = this.bitmap.data[idx + 2];
-        const alpha = this.bitmap.data[idx + 3];
-        
-        // Calculate luminance using selected method
-        const luminance = calculateLuminance(red, green, blue);
-        
-        if (alpha > 0) {
-          // Apply color while preserving luminance
-          this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
-          this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
-          this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
-          this.bitmap.data[idx + 3] = alpha;
-        }
-      });
-      
-      setProcessedImage(colorized);
-      setError('');
-    } catch (err) {
-      console.error('Error colorizing image:', err);
-      setError('Failed to colorize image. Please try again.');
-    } finally {
-      setIsProcessing(false);
+  const applyColor = async () => {
+    if (/^#[0-9a-f]{6}$/i.test(selectedColor)) {
+      await colorize();
+      addToRecentColors(selectedColor);
+    }
+  };
+
+  const handleColorSelect = (color) => {
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      setSelectedColor(color);
+      setRgbColor(rgb);
+      // Apply color immediately
+      if (originalImage) {
+        const colorized = originalImage.clone();
+        colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
+          const red = this.bitmap.data[idx + 0];
+          const green = this.bitmap.data[idx + 1];
+          const blue = this.bitmap.data[idx + 2];
+          const alpha = this.bitmap.data[idx + 3];
+          
+          const luminance = (red * 0.299 + green * 0.587 + blue * 0.114) / 255;
+          
+          if (alpha > 0) {
+            this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
+            this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
+            this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
+            this.bitmap.data[idx + 3] = alpha;
+          }
+        });
+
+        colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
+          if (!err) {
+            setProcessedImage(base64);
+            setCanDownload(true);
+            addToRecentColors(color);
+          }
+        });
+      }
     }
   };
 
@@ -263,8 +370,8 @@ function App() {
     if (!processedImage) return;
     
     try {
-      const base64 = await processedImage.getBase64Async(Jimp.MIME_PNG);
-      const filename = 'hextra-tshirt.png';
+      const base64 = processedImage;
+      const filename = generateFilename();
       const link = document.createElement('a');
       link.href = base64;
       link.download = filename;
@@ -317,27 +424,6 @@ function App() {
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
   };
 
-  useEffect(() => {
-    setIsDarkMode(document.documentElement.getAttribute('data-theme') === 'dark');
-  }, []);
-
-  // Theme toggle handler
-  const toggleTheme = () => {
-    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    setIsDarkMode(newTheme === 'dark');
-  };
-
-  const theme = {
-    typography: {
-      fontFamily: "'Inter', sans-serif",
-      button: {
-        textTransform: 'none',
-        fontWeight: 500
-      }
-    }
-  };
-
   return (
     <Box
       sx={{
@@ -352,18 +438,18 @@ function App() {
     >
       <Banner 
         version={VERSION}
-        isDarkMode={isDarkMode}
+        isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
       
       <Box sx={{ 
-        width: '100%',
-        maxWidth: '800px',
-        margin: '0 auto',
-        padding: '36px 16px 32px',  
-        minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        alignItems: 'center',
+        minHeight: '100vh',
+        paddingTop: '45px', 
+        backgroundColor: 'var(--bg-primary)',
+        transition: 'background-color 0.3s'
       }}>
         <Typography 
           variant="subtitle1" 
@@ -405,10 +491,8 @@ function App() {
               onChange={(color) => handleColorChange(color)}
               width={280}
               height={280}
-              style={{ 
-                position: 'absolute',
-                top: 0,
-                left: 0
+              style={{
+                margin: '0 auto'
               }}
             />
           </Box>
@@ -455,61 +539,136 @@ function App() {
                 }}
               />
 
-              {/* HEX Input */}
-              <TextField
-                label="HEX Color"
-                value={selectedColor}
-                onChange={handleHexInputChange}
-                sx={{ 
-                  width: '160px',
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: 'var(--border-color)',
-                      borderWidth: '1px'
+              <Box sx={{ position: 'relative' }}>
+                <TextField
+                  label="HEX Color"
+                  value={selectedColor}
+                  onChange={handleHexInputChange}
+                  onKeyDown={handleHexInputKeyDown}
+                  autoComplete="off"
+                  sx={{ 
+                    width: '150px',
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'var(--border-color)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'var(--border-hover)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'var(--primary-color)',
+                      },
+                      backgroundColor: 'var(--background)'
                     },
-                    '&:hover fieldset': {
-                      borderColor: 'var(--border-color)',
-                      borderWidth: '2px'
+                    '& .MuiInputLabel-root': {
+                      color: 'var(--text-secondary)',
+                      '&.Mui-focused': {
+                        color: 'var(--primary-color)',
+                      },
                     },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'var(--border-color)',
-                      borderWidth: '2px'
+                    '& .MuiInputBase-input': {
+                      color: 'var(--text-primary)',
+                      backgroundColor: 'var(--background)',
+                      fontFamily: "'Inter', sans-serif",
+                      textTransform: 'lowercase',
+                      fontSize: '0.875rem',
+                      '&:-webkit-autofill': {
+                        WebkitBoxShadow: '0 0 0 100px var(--background) inset',
+                        WebkitTextFillColor: 'var(--text-primary)',
+                        fontSize: 'inherit',
+                        fontFamily: 'inherit'
+                      }
                     }
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: 'var(--text-secondary)',
-                    fontFamily: "'Inter', sans-serif"
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: 'var(--text-primary)'
-                  },
-                  '& .MuiInputBase-input': {
-                    color: 'var(--text-primary)',
-                    fontFamily: "'Inter', sans-serif"
-                  }
-                }}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    colorize();
-                  }
-                }}
-              />
+                  }}
+                />
+                
+                {/* Google-style Recent Colors Dropdown */}
+                {recentColors.length > 0 && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      width: '150px',
+                      display: 'none',
+                      flexDirection: 'column',
+                      backgroundColor: 'var(--bg-primary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '4px',
+                      marginTop: '4px',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      '.MuiTextField-root:focus-within + &': {
+                        display: 'flex'
+                      },
+                      '&:hover': {
+                        display: 'flex'
+                      }
+                    }}
+                  >
+                    {recentColors.map((color, index) => (
+                      <Box
+                        key={index}
+                        onClick={() => handleColorSelect(color)}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '8px',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            backgroundColor: 'var(--hover-bg)'
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: '20px',
+                            height: '20px',
+                            backgroundColor: color,
+                            marginRight: '8px',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '2px'
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            color: 'var(--text-primary)',
+                            fontSize: '0.875rem',
+                            fontFamily: "'Inter', sans-serif"
+                          }}
+                        >
+                          {color.toLowerCase()}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Box>
 
               {/* Apply Button */}
               <Button
                 variant="contained"
-                onClick={colorize}
-                sx={{ 
+                onClick={applyColor}
+                disabled={isProcessing || !imageLoaded}
+                sx={{
                   bgcolor: 'var(--button-bg)',
                   color: 'var(--button-text)',
                   '&:hover': {
-                    bgcolor: 'var(--button-hover)'
+                    bgcolor: 'var(--button-hover)',
                   },
+                  '&.Mui-disabled': {
+                    bgcolor: 'var(--disabled-bg)',
+                    color: 'var(--disabled-text)',
+                  },
+                  fontFamily: "'Inter', sans-serif",
+                  textTransform: 'none',
+                  minWidth: '100px',
+                  padding: '6px 16px',
                   boxShadow: 'none',
-                  fontFamily: "'Inter', sans-serif"
+                  border: '1px solid var(--border-color)'
                 }}
               >
-                Apply
+                Apply Color
               </Button>
             </Box>
 
@@ -565,7 +724,7 @@ function App() {
                   type="file"
                   hidden
                   accept="image/*"
-                  onChange={handleFileUpload}
+                  onChange={handleImageUpload}
                   disabled={isProcessing}
                 />
               </Button>
@@ -704,31 +863,52 @@ function App() {
                         gap: 1
                       }}>
                         {Object.entries(LUMINANCE_METHODS).map(([key, method]) => (
-                          <Button
-                            key={key}
-                            variant={luminanceMethod === key ? "contained" : "outlined"}
-                            size="small"
-                            onClick={() => {
-                              setLuminanceMethod(key);
-                              if (processedImage) {
-                                colorize();
+                          <Tooltip
+                            title={method.tooltip}
+                            arrow
+                            enterDelay={200}
+                            leaveDelay={0}
+                            PopperProps={{
+                              sx: {
+                                '& .MuiTooltip-tooltip': {
+                                  backgroundColor: 'var(--bg-secondary)',
+                                  color: 'var(--text-primary)',
+                                  fontSize: '0.75rem',
+                                  padding: '8px 12px',
+                                  borderRadius: '4px',
+                                  maxWidth: '200px'
+                                },
+                                '& .MuiTooltip-arrow': {
+                                  color: 'var(--bg-secondary)'
+                                }
                               }
                             }}
-                            title={method.tooltip}
-                            sx={{
-                              bgcolor: luminanceMethod === key ? 'var(--button-bg)' : 'transparent',
-                              color: luminanceMethod === key ? 'var(--button-text)' : 'var(--text-primary)',
-                              borderColor: 'var(--border-color)',
-                              '&:hover': {
-                                bgcolor: luminanceMethod === key ? 'var(--button-hover)' : 'var(--button-hover-light)'
-                              },
-                              fontFamily: "'Inter', sans-serif",
-                              textTransform: 'none',
-                              minWidth: '80px'
-                            }}
                           >
-                            {method.label}
-                          </Button>
+                            <Button
+                              key={key}
+                              variant={luminanceMethod === key ? "contained" : "outlined"}
+                              size="small"
+                              onClick={() => {
+                                setLuminanceMethod(key);
+                                if (processedImage) {
+                                  colorize();
+                                }
+                              }}
+                              sx={{
+                                bgcolor: luminanceMethod === key ? 'var(--button-bg)' : 'transparent',
+                                color: luminanceMethod === key ? 'var(--button-text)' : 'var(--text-primary)',
+                                borderColor: 'var(--border-color)',
+                                '&:hover': {
+                                  bgcolor: luminanceMethod === key ? 'var(--button-hover)' : 'var(--button-hover-light)'
+                                },
+                                fontFamily: "'Inter', sans-serif",
+                                textTransform: 'none',
+                                minWidth: '80px'
+                              }}
+                            >
+                              {method.label}
+                            </Button>
+                          </Tooltip>
                         ))}
                       </Box>
 

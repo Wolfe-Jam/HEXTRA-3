@@ -6,6 +6,11 @@
     --button-text: #ffffff;
     --button-hover: #333333;
     --border-color: rgb(20, 20, 20);
+    --primary-color: rgb(20, 20, 20);
+    --primary-hover: #333333;
+    --disabled-bg: #e0e0e0;
+    --disabled-text: #888888;
+    --hover-bg: #f5f5f5;
 }
 
 :root[data-theme="dark"] {
@@ -16,6 +21,11 @@
     --button-text: rgb(20, 20, 20);
     --button-hover: #cccccc;
     --border-color: #ffffff;
+    --primary-color: #ffffff;
+    --primary-hover: #cccccc;
+    --disabled-bg: #333333;
+    --disabled-text: #666666;
+    --hover-bg: #333333;
 }
 
 /* Base styles */

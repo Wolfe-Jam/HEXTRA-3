@@ -1,62 +1,67 @@
 import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
-import ThemeToggleIcon from './ThemeToggleIcon';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 
 const Banner = ({ version, isDarkMode, onThemeToggle }) => {
   return (
     <Box
       sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start', 
+        padding: '8px 16px 0', 
+        backgroundColor: isDarkMode ? '#ffffff' : '#000000',
+        borderBottom: `1px solid ${isDarkMode ? '#000000' : '#ffffff'}`,
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        height: '64px',
-        backgroundColor: 'var(--bg-primary)',
-        borderBottom: '1px solid var(--border-color)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
+        height: '64px', 
         zIndex: 1100,
-        transition: 'background-color 0.3s, border-color 0.3s'
+        transition: 'background-color 0.3s, border-color 0.3s',
+        overflow: 'visible' 
       }}
     >
-      {/* Version number */}
       <Typography
         sx={{
           fontSize: '0.875rem',
-          color: 'var(--text-primary)'
+          color: isDarkMode ? '#000000' : '#ffffff',
+          fontFamily: "'Inter', sans-serif",
+          marginTop: '8px' 
         }}
       >
         v{version}
       </Typography>
 
-      {/* Logo */}
+      {/* Logo with overflow */}
       <Box
         component="img"
-        src={isDarkMode ? '/images/HEXTRA-3-logo-Blk.svg' : '/images/HEXTRA-3-logo-Wht.svg'}
+        src={isDarkMode ? '/images/HEXTRA-3-logo-Wht.svg' : '/images/HEXTRA-3-logo-Blk.svg'}
         alt="HEXTRA-3"
         sx={{
           height: '90px',
           width: 'auto',
           objectFit: 'contain',
           display: 'block',
-          paddingTop: '9px',
+          marginTop: '-8px', 
+          position: 'relative', 
           zIndex: 1200
         }}
       />
-
-      {/* Theme toggle */}
+      
       <IconButton
         onClick={onThemeToggle}
         sx={{
-          color: 'var(--text-primary)',
+          color: isDarkMode ? '#000000' : '#ffffff',
+          padding: '8px',
+          marginTop: '8px', 
           '&:hover': {
-            backgroundColor: 'var(--button-hover)'
+            backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)'
           }
         }}
       >
-        <ThemeToggleIcon isDarkMode={isDarkMode} />
+        {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
       </IconButton>
     </Box>
   );
