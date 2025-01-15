@@ -10,7 +10,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ImageIcon from '@mui/icons-material/Image';
 import LinkIcon from '@mui/icons-material/Link';
 
-const DEFAULT_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0804/1136/1573/files/printify-t-shirt-white-xs-hextra-master-white-t-shirt-49101104120101.png?v=1736860133';
+const DEFAULT_IMAGE_URL = '/images/default-tshirt.svg';
 const DEFAULT_COLOR = '#FFA500';
 const VERSION = '1.1.2'; // Updated version
 
