@@ -626,42 +626,6 @@ function App() {
               mb: 2
             }} />
 
-            {/* Color Mode Toggle */}
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center',
-              gap: 1, 
-              mb: 2
-            }}>
-              {Object.entries(LUMINANCE_METHODS).map(([key, method]) => (
-                <Button
-                  key={key}
-                  variant={luminanceMethod === key ? "contained" : "outlined"}
-                  size="small"
-                  onClick={() => {
-                    setLuminanceMethod(key);
-                    if (processedImage) {
-                      colorize();
-                    }
-                  }}
-                  title={method.tooltip}
-                  sx={{
-                    bgcolor: luminanceMethod === key ? 'var(--button-bg)' : 'transparent',
-                    color: luminanceMethod === key ? 'var(--button-text)' : 'var(--text-primary)',
-                    borderColor: 'var(--border-color)',
-                    '&:hover': {
-                      bgcolor: luminanceMethod === key ? 'var(--button-hover)' : 'var(--button-hover-light)'
-                    },
-                    fontFamily: "'Inter', sans-serif",
-                    textTransform: 'none',
-                    minWidth: '80px'
-                  }}
-                >
-                  {method.label}
-                </Button>
-              ))}
-            </Box>
-
             {/* Result section */}
             <Box sx={{ position: 'relative' }}>
               {isProcessing && (
@@ -697,21 +661,97 @@ function App() {
                   width: '100%',
                   height: 'auto',
                   display: 'flex',
-                  justifyContent: 'center',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  marginTop: 2
+                  gap: 2
                 }}
               >
                 {processedImageUrl ? (
-                  <img
-                    src={processedImageUrl}
-                    alt="Processed T-shirt"
-                    style={{
-                      maxWidth: '100%',
-                      height: 'auto',
-                      borderRadius: '4px'
-                    }}
-                  />
+                  <>
+                    <img
+                      src={processedImageUrl}
+                      alt="Processed T-shirt"
+                      style={{
+                        maxWidth: '100%',
+                        height: 'auto',
+                        borderRadius: '4px'
+                      }}
+                    />
+                    
+                    {/* Separator between image and color mode toggle */}
+                    <Box sx={{ 
+                      width: '100%', 
+                      height: '1px', 
+                      bgcolor: 'var(--text-primary)',
+                      opacity: 0.3,
+                      mt: 2,
+                      mb: 2
+                    }} />
+
+                    {/* Color Mode Toggle and Download button container */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 2,
+                      width: '100%',
+                      position: 'relative'
+                    }}>
+                      {/* Color Mode Toggle */}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center',
+                        gap: 1
+                      }}>
+                        {Object.entries(LUMINANCE_METHODS).map(([key, method]) => (
+                          <Button
+                            key={key}
+                            variant={luminanceMethod === key ? "contained" : "outlined"}
+                            size="small"
+                            onClick={() => {
+                              setLuminanceMethod(key);
+                              if (processedImage) {
+                                colorize();
+                              }
+                            }}
+                            title={method.tooltip}
+                            sx={{
+                              bgcolor: luminanceMethod === key ? 'var(--button-bg)' : 'transparent',
+                              color: luminanceMethod === key ? 'var(--button-text)' : 'var(--text-primary)',
+                              borderColor: 'var(--border-color)',
+                              '&:hover': {
+                                bgcolor: luminanceMethod === key ? 'var(--button-hover)' : 'var(--button-hover-light)'
+                              },
+                              fontFamily: "'Inter', sans-serif",
+                              textTransform: 'none',
+                              minWidth: '80px'
+                            }}
+                          >
+                            {method.label}
+                          </Button>
+                        ))}
+                      </Box>
+
+                      {/* Download button */}
+                      <IconButton
+                        onClick={handleQuickDownload}
+                        disabled={!canDownload}
+                        sx={{
+                          position: 'absolute',
+                          right: 0,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          bgcolor: canDownload ? 'var(--button-bg)' : 'rgba(0, 0, 0, 0.12)',
+                          color: canDownload ? 'var(--button-text)' : 'rgba(0, 0, 0, 0.26)',
+                          '&:hover': {
+                            bgcolor: canDownload ? 'var(--button-hover)' : 'rgba(0, 0, 0, 0.12)'
+                          }
+                        }}
+                      >
+                        <FileDownloadIcon />
+                      </IconButton>
+                    </Box>
+                  </>
                 ) : (
                   <Typography>Loading image...</Typography>
                 )}
