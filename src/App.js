@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, TextField, Button, Typography, IconButton } from '@mui/material';
+import { Box, TextField, Button, Typography, IconButton } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import Jimp from 'jimp';
 import Banner from './components/Banner';
-import ThemeToggleIcon from './components/ThemeToggleIcon';
-import themeManager from './theme.js';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
@@ -31,7 +29,9 @@ function App() {
   const [imageFile, setImageFile] = useState(null);
   const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGE_URL);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [originalImage, setOriginalImage] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);
+  const [processedImageUrl, setProcessedImageUrl] = useState('');
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.getAttribute('data-theme') === 'dark');
@@ -42,6 +42,17 @@ function App() {
   useEffect(() => {
     loadImage(DEFAULT_IMAGE_URL);
   }, []);
+
+  useEffect(() => {
+    if (processedImage) {
+      processedImage.getBase64Async(Jimp.MIME_PNG)
+        .then(base64 => {
+          setProcessedImageUrl(base64);
+          setCanDownload(true);
+        })
+        .catch(err => console.error('Error converting to base64:', err));
+    }
+  }, [processedImage]);
 
   const handleColorChange = (color) => {
     setSelectedColor(color.hex);
@@ -140,17 +151,14 @@ function App() {
 
   const loadImage = async (url) => {
     try {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = url;
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
+      const img = await Jimp.read(url);
+      setOriginalImage(img);
+      setProcessedImage(img.clone());  // Set the processed image initially
       setImageUrl(url);
       setImageLoaded(true);
       setError('');
     } catch (err) {
+      console.error('Error loading image:', err);
       setError('Failed to load image. Please try a different URL.');
       setImageUrl(DEFAULT_IMAGE_URL);
     }
@@ -202,25 +210,58 @@ function App() {
     }
   };
 
-  const handleQuickDownload = () => {
-    const filename = generateFilename();
-    const byteString = atob(processedImage.split(',')[1]);
-    const mimeString = processedImage.split(',')[0].split(':')[1].split(';')[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
+  const colorize = async () => {
+    if (!originalImage) return;
+    
+    setIsProcessing(true);
+    try {
+      const colorized = originalImage.clone();
+      
+      // Process each pixel to maintain luminance
+      colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
+        const red = this.bitmap.data[idx + 0];
+        const green = this.bitmap.data[idx + 1];
+        const blue = this.bitmap.data[idx + 2];
+        const alpha = this.bitmap.data[idx + 3];
+        
+        // Calculate luminance
+        const luminance = (red + green + blue) / (3 * 255);
+        
+        if (alpha > 0) {
+          // Apply color while preserving luminance
+          this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
+          this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
+          this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
+          this.bitmap.data[idx + 3] = alpha;
+        }
+      });
+      
+      setProcessedImage(colorized);
+      setError('');
+    } catch (err) {
+      console.error('Error colorizing image:', err);
+      setError('Failed to colorize image. Please try again.');
+    } finally {
+      setIsProcessing(false);
     }
-    const blob = new Blob([ab], { type: mimeString });
-    const url = window.URL.createObjectURL(blob);
+  };
+
+  const handleQuickDownload = async () => {
+    if (!processedImage) return;
     
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename + '.png';
-    link.style.display = 'none';
-    link.click();
-    
-    window.URL.revokeObjectURL(url);
+    try {
+      const base64 = await processedImage.getBase64Async(Jimp.MIME_PNG);
+      const filename = 'hextra-tshirt.png';
+      const link = document.createElement('a');
+      link.href = base64;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Error downloading image:', err);
+      setError('Failed to download image. Please try again.');
+    }
   };
 
   const handleSaveAs = () => {
@@ -264,13 +305,13 @@ function App() {
   };
 
   useEffect(() => {
-    themeManager.init();
-    setIsDarkMode(themeManager.getCurrentTheme() === 'dark');
+    setIsDarkMode(document.documentElement.getAttribute('data-theme') === 'dark');
   }, []);
 
   // Theme toggle handler
   const toggleTheme = () => {
-    const newTheme = themeManager.toggle();
+    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
     setIsDarkMode(newTheme === 'dark');
   };
 
@@ -436,7 +477,7 @@ function App() {
                 }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
-                    applyColor();
+                    colorize();
                   }
                 }}
               />
@@ -444,7 +485,7 @@ function App() {
               {/* Apply Button */}
               <Button
                 variant="contained"
-                onClick={applyColor}
+                onClick={colorize}
                 sx={{ 
                   bgcolor: 'var(--button-bg)',
                   color: 'var(--button-text)',
@@ -466,6 +507,20 @@ function App() {
               bgcolor: 'var(--border-color)'
             }} />
           </Box>
+
+          {/* Error message */}
+          {error && (
+            <Typography 
+              color="error" 
+              sx={{ 
+                mt: 2,
+                textAlign: 'center',
+                fontFamily: "'Inter', sans-serif"
+              }}
+            >
+              {error}
+            </Typography>
+          )}
 
           {/* Image input section */}
           <Box sx={{ 
@@ -564,38 +619,60 @@ function App() {
           </IconButton>
 
           {/* Result section */}
-          {processedImage && (
-            <Box sx={{ mt: 2, position: 'relative' }}>
-              {isProcessing && (
-                <Box
+          <Box sx={{ mt: 2, position: 'relative' }}>
+            {isProcessing && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '10px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  bgcolor: 'rgba(0, 0, 0, 0.8)',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  zIndex: 1000,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <Typography
                   sx={{
-                    position: 'absolute',
-                    top: '10px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    bgcolor: 'rgba(0, 0, 0, 0.8)',
-                    color: 'white',
-                    padding: '8px 16px',
-                    borderRadius: '4px',
-                    zIndex: 1000,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
+                    fontSize: '0.875rem',
+                    fontFamily: "'Inter', sans-serif"
                   }}
                 >
-                  <Typography
-                    sx={{
-                      fontSize: '0.875rem',
-                      fontFamily: "'Inter', sans-serif"
-                    }}
-                  >
-                    Processing image...
-                  </Typography>
-                </Box>
+                  Processing image...
+                </Typography>
+              </Box>
+            )}
+            <Box
+              sx={{
+                width: '100%',
+                height: 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginTop: 2
+              }}
+            >
+              {processedImageUrl ? (
+                <img
+                  src={processedImageUrl}
+                  alt="Processed T-shirt"
+                  style={{
+                    maxWidth: '100%',
+                    height: 'auto',
+                    borderRadius: '4px'
+                  }}
+                />
+              ) : (
+                <Typography>Loading image...</Typography>
               )}
             </Box>
-          )}
+          </Box>
         </Box>
       </Box>
     </Box>
