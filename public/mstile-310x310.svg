@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="310" height="310" xmlns="http://www.w3.org/2000/svg">
+    <rect width="310" height="310" fill="#D50032"/>
+    <g transform="translate(55,45)">
+        <path d="M0 140 l100 -50 l100 50 l-100 50 z" fill="#ffffff"/>
+        <path d="M0 140 l0 -100 l100 -50 l0 100 z" fill="#ffffff" fill-opacity="0.8"/>
+        <path d="M200 140 l0 -100 l-100 -50 l0 100 z" fill="#ffffff" fill-opacity="0.6"/>
+    </g>
+    <text x="155" y="220" font-family="League Spartan" font-size="32" text-anchor="middle" fill="#ffffff">HEXTRA-3</text>
+    <text x="155" y="260" font-family="Inter" font-size="16" text-anchor="middle" fill="#ffffff">Colorize | Visualize | Mesmerize</text>
+</svg>

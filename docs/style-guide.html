@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXTRA-3 Style Guide</title>
+    <link rel="stylesheet" href="style-guide.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@500;600&display=swap">
+</head>
+<body>
+    <header>
+        <h1>HEXTRA-3 Style Guide</h1>
+        <p class="tagline">COLORIZE | VISUALIZE | MESMERIZE</p>
+    </header>
+
+    <main>
+        <section id="colors">
+            <h2>Brand Colors</h2>
+            <div class="color-grid">
+                <div class="color-swatch" style="background-color: #D50032;">
+                    <strong>Primary Red</strong>
+                    #D50032
+                </div>
+                <div class="color-swatch" style="background-color: #00805E;">
+                    <strong>Primary Green</strong>
+                    #00805E
+                </div>
+                <div class="color-swatch" style="background-color: #224D8F;">
+                    <strong>Primary Blue</strong>
+                    #224D8F
+                </div>
+            </div>
+            <div class="color-grid">
+                <div class="color-swatch" style="background-color: #FED141; color: #333;">
+                    <strong>Yellow</strong>
+                    #FED141
+                </div>
+                <div class="color-swatch" style="background-color: #FF4400;">
+                    <strong>Orange</strong>
+                    #FF4400
+                </div>
+                <div class="color-swatch" style="background-color: #CABFAD; color: #333;">
+                    <strong>Neutral</strong>
+                    #CABFAD
+                </div>
+            </div>
+        </section>
+
+        <section id="typography">
+            <h2>Typography</h2>
+            <div class="type-examples">
+                <h1 style="font-family: 'League Spartan';">League Spartan Display (500)</h1>
+                <h2 style="font-family: 'League Spartan';">League Spartan Display (600)</h2>
+                <p style="font-family: 'Inter'; font-weight: 400;">Inter Body Text (400)</p>
+                <p style="font-family: 'Inter'; font-weight: 500;">Inter UI Text (500)</p>
+                <p style="font-family: 'Inter'; font-weight: 600;">Inter Button Text (600)</p>
+            </div>
+        </section>
+
+        <section id="buttons">
+            <h2>Buttons</h2>
+            <div class="button-grid">
+                <button class="button button-primary">Primary Button</button>
+                <button class="button button-secondary">Secondary Button</button>
+            </div>
+        </section>
+
+        <section id="inputs">
+            <h2>Form Elements</h2>
+            <div class="input-grid">
+                <input type="text" class="input" placeholder="Text Input">
+                <input type="text" class="input" placeholder="Focused Input" autofocus>
+            </div>
+        </section>
+
+        <section id="logos">
+            <h2>Logo Usage</h2>
+            
+            <h3>Primary Logo Variations</h3>
+            <div class="logo-grid">
+                <div class="logo-item">
+                    <img src="../public/HEXTRA-3-logo-Blk.svg" alt="HEXTRA-3 Logo Black">
+                    <div class="logo-title">Primary Logo - Black</div>
+                    <div class="logo-size">Minimum width: 180px</div>
+                </div>
+                <div class="logo-item dark">
+                    <img src="../public/HEXTRA-3-logo-Wht.svg" alt="HEXTRA-3 Logo White">
+                    <div class="logo-title" style="color: #999;">Primary Logo - White</div>
+                    <div class="logo-size" style="color: #666;">Minimum width: 180px</div>
+                </div>
+            </div>
+
+            <h3>Icon Variations</h3>
+            <div class="logo-grid">
+                <div class="logo-item">
+                    <img src="../public/favicon.svg" alt="Favicon">
+                    <div class="logo-title">Favicon</div>
+                    <div class="logo-size">32x32 px</div>
+                </div>
+                <div class="logo-item">
+                    <img src="../public/apple-touch-icon.svg" alt="Apple Touch Icon">
+                    <div class="logo-title">Apple Touch Icon</div>
+                    <div class="logo-size">180x180 px</div>
+                </div>
+            </div>
+
+            <h3>MS Tiles</h3>
+            <div class="logo-grid">
+                <div class="logo-item">
+                    <img src="../public/mstile-70x70.svg" alt="MS Tile Small">
+                    <div class="logo-title">MS Tile Small</div>
+                    <div class="logo-size">70x70 px</div>
+                </div>
+                <div class="logo-item">
+                    <img src="../public/mstile-150x150.svg" alt="MS Tile Medium">
+                    <div class="logo-title">MS Tile Medium</div>
+                    <div class="logo-size">150x150 px</div>
+                </div>
+                <div class="logo-item">
+                    <img src="../public/mstile-310x310.svg" alt="MS Tile Large">
+                    <div class="logo-title">MS Tile Large</div>
+                    <div class="logo-size">310x310 px</div>
+                </div>
+                <div class="logo-item">
+                    <img src="../public/mstile-310x150.svg" alt="MS Tile Wide">
+                    <div class="logo-title">MS Tile Wide</div>
+                    <div class="logo-size">310x150 px</div>
+                </div>
+            </div>
+
+            <h3>Logo Spacing Guidelines</h3>
+            <div class="spacing-demo">
+                <img src="../public/HEXTRA-3-logo-Blk.svg" alt="Logo Spacing Demo">
+                <div class="spacing-guide" style="top: 0; right: 0; bottom: 0; left: 0;"></div>
+            </div>
+            <p class="spacing-note">Minimum clear space: Height of 'X' in HEXTRA</p>
+        </section>
+
+        <section id="dark-mode">
+            <h2>Dark Mode</h2>
+            <div class="dark-mode" style="padding: 20px; border-radius: 8px;">
+                <h3>Dark Mode Example</h3>
+                <p>Dark mode text and UI elements</p>
+                <button class="button button-primary">Dark Mode Button</button>
+            </div>
+        </section>
+
+        <section id="animation">
+            <h2>Animation</h2>
+            <div class="animation-examples">
+                <button class="button button-primary animate-pulse">Animated Button</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Add hover effects
+        document.querySelectorAll('.button').forEach(button => {
+            button.addEventListener('mouseover', () => {
+                button.style.transform = 'translateY(-2px)';
+            });
+            button.addEventListener('mouseout', () => {
+                button.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

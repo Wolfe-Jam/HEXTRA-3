@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(4,4) scale(0.24)">
+        <path d="M0 70 l50 -25 l50 25 l-50 25 z" fill="#D50032"/>
+        <path d="M0 70 l0 -50 l50 -25 l0 50 z" fill="#00805E"/>
+        <path d="M100 70 l0 -50 l-50 -25 l0 50 z" fill="#224D8F"/>
+    </g>
+</svg>

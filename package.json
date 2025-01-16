@@ -1,6 +1,23 @@
 {
-  "name": "hextra-3",
-  "version": "1.2.1",
+  "name": "hextra",
+  "version": "1.2.2",
+  "description": "Professional-grade color manipulation suite with advanced luminance preservation",
+  "keywords": [
+    "image-processing",
+    "color-manipulation",
+    "hex-colors",
+    "rgb-colors",
+    "image-editor",
+    "react",
+    "material-ui",
+    "jimp",
+    "design-tools",
+    "color-wheel"
+  ],
+  "author": {
+    "name": "James Wolfe",
+    "url": "https://github.com/wolfejam"
+  },
   "private": true,
   "vercel": {
     "version": 2,

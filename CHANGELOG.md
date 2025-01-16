@@ -1,0 +1,76 @@
+# Changelog
+All notable changes to HEXTRA-3 will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.2.1] - 2025-01-15
+### Added
+- Comprehensive style guide with visual reference
+- Mobile-first responsive design
+- Universal accessibility features
+- SEO optimization with robots.txt and sitemap.xml
+- Brand messaging with Action | Result | Reaction framework
+
+### Improved
+- Professional positioning and messaging
+- Documentation structure and clarity
+- Mobile testing guidelines
+- Icon system and favicon setup
+
+### Fixed
+- Typography consistency
+- Color system documentation
+- Mobile viewport settings
+- Touch target sizes
+
+## [1.2.0] - 2025-01-14
+### Added
+- Natural/Vibrant/Balanced color modes
+- Advanced luminance preservation
+- Real-time preview system
+
+### Improved
+- UI layout with separators
+- Color picker interface
+- Performance optimizations
+
+### Fixed
+- Color application accuracy
+- Shadow preservation
+- Touch interaction issues
+
+## [1.1.2] - 2025-01-13
+### Improved
+- Performance optimizations
+- Memory usage
+- Loading times
+
+### Fixed
+- Color picker accuracy
+- Mobile touch response
+- Interface scaling
+
+## [1.1.1] - 2025-01-12
+### Fixed
+- Critical bug fixes
+- UI responsiveness
+- Color application issues
+
+## [1.1.0] - 2025-01-11
+### Added
+- Enhanced color manipulation
+- Advanced preview features
+- Professional export options
+
+### Improved
+- User interface
+- Performance
+- Documentation
+
+## [1.0.0] - 2025-01-10
+### Added
+- Initial release
+- Core color manipulation
+- Basic interface
+- Essential features

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="180" height="180" xmlns="http://www.w3.org/2000/svg">
+    <rect width="180" height="180" fill="#ffffff"/>
+    <g transform="translate(40,30)">
+        <path d="M0 70 l50 -25 l50 25 l-50 25 z" fill="#D50032"/>
+        <path d="M0 70 l0 -50 l50 -25 l0 50 z" fill="#00805E"/>
+        <path d="M100 70 l0 -50 l-50 -25 l0 50 z" fill="#224D8F"/>
+    </g>
+    <text x="90" y="130" font-family="League Spartan" font-size="24" text-anchor="middle" fill="#000000">HEXTRA-3</text>
+</svg>

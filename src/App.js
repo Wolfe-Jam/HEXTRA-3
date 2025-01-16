@@ -16,7 +16,7 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
-const VERSION = '1.2.1'; // Updated version
+const VERSION = '1.2.2'; // Updated version for UI improvements
 
 function hexToRgb(hex) {
   // Remove # if present
@@ -472,48 +472,72 @@ function App() {
         <Box sx={{ 
           display: 'flex',
           flexDirection: 'column',
-          gap: 2,
+          gap: 3,
           maxWidth: '600px',
           margin: '0 auto'
         }}>
-          {/* Color wheel section */}
-          <Box sx={{ 
-            display: 'flex',
-            justifyContent: 'center',
-            mb: 1,
-            position: 'relative',
-            width: '280px',
-            height: '280px',
-            margin: '0 auto'
-          }}>
-            <Wheel
-              color={selectedColor}
-              onChange={(color) => handleColorChange(color)}
-              width={280}
-              height={280}
-              style={{
-                margin: '0 auto'
-              }}
-            />
-          </Box>
+          {/* Color Section */}
+          <Box sx={{ mb: 3 }}>
+            {/* Color Wheel */}
+            <Box sx={{ 
+              display: 'flex',
+              justifyContent: 'center',
+              mb: 3
+            }}>
+              <Wheel
+                color={selectedColor}
+                onChange={handleColorChange}
+                width={240}
+                height={240}
+              />
+            </Box>
 
-          {/* Color input section with separator */}
-          <Box sx={{ 
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-            mb: 3,
-            mt: 4
-          }}>
+            {/* Value Display */}
+            <Box sx={{ width: '100%', mb: 3 }}>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '20px',
+                  background: 'linear-gradient(to right, #000000 0%, #FFFFFF 100%)',
+                  borderRadius: '6px',
+                  position: 'relative',
+                  pointerEvents: 'none',
+                  mb: 1
+                }}
+              >
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: `${(rgbColor.r * 0.299 + rgbColor.g * 0.587 + rgbColor.b * 0.114) / 2.55}%`,
+                    top: -2,
+                    bottom: -2,
+                    width: '4px',
+                    backgroundColor: '#FF4400',
+                    opacity: 1,
+                    pointerEvents: 'none',
+                    borderRadius: '2px'
+                  }}
+                />
+              </Box>
+              <Typography 
+                sx={{ 
+                  fontFamily: "'Inter', sans-serif",
+                  color: 'var(--text-primary)',
+                  fontSize: '0.875rem',
+                  pl: '40px'  // Align with RGB text
+                }}
+              >
+                Gray Value: {Math.round((rgbColor.r * 0.299 + rgbColor.g * 0.587 + rgbColor.b * 0.114))}
+              </Typography>
+            </Box>
+
             {/* Color controls */}
             <Box sx={{ 
               display: 'flex',
-              gap: 2,
+              gap: 3,
               alignItems: 'center',
-              justifyContent: 'center',
               width: '100%',
-              mb: 3
+              pl: '40px'  // Consistent left padding
             }}>
               {/* RGB Display */}
               <Typography sx={{ 
@@ -524,7 +548,13 @@ function App() {
                 width: '140px',  
                 textAlign: 'right'
               }}>
-                RGB: {rgbColor ? `${rgbColor.r.toString().padStart(3, ' ')}, ${rgbColor.g.toString().padStart(3, ' ')}, ${rgbColor.b.toString().padStart(3, ' ')}` : '  0,   0,   0'}
+                <Box component="span" sx={{ display: 'inline-block', width: '40px', textAlign: 'right' }}>
+                  RGB:
+                </Box>
+                {' '}
+                <Box component="span" sx={{ display: 'inline-block', width: '85px', textAlign: 'left', fontFamily: 'monospace' }}>
+                  {rgbColor ? `${rgbColor.r},${rgbColor.g},${rgbColor.b}` : '0,0,0'}
+                </Box>
               </Typography>
 
               {/* Color Swatch */}
@@ -539,6 +569,7 @@ function App() {
                 }}
               />
 
+              {/* HEX Input */}
               <Box sx={{ position: 'relative' }}>
                 <TextField
                   label="HEX Color"
@@ -671,271 +702,254 @@ function App() {
                 Apply Color
               </Button>
             </Box>
+          </Box>
 
-            {/* Separator after Apply button */}
-            <Box sx={{ 
-              width: '100%', 
-              height: '1px', 
-              bgcolor: 'var(--text-primary)',
-              opacity: 0.3,
-              mb: 2
-            }} />
+          {/* Separator between Color and Image sections */}
+          <Box sx={{ 
+            width: '100%', 
+            height: '1px', 
+            bgcolor: 'var(--text-primary)',
+            opacity: 0.3,
+            mb: 3
+          }} />
 
-            {/* Error message */}
-            {error && (
-              <Typography 
-                color="error" 
-                sx={{ 
-                  mb: 2,
-                  textAlign: 'center',
-                  fontFamily: "'Inter', sans-serif"
-                }}
-              >
-                {error}
-              </Typography>
-            )}
-
-            {/* Image input section */}
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 1,
-              alignItems: 'center',
-              mb: 2,
-              '& .MuiButton-root': {
-                minWidth: '120px'  // Align button widths
-              }
-            }}>
-              <Button
-                component="label"
-                variant="contained"
+          {/* Image Section */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 3,
+            alignItems: 'center',
+            mb: 3
+          }}>
+            <Button
+              component="label"
+              variant="contained"
+              disabled={isProcessing}
+              sx={{ 
+                bgcolor: 'var(--button-bg)',
+                color: 'var(--button-text)',
+                '&:hover': {
+                  bgcolor: 'var(--button-hover)'
+                },
+                boxShadow: 'none',
+                fontFamily: "'Inter', sans-serif"
+              }}
+            >
+              Load Image
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleImageUpload}
                 disabled={isProcessing}
-                sx={{ 
-                  bgcolor: 'var(--button-bg)',
-                  color: 'var(--button-text)',
-                  '&:hover': {
-                    bgcolor: 'var(--button-hover)'
-                  },
-                  boxShadow: 'none',
-                  fontFamily: "'Inter', sans-serif"
-                }}
-              >
-                Load Image
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={isProcessing}
-                />
-              </Button>
-
-              <Typography sx={{ mx: 1, fontFamily: "'Inter', sans-serif" }}>OR</Typography>
-              
-              <TextField
-                placeholder="Enter image URL"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                onKeyPress={handleUrlKeyPress}
-                sx={{
-                  flexGrow: 1,
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: 'var(--border-color)',
-                      borderWidth: '1px'
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'var(--border-color)',
-                      borderWidth: '2px'
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'var(--border-color)',
-                      borderWidth: '2px'
-                    }
-                  },
-                  '& .MuiInputBase-input': {
-                    color: 'var(--text-primary)',
-                    fontFamily: "'Inter', sans-serif"
-                  }
-                }}
               />
+            </Button>
 
-              <Button
-                onClick={handleLoadUrl}
-                variant="contained"
-                sx={{ 
-                  bgcolor: 'var(--button-bg)',
-                  color: 'var(--button-text)',
-                  '&:hover': {
-                    bgcolor: 'var(--button-hover)'
+            <Typography sx={{ mx: 3, fontFamily: "'Inter', sans-serif" }}>OR</Typography>
+            
+            <TextField
+              placeholder="Enter image URL"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyPress={handleUrlKeyPress}
+              sx={{
+                flexGrow: 1,
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'var(--border-color)',
+                    borderWidth: '1px'
                   },
-                  boxShadow: 'none',
+                  '&:hover fieldset': {
+                    borderColor: 'var(--border-color)',
+                    borderWidth: '2px'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'var(--border-color)',
+                    borderWidth: '2px'
+                  }
+                },
+                '& .MuiInputBase-input': {
+                  color: 'var(--text-primary)',
                   fontFamily: "'Inter', sans-serif"
-                }}
-              >
-                Load URL
-              </Button>
-            </Box>
+                }
+              }}
+            />
 
-            {/* Separator before image */}
-            <Box sx={{ 
-              width: '100%', 
-              height: '1px', 
-              bgcolor: 'var(--text-primary)',
-              opacity: 0.3,
-              mb: 2
-            }} />
+            <Button
+              onClick={handleLoadUrl}
+              variant="contained"
+              sx={{ 
+                bgcolor: 'var(--button-bg)',
+                color: 'var(--button-text)',
+                '&:hover': {
+                  bgcolor: 'var(--button-hover)'
+                },
+                boxShadow: 'none',
+                fontFamily: "'Inter', sans-serif"
+              }}
+            >
+              Load URL
+            </Button>
+          </Box>
 
-            {/* Result section */}
-            <Box sx={{ position: 'relative' }}>
-              {isProcessing && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: '10px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    bgcolor: 'rgba(0, 0, 0, 0.8)',
-                    color: 'white',
-                    padding: '8px 16px',
-                    borderRadius: '4px',
-                    zIndex: 1000,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: '0.875rem',
-                      fontFamily: "'Inter', sans-serif"
-                    }}
-                  >
-                    Processing image...
-                  </Typography>
-                </Box>
-              )}
+          {/* Separator before image */}
+          <Box sx={{ 
+            width: '100%', 
+            height: '1px', 
+            bgcolor: 'var(--text-primary)',
+            opacity: 0.3,
+            mb: 3
+          }} />
+
+          {/* Result section */}
+          <Box sx={{ position: 'relative' }}>
+            {isProcessing && (
               <Box
                 sx={{
-                  width: '100%',
-                  height: 'auto',
+                  position: 'absolute',
+                  top: '10px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  bgcolor: 'rgba(0, 0, 0, 0.8)',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  zIndex: 1000,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 2
+                  gap: 3
                 }}
               >
-                {processedImageUrl ? (
-                  <>
-                    <img
-                      src={processedImageUrl}
-                      alt="Processed T-shirt"
-                      style={{
-                        maxWidth: '100%',
-                        height: 'auto',
-                        borderRadius: '4px'
-                      }}
-                    />
-                    
-                    {/* Separator between image and color mode toggle */}
-                    <Box sx={{ 
-                      width: '100%', 
-                      height: '1px', 
-                      bgcolor: 'var(--text-primary)',
-                      opacity: 0.3,
-                      mt: 2,
-                      mb: 2
-                    }} />
+                <Typography
+                  sx={{
+                    fontSize: '0.875rem',
+                    fontFamily: "'Inter', sans-serif"
+                  }}
+                >
+                  Processing image...
+                </Typography>
+              </Box>
+            )}
+            <Box
+              sx={{
+                width: '100%',
+                height: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3
+              }}
+            >
+              {processedImageUrl ? (
+                <>
+                  <img
+                    src={processedImageUrl}
+                    alt="Processed T-shirt"
+                    style={{
+                      maxWidth: '100%',
+                      height: 'auto',
+                      borderRadius: '4px'
+                    }}
+                  />
+                  
+                  {/* Separator between image and color mode toggle */}
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: '1px', 
+                    bgcolor: 'var(--text-primary)',
+                    opacity: 0.3,
+                    mt: 3,
+                    mb: 3
+                  }} />
 
-                    {/* Color Mode Toggle and Download button container */}
+                  {/* Color Mode Toggle and Download button container */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 3,
+                    width: '100%',
+                    position: 'relative'
+                  }}>
+                    {/* Color Mode Toggle */}
                     <Box sx={{ 
                       display: 'flex', 
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 2,
-                      width: '100%',
-                      position: 'relative'
+                      justifyContent: 'center',
+                      gap: 3
                     }}>
-                      {/* Color Mode Toggle */}
-                      <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'center',
-                        gap: 1
-                      }}>
-                        {Object.entries(LUMINANCE_METHODS).map(([key, method]) => (
-                          <Tooltip
-                            title={method.tooltip}
-                            arrow
-                            enterDelay={200}
-                            leaveDelay={0}
-                            PopperProps={{
-                              sx: {
-                                '& .MuiTooltip-tooltip': {
-                                  backgroundColor: 'var(--bg-secondary)',
-                                  color: 'var(--text-primary)',
-                                  fontSize: '0.75rem',
-                                  padding: '8px 12px',
-                                  borderRadius: '4px',
-                                  maxWidth: '200px'
-                                },
-                                '& .MuiTooltip-arrow': {
-                                  color: 'var(--bg-secondary)'
-                                }
+                      {Object.entries(LUMINANCE_METHODS).map(([key, method]) => (
+                        <Tooltip
+                          title={method.tooltip}
+                          arrow
+                          enterDelay={200}
+                          leaveDelay={0}
+                          PopperProps={{
+                            sx: {
+                              '& .MuiTooltip-tooltip': {
+                                backgroundColor: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.75rem',
+                                padding: '8px 12px',
+                                borderRadius: '4px',
+                                maxWidth: '200px'
+                              },
+                              '& .MuiTooltip-arrow': {
+                                color: 'var(--bg-secondary)'
+                              }
+                            }
+                          }}
+                        >
+                          <Button
+                            key={key}
+                            variant={luminanceMethod === key ? "contained" : "outlined"}
+                            size="small"
+                            onClick={() => {
+                              setLuminanceMethod(key);
+                              if (processedImage) {
+                                colorize();
                               }
                             }}
+                            sx={{
+                              bgcolor: luminanceMethod === key ? 'var(--button-bg)' : 'transparent',
+                              color: luminanceMethod === key ? 'var(--button-text)' : 'var(--text-primary)',
+                              borderColor: 'var(--border-color)',
+                              '&:hover': {
+                                bgcolor: luminanceMethod === key ? 'var(--button-hover)' : 'var(--button-hover-light)'
+                              },
+                              fontFamily: "'Inter', sans-serif",
+                              textTransform: 'none',
+                              minWidth: '80px'
+                            }}
                           >
-                            <Button
-                              key={key}
-                              variant={luminanceMethod === key ? "contained" : "outlined"}
-                              size="small"
-                              onClick={() => {
-                                setLuminanceMethod(key);
-                                if (processedImage) {
-                                  colorize();
-                                }
-                              }}
-                              sx={{
-                                bgcolor: luminanceMethod === key ? 'var(--button-bg)' : 'transparent',
-                                color: luminanceMethod === key ? 'var(--button-text)' : 'var(--text-primary)',
-                                borderColor: 'var(--border-color)',
-                                '&:hover': {
-                                  bgcolor: luminanceMethod === key ? 'var(--button-hover)' : 'var(--button-hover-light)'
-                                },
-                                fontFamily: "'Inter', sans-serif",
-                                textTransform: 'none',
-                                minWidth: '80px'
-                              }}
-                            >
-                              {method.label}
-                            </Button>
-                          </Tooltip>
-                        ))}
-                      </Box>
-
-                      {/* Download button */}
-                      <IconButton
-                        onClick={handleQuickDownload}
-                        disabled={!canDownload}
-                        sx={{
-                          position: 'absolute',
-                          right: 0,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          bgcolor: canDownload ? 'var(--button-bg)' : 'rgba(0, 0, 0, 0.12)',
-                          color: canDownload ? 'var(--button-text)' : 'rgba(0, 0, 0, 0.26)',
-                          '&:hover': {
-                            bgcolor: canDownload ? 'var(--button-hover)' : 'rgba(0, 0, 0, 0.12)'
-                          }
-                        }}
-                      >
-                        <FileDownloadIcon />
-                      </IconButton>
+                            {method.label}
+                          </Button>
+                        </Tooltip>
+                      ))}
                     </Box>
-                  </>
-                ) : (
-                  <Typography>Loading image...</Typography>
-                )}
-              </Box>
+
+                    {/* Download button */}
+                    <IconButton
+                      onClick={handleQuickDownload}
+                      disabled={!canDownload}
+                      sx={{
+                        position: 'absolute',
+                        right: 0,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        bgcolor: canDownload ? 'var(--button-bg)' : 'rgba(0, 0, 0, 0.12)',
+                        color: canDownload ? 'var(--button-text)' : 'rgba(0, 0, 0, 0.26)',
+                        '&:hover': {
+                          bgcolor: canDownload ? 'var(--button-hover)' : 'rgba(0, 0, 0, 0.12)'
+                        }
+                      }}
+                    >
+                      <FileDownloadIcon />
+                    </IconButton>
+                  </Box>
+                </>
+              ) : (
+                <Typography>Loading image...</Typography>
+              )}
             </Box>
           </Box>
         </Box>

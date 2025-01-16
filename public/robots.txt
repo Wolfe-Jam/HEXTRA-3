@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Sitemap: https://hextra-3.vercel.app/sitemap.xml
+
+# Future paths to consider
+Allow: /docs/
+Allow: /tutorials/
+Allow: /help/
+Allow: /generators/
+Allow: /libraries/
+Allow: /about/
+
+# Prevent access to development assets
+Disallow: /src/
+Disallow: /*.js$
+Disallow: /*.json$

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="150" height="150" xmlns="http://www.w3.org/2000/svg">
+    <rect width="150" height="150" fill="#D50032"/>
+    <g transform="translate(25,25)">
+        <path d="M0 70 l50 -25 l50 25 l-50 25 z" fill="#ffffff"/>
+        <path d="M0 70 l0 -50 l50 -25 l0 50 z" fill="#ffffff" fill-opacity="0.8"/>
+        <path d="M100 70 l0 -50 l-50 -25 l0 50 z" fill="#ffffff" fill-opacity="0.6"/>
+    </g>
+    <text x="75" y="120" font-family="Inter" font-size="16" text-anchor="middle" fill="#ffffff">HEXTRA-3</text>
+</svg>
