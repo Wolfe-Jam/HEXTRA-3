@@ -4,6 +4,13 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 
 const Banner = ({ version, isDarkMode, onThemeToggle }) => {
+  const COLORS = {
+    dark: '#141414',    // RGB(20,20,20)
+    light: '#F8F8F8',   // Soft white
+    textDark: '#141414',
+    textLight: '#F8F8F8'
+  };
+
   return (
     <Box
       sx={{
@@ -11,8 +18,8 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
         justifyContent: 'space-between',
         alignItems: 'flex-start', 
         padding: '8px 16px 0', 
-        backgroundColor: isDarkMode ? '#ffffff' : '#000000',
-        borderBottom: `1px solid ${isDarkMode ? '#000000' : '#ffffff'}`,
+        backgroundColor: isDarkMode ? COLORS.light : COLORS.dark,
+        borderBottom: `1px solid ${isDarkMode ? COLORS.dark : COLORS.light}`,
         position: 'fixed',
         top: 0,
         left: 0,
@@ -26,7 +33,7 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
       <Typography
         sx={{
           fontSize: '0.875rem',
-          color: isDarkMode ? '#000000' : '#ffffff',
+          color: isDarkMode ? COLORS.textDark : COLORS.textLight,
           fontFamily: "'Inter', sans-serif",
           marginTop: '8px' 
         }}
@@ -53,11 +60,19 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
       <IconButton
         onClick={onThemeToggle}
         sx={{
-          color: isDarkMode ? '#000000' : '#ffffff',
+          width: '42px',
+          height: '42px',
+          color: isDarkMode ? COLORS.textDark : COLORS.textLight,
           padding: '8px',
-          marginTop: '8px', 
+          marginTop: '8px',
+          border: '1px solid transparent',
+          transition: 'all 0.2s ease-in-out',
           '&:hover': {
-            backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)'
+            backgroundColor: 'transparent',
+            borderColor: '#FED141',
+            color: '#FED141',
+            boxShadow: `0 0 0 3px ${isDarkMode ? 'rgba(254, 209, 65, 0.25)' : 'rgba(254, 209, 65, 0.2)'}`,
+            transform: 'scale(1.05)'
           }
         }}
       >
