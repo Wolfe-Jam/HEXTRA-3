@@ -23,7 +23,7 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
-const VERSION = '1.2.6'; // Starting new features
+const VERSION = '1.2.7'; // Starting new features after THE IMAGE FACTORY
 
 function hexToRgb(hex) {
   // Remove the hash if present
@@ -469,7 +469,7 @@ function App() {
       }}
     >
       <Banner 
-        version="1.2.6"
+        version="1.2.7"
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
