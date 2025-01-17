@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Test Gradient</title>
+</head>
+<body>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Create gradient background
+        const gradient = ctx.createLinearGradient(0, 0, 400, 400);
+        gradient.addColorStop(0, 'white');
+        gradient.addColorStop(1, 'black');
+        
+        // Fill background
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 400, 400);
+
+        // Add test circles
+        ctx.beginPath();
+        ctx.arc(100, 100, 60, 0, Math.PI * 2);
+        ctx.fillStyle = '#808080';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(300, 300, 60, 0, Math.PI * 2);
+        ctx.fillStyle = '#404040';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(300, 100, 40, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(100, 300, 40, 0, Math.PI * 2);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+
+        // Save as PNG
+        const link = document.createElement('a');
+        link.download = 'test-gradient.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    </script>
+</body>
+</html>

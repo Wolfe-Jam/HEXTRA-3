@@ -5,6 +5,8 @@ import Jimp from 'jimp';
 import Banner from './components/Banner';
 import GlowButton from './components/GlowButton';
 import GlowTextButton from './components/GlowTextButton';
+import GlowToggleGroup from './components/GlowToggleGroup';
+import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import './theme.css';
@@ -15,6 +17,7 @@ import TagIcon from '@mui/icons-material/Tag';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
+const TEST_IMAGE_URL = '/images/Test-Gradient-600-400.webp';
 const DEFAULT_COLORS = [
   '#D50032',  // Red
   '#00805E',  // Green
@@ -78,17 +81,19 @@ function rgbToHsv(r, g, b) {
 function App() {
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
-  const [imageFile, setImageFile] = useState(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [workingImage, setWorkingImage] = useState(null);
+  const [workingImageUrl, setWorkingImageUrl] = useState(null);
+  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
+  const [testImage, setTestImage] = useState(null);
+  const [testImageUrl, setTestImageUrl] = useState(null);
+  const [testProcessedUrl, setTestProcessedUrl] = useState(null);
   const [originalImage, setOriginalImage] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);
-  const [processedImageUrl, setProcessedImageUrl] = useState('');
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
   const [hexInput, setHexInput] = useState(DEFAULT_COLOR);
   const [urlInput, setUrlInput] = useState('');
-  const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGE_URL);
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('hextraTheme');
     return savedTheme || 'dark';
@@ -96,29 +101,43 @@ function App() {
   const [isDropdownSelection, setIsDropdownSelection] = useState(false);
   const [lastClickColor, setLastClickColor] = useState(null);
   const [lastClickTime, setLastClickTime] = useState(0);
+  const [enhanceEffect, setEnhanceEffect] = useState(true);  // Default to enhanced
+  const [showTooltips, setShowTooltips] = useState(true);  // Default tooltips on
+  const [useTestImage, setUseTestImage] = useState(false);
+  const [lastWorkingImage, setLastWorkingImage] = useState(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   // Image processing methods
   const LUMINANCE_METHODS = {
     NATURAL: {
       label: 'Natural',
       tooltip: 'Uses ITU-R BT.709 standard weights for most accurate color perception',
-      calculate: (r, g, b) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+      calculate: (r, g, b) => {
+        const base = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        return enhanceEffect ? Math.pow(base, 0.8) : Math.pow(base, 0.95);  // Subtle enhancement even in normal mode
+      }
     },
     VIBRANT: {
       label: 'Vibrant',
       tooltip: 'Maximizes color saturation for bold, vivid results',
-      calculate: (r, g, b) => (r + g + b) / (3 * 255)
+      calculate: (r, g, b) => {
+        const base = (r + g + b) / (3 * 255);
+        return enhanceEffect ? Math.pow(base, 0.7) : Math.pow(base, 0.9);  // More contrast in normal mode
+      }
     },
     BALANCED: {
       label: 'Balanced',
       tooltip: 'Uses NTSC/PAL standard for a middle-ground approach',
-      calculate: (r, g, b) => (0.299 * r + 0.587 * g + 0.114 * b) / 255
+      calculate: (r, g, b) => {
+        const base = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return enhanceEffect ? Math.pow(base, 0.85) : Math.pow(base, 0.98);  // Slight enhancement in normal mode
+      }
     }
   };
 
   const [luminanceMethod, setLuminanceMethod] = useState('NATURAL');
-  const [matteValue, setMatteValue] = useState(0);
-  const [textureValue, setTextureValue] = useState(0);
+  const [matteValue, setMatteValue] = useState(50);
+  const [textureValue, setTextureValue] = useState(50);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -207,9 +226,18 @@ function App() {
         
         if (alpha > 0) {
           const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-          this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
-          this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
-          this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
+          
+          // Always apply color to working image, keep test image grayscale
+          if (useTestImage) {
+            const value = Math.round(luminance * 255);
+            this.bitmap.data[idx + 0] = value;
+            this.bitmap.data[idx + 1] = value;
+            this.bitmap.data[idx + 2] = value;
+          } else {
+            this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
+            this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
+            this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
+          }
         }
       });
 
@@ -221,7 +249,11 @@ function App() {
       });
       
       setProcessedImage(colorized);
-      setProcessedImageUrl(base64);
+      if (useTestImage) {
+        setTestProcessedUrl(base64);
+      } else {
+        setWorkingProcessedUrl(base64);
+      }
       setCanDownload(true);
       setError('');
     } catch (err) {
@@ -236,33 +268,32 @@ function App() {
   const handleImageUpload = async (file) => {
     if (!file) return;
     
-    // Reset states for new upload
-    setProcessedImage(null);
-    setProcessedImageUrl('');
-    setCanDownload(false);
-    setError('');
-    setImageUrl(''); // Clear any previous URL
-    setIsProcessing(true);
+    const url = URL.createObjectURL(file);
     
     try {
       const image = await Jimp.read(await file.arrayBuffer());
+      
+      if (useTestImage) {
+        setTestImage(file);
+        setTestImageUrl(url);
+        setTestProcessedUrl(url);
+      } else {
+        setWorkingImage(file);
+        setWorkingImageUrl(url);
+        setWorkingProcessedUrl(url);
+      }
+      
       setOriginalImage(image);
       setImageLoaded(true);
+      setError('');
       
-      image.getBase64(Jimp.MIME_PNG, (err, base64) => {
-        if (!err) {
-          setProcessedImage(image);
-          setProcessedImageUrl(base64);
-          setCanDownload(true);
-        }
-        setIsProcessing(false);
-      });
+      if (rgbColor) {
+        setTimeout(() => applyColor(), 0);
+      }
     } catch (err) {
       console.error('Error loading image:', err);
-      setError('Failed to load image');
+      setError('Error loading image');
       setImageLoaded(false);
-      setCanDownload(false);
-      setIsProcessing(false);
     }
   };
 
@@ -272,18 +303,18 @@ function App() {
       return;
     }
     // Reset file input by clearing imageFile state
-    setImageFile(null);
+    setWorkingImage(null);
     const url = urlInput.trim();
-    setImageUrl(url);
+    setWorkingImageUrl(url);
   };
 
   const handleUrlKeyPress = (e) => {
     if (e.key === 'Enter' && urlInput.trim()) {
       e.preventDefault();
       // Reset file input by clearing imageFile state
-      setImageFile(null);
+      setWorkingImage(null);
       const url = urlInput.trim();
-      setImageUrl(url);
+      setWorkingImageUrl(url);
     }
   };
 
@@ -358,7 +389,7 @@ function App() {
         image.getBase64(Jimp.MIME_PNG, (err, base64) => {
           if (!err) {
             setProcessedImage(image);
-            setProcessedImageUrl(base64);
+            setWorkingProcessedUrl(base64);
             setCanDownload(true);
           }
         });
@@ -434,13 +465,13 @@ function App() {
   };
 
   const handleQuickDownload = () => {
-    if (!processedImageUrl || !canDownload) return;
+    if (!processedImage || !canDownload) return;
     
     const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.png`;
     
     const link = document.createElement('a');
-    link.href = processedImageUrl;
+    link.href = useTestImage ? testProcessedUrl : workingProcessedUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
@@ -448,23 +479,23 @@ function App() {
   };
 
   useEffect(() => {
-    if (!imageUrl || imageUrl === DEFAULT_IMAGE_URL) return;
+    if (!workingImageUrl || workingImageUrl === DEFAULT_IMAGE_URL) return;
     
     // Reset states before loading new image
     setProcessedImage(null);
-    setProcessedImageUrl('');
+    setWorkingProcessedUrl('');
     setCanDownload(false);
     setError('');
     setIsProcessing(true);
     
-    Jimp.read(imageUrl)
+    Jimp.read(workingImageUrl)
       .then(image => {
         setOriginalImage(image);
         setImageLoaded(true);
         image.getBase64(Jimp.MIME_PNG, (err, base64) => {
           if (!err) {
             setProcessedImage(image);
-            setProcessedImageUrl(base64);
+            setWorkingProcessedUrl(base64);
             setCanDownload(true);
           }
           setIsProcessing(false);
@@ -477,7 +508,7 @@ function App() {
         setCanDownload(false);
         setIsProcessing(false);
       });
-  }, [imageUrl]);
+  }, [workingImageUrl]);
 
   return (
     <Box
@@ -792,13 +823,18 @@ function App() {
           </Box>
 
           {/* Section F: Main Image (with integrated download button) */}
-          <Box sx={{ 
+          <Box sx={{
             position: 'relative',
-            width: '100%'
+            zIndex: 1,  // Lower z-index for image container
+            mt: 2,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '200px'
           }}>
             <img
-              src={processedImageUrl || DEFAULT_IMAGE_URL}
-              alt="Processed"
+              src={useTestImage ? TEST_IMAGE_URL : workingProcessedUrl}
+              alt={useTestImage ? "Test Gradient" : "Processed Image"}
               style={{
                 maxWidth: '100%',
                 height: 'auto',
@@ -822,60 +858,116 @@ function App() {
           </Box>
 
           {/* Section G: Image Processing */}
-          <Box sx={{ width: '100%', mt: 2 }}>
-            {/* Processing Mode Buttons */}
+          <Box sx={{ 
+            width: '100%', 
+            mt: 2,
+            position: 'relative',
+            zIndex: 2  // Higher z-index for controls
+          }}>
+            {/* Luminance Method Buttons */}
+            <Box sx={{ mb: 3 }}>
+              <GlowToggleGroup
+                options={Object.entries(LUMINANCE_METHODS).map(([key, method]) => ({
+                  value: key,
+                  label: method.label,
+                  tooltip: method.tooltip
+                }))}
+                value={luminanceMethod}
+                onChange={(value) => {
+                  setLuminanceMethod(value);
+                  if (imageLoaded) {
+                    setTimeout(() => applyColor(), 0);
+                  }
+                }}
+                showTooltips={showTooltips}
+              />
+            </Box>
+
+            {/* Enhancement and Tooltip Controls */}
             <Box sx={{ 
               display: 'flex', 
               justifyContent: 'center',
-              gap: 2,
-              mb: 3 
+              alignItems: 'center',
+              gap: 4,
+              mb: 3
             }}>
-              {Object.entries(LUMINANCE_METHODS).map(([key, method]) => (
-                <Tooltip key={key} title={method.tooltip} arrow>
-                  <Button
-                    variant={luminanceMethod === key ? "contained" : "outlined"}
-                    onClick={() => setLuminanceMethod(key)}
-                    sx={{
-                      fontFamily: "'League Spartan', sans-serif",
-                      letterSpacing: '0.1em'
-                    }}
-                  >
-                    {method.label}
-                  </Button>
-                </Tooltip>
-              ))}
+              <GlowSwitch
+                checked={enhanceEffect}
+                onChange={(e) => {
+                  setEnhanceEffect(e.target.checked);
+                  if (imageLoaded) {
+                    applyColor();
+                  }
+                }}
+                label="Enhanced"
+              />
+              <GlowSwitch
+                checked={showTooltips}
+                onChange={(e) => setShowTooltips(e.target.checked)}
+                label="Tooltips"
+              />
+              <GlowSwitch
+                checked={useTestImage}
+                onChange={(e) => setUseTestImage(e.target.checked)}
+                label="Test Image"
+              />
             </Box>
-
             {/* Sliders */}
             <Box sx={{ px: 3 }}>
               <Box sx={{ mb: 2 }}>
                 <Typography gutterBottom sx={{ 
-                  fontFamily: "'League Spartan', sans-serif",
-                  letterSpacing: '0.1em'
+                  fontFamily: "'Inter', sans-serif",
+                  letterSpacing: '0.05em',
+                  color: 'rgba(128, 128, 128, 0.5)'
                 }}>
-                  Matte
+                  Matte Effect
                 </Typography>
                 <Slider
                   value={matteValue}
                   onChange={(e, newValue) => setMatteValue(newValue)}
                   min={0}
                   max={100}
-                  sx={{ color: 'var(--text-secondary)' }}
+                  disabled={true}
+                  sx={{ 
+                    color: 'rgba(128, 128, 128, 0.5)',
+                    '& .MuiSlider-thumb': {
+                      color: 'rgba(128, 128, 128, 0.5)',
+                    },
+                    '& .MuiSlider-track': {
+                      color: 'rgba(128, 128, 128, 0.5)',
+                    },
+                    '& .MuiSlider-rail': {
+                      color: 'rgba(128, 128, 128, 0.5)',
+                    }
+                  }}
                 />
               </Box>
               <Box>
                 <Typography gutterBottom sx={{ 
-                  fontFamily: "'League Spartan', sans-serif",
-                  letterSpacing: '0.1em'
+                  fontFamily: "'Inter', sans-serif",
+                  letterSpacing: '0.05em',
+                  color: 'rgba(128, 128, 128, 0.5)'
                 }}>
-                  Texture
+                  Texture Effect
                 </Typography>
                 <Slider
                   value={textureValue}
                   onChange={(e, newValue) => setTextureValue(newValue)}
                   min={0}
                   max={100}
-                  sx={{ color: 'var(--text-secondary)' }}
+                  disabled={true}
+                  sx={{ 
+                    color: 'rgba(128, 128, 128, 0.5)',
+                    '& .MuiSlider-thumb': {
+                      color: 'rgba(128, 128, 128, 0.5)',
+                    },
+                    '& .MuiSlider-track': {
+                      color: 'rgba(128, 128, 128, 0.5)',
+                    },
+                    '& .MuiSlider-rail': {
+                      color: 'rgba(128, 128, 128, 0.5)',
+                    }
+                  }}
                 />
               </Box>
             </Box>
