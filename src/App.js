@@ -97,6 +97,29 @@ function App() {
   const [lastClickColor, setLastClickColor] = useState(null);
   const [lastClickTime, setLastClickTime] = useState(0);
 
+  // Image processing methods
+  const LUMINANCE_METHODS = {
+    NATURAL: {
+      label: 'Natural',
+      tooltip: 'Uses ITU-R BT.709 standard weights for most accurate color perception',
+      calculate: (r, g, b) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+    },
+    VIBRANT: {
+      label: 'Vibrant',
+      tooltip: 'Maximizes color saturation for bold, vivid results',
+      calculate: (r, g, b) => (r + g + b) / (3 * 255)
+    },
+    BALANCED: {
+      label: 'Balanced',
+      tooltip: 'Uses NTSC/PAL standard for a middle-ground approach',
+      calculate: (r, g, b) => (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    }
+  };
+
+  const [luminanceMethod, setLuminanceMethod] = useState('NATURAL');
+  const [matteValue, setMatteValue] = useState(0);
+  const [textureValue, setTextureValue] = useState(0);
+
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
@@ -183,7 +206,7 @@ function App() {
         const alpha = this.bitmap.data[idx + 3];
         
         if (alpha > 0) {
-          const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+          const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
           this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
           this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
           this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
@@ -468,6 +491,7 @@ function App() {
         transition: 'background-color 0.3s, color 0.3s'
       }}
     >
+      {/* Section A: Banner */}
       <Banner 
         version="1.2.7"
         isDarkMode={theme === 'dark'}
@@ -527,7 +551,7 @@ function App() {
               />
             </Box>
 
-            {/* Section C: Grayscale Display Bar */}
+            {/* Section C: Grayscale Tool Bar */}
             <Box sx={{ 
               display: 'flex',
               alignItems: 'center',
@@ -711,7 +735,7 @@ function App() {
             THE IMAGE FACTORY
           </Typography>
 
-          {/* Image Section */}
+          {/* Section E: Image Loading */}
           <Box sx={{ 
             display: 'flex', 
             gap: 2,
@@ -767,7 +791,97 @@ function App() {
             </Button>
           </Box>
 
-          {/* Result section */}
+          {/* Section F: Main Image (with integrated download button) */}
+          <Box sx={{ 
+            position: 'relative',
+            width: '100%'
+          }}>
+            <img
+              src={processedImageUrl || DEFAULT_IMAGE_URL}
+              alt="Processed"
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)'
+              }}
+            />
+            {/* Download button using GlowButton */}
+            <GlowButton
+              onClick={handleQuickDownload}
+              disabled={!canDownload}
+              sx={{
+                position: 'absolute',
+                right: '12px',
+                top: '12px',
+                backgroundColor: 'var(--element-bg)',
+              }}
+            >
+              <FileDownloadIcon />
+            </GlowButton>
+          </Box>
+
+          {/* Section G: Image Processing */}
+          <Box sx={{ width: '100%', mt: 2 }}>
+            {/* Processing Mode Buttons */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center',
+              gap: 2,
+              mb: 3 
+            }}>
+              {Object.entries(LUMINANCE_METHODS).map(([key, method]) => (
+                <Tooltip key={key} title={method.tooltip} arrow>
+                  <Button
+                    variant={luminanceMethod === key ? "contained" : "outlined"}
+                    onClick={() => setLuminanceMethod(key)}
+                    sx={{
+                      fontFamily: "'League Spartan', sans-serif",
+                      letterSpacing: '0.1em'
+                    }}
+                  >
+                    {method.label}
+                  </Button>
+                </Tooltip>
+              ))}
+            </Box>
+
+            {/* Sliders */}
+            <Box sx={{ px: 3 }}>
+              <Box sx={{ mb: 2 }}>
+                <Typography gutterBottom sx={{ 
+                  fontFamily: "'League Spartan', sans-serif",
+                  letterSpacing: '0.1em'
+                }}>
+                  Matte
+                </Typography>
+                <Slider
+                  value={matteValue}
+                  onChange={(e, newValue) => setMatteValue(newValue)}
+                  min={0}
+                  max={100}
+                  sx={{ color: 'var(--text-secondary)' }}
+                />
+              </Box>
+              <Box>
+                <Typography gutterBottom sx={{ 
+                  fontFamily: "'League Spartan', sans-serif",
+                  letterSpacing: '0.1em'
+                }}>
+                  Texture
+                </Typography>
+                <Slider
+                  value={textureValue}
+                  onChange={(e, newValue) => setTextureValue(newValue)}
+                  min={0}
+                  max={100}
+                  sx={{ color: 'var(--text-secondary)' }}
+                />
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Section H: Results */}
           <Box sx={{ position: 'relative' }}>
             <Box
               sx={{
@@ -777,53 +891,25 @@ function App() {
                 gap: 3
               }}
             >
-              <Box sx={{ 
-                position: 'relative',
-                width: '100%'
-              }}>
-                <img
-                  src={processedImageUrl || DEFAULT_IMAGE_URL}
-                  alt="Processed"
-                  style={{
-                    maxWidth: '100%',
-                    height: 'auto',
-                    borderRadius: '4px',
-                    border: '1px solid var(--border-color)'
-                  }}
-                />
-                {isProcessing && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                      borderRadius: '4px',
-                      zIndex: 1
-                    }}
-                  >
-                    <CircularProgress sx={{ color: 'var(--glow-color)' }} />
-                  </Box>
-                )}
-                {/* Download button using GlowButton */}
-                <GlowButton
-                  onClick={handleQuickDownload}
-                  disabled={!canDownload}
+              {isProcessing && (
+                <Box
                   sx={{
                     position: 'absolute',
-                    right: '12px',
-                    top: '12px',
-                    backgroundColor: 'var(--element-bg)',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                    borderRadius: '4px',
+                    zIndex: 1
                   }}
                 >
-                  <FileDownloadIcon />
-                </GlowButton>
-              </Box>
+                  <CircularProgress sx={{ color: 'var(--glow-color)' }} />
+                </Box>
+              )}
             </Box>
           </Box>
         </Box>
