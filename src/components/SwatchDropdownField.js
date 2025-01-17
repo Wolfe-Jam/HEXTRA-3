@@ -26,26 +26,28 @@ const StyledTextField = styled(TextField)(() => ({
 }));
 
 /**
- * IconTextField - A styled text input component with optional start and end icons
+ * SwatchDropdownField - A specialized dropdown component with color swatches and auto-apply behavior
+ * 
+ * Features:
+ * 1. Shows color swatches in dropdown menu
+ * 2. Auto-applies selection (Google Search style)
+ * 3. Handles asynchronous state updates
+ * 4. Supports keyboard navigation
  * 
  * @param {Object} props
- * @param {string} props.value - Input value
- * @param {function} props.onChange - Change handler
- * @param {function} props.onKeyDown - Key down handler
+ * @param {string} props.value - Current input value
+ * @param {function} props.onChange - Called when input changes manually
+ * @param {function} props.onKeyDown - Keyboard handler
  * @param {string} props.placeholder - Input placeholder
- * @param {Object} props.sx - Additional styles
- * @param {React.Component} props.startIcon - Icon to show at start of input
- * @param {boolean} props.hasReset - Whether to show reset button at end
+ * @param {Object} props.sx - Additional MUI styles
+ * @param {React.Component} props.startIcon - Icon shown at input start
+ * @param {boolean} props.hasReset - Show reset button
  * @param {function} props.onReset - Reset handler
- * @param {Object} props.options - Options for autocomplete
- * @param {function} props.renderOption - Option render handler
- * @param {function} props.getOptionLabel - Option label handler
- * @param {function} props.isOptionEqualToValue - Option equality handler
- * @param {function} props.onOptionSelect - Option select handler
- * @param {Object} props.InputProps - Additional MUI InputProps
- * @param {Object} props.rest - Additional props passed to TextField
+ * @param {Array} props.options - Array of color options
+ * @param {function} props.onSelectionChange - Called when dropdown selection changes
+ * @param {function} props.onAutoApply - Called after states update (auto-apply)
  */
-const IconTextField = ({
+const SwatchDropdownField = ({
   value,
   onChange,
   onKeyDown,
@@ -55,13 +57,22 @@ const IconTextField = ({
   hasReset = false,
   onReset,
   options = [],
-  renderOption,
-  getOptionLabel,
-  isOptionEqualToValue,
-  onOptionSelect,
+  onSelectionChange,
+  onAutoApply,
   InputProps = {},
   ...rest
 }) => {
+  // Track if selection came from dropdown
+  const [isDropdownSelection, setIsDropdownSelection] = React.useState(false);
+
+  // Auto-apply after state updates from dropdown selection
+  React.useEffect(() => {
+    if (isDropdownSelection && onAutoApply) {
+      onAutoApply();
+      setIsDropdownSelection(false);
+    }
+  }, [value, isDropdownSelection, onAutoApply]);
+
   // Combine any provided endAdornment with reset button if needed
   const endAdornment = hasReset ? (
     <InputAdornment position="end">
@@ -104,7 +115,8 @@ const IconTextField = ({
       value={value}
       onChange={(event, newValue) => {
         if (newValue) {
-          onOptionSelect?.(newValue);
+          onSelectionChange?.(newValue);
+          setIsDropdownSelection(true);
         }
       }}
       onInputChange={(event, newValue, reason) => {
@@ -117,9 +129,20 @@ const IconTextField = ({
       handleHomeEndKeys
       autoSelect
       options={options}
-      renderOption={renderOption}
-      getOptionLabel={getOptionLabel}
-      isOptionEqualToValue={isOptionEqualToValue}
+      renderOption={(props, option) => (
+        <li {...props} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ 
+            width: '20px', 
+            height: '20px', 
+            borderRadius: '4px',
+            backgroundColor: option,
+            border: '1px solid var(--border-color)'
+          }} />
+          <span style={{ fontFamily: 'monospace' }}>{option}</span>
+        </li>
+      )}
+      getOptionLabel={(option) => option}
+      isOptionEqualToValue={(option, value) => option === value}
       renderInput={(params) => (
         <StyledTextField
           {...params}
@@ -156,4 +179,4 @@ const IconTextField = ({
   );
 };
 
-export default IconTextField;
+export default SwatchDropdownField;

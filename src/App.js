@@ -6,10 +6,12 @@ import Banner from './components/Banner';
 import GlowButton from './components/GlowButton';
 import GlowTextButton from './components/GlowTextButton';
 import IconTextField from './components/IconTextField';
+import SwatchDropdownField from './components/SwatchDropdownField';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';  // Bolder icon
 import { TextField, InputAdornment, IconButton } from '@mui/material';
+import TagIcon from '@mui/icons-material/Tag';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
@@ -47,6 +49,32 @@ function normalizeHex(hex) {
   return '#' + hex;
 }
 
+function rgbToHsv(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let h;
+  if (delta === 0) {
+    h = 0;
+  } else if (max === r) {
+    h = (60 * ((g - b) / delta) + 360) % 360;
+  } else if (max === g) {
+    h = (60 * ((b - r) / delta) + 120) % 360;
+  } else if (max === b) {
+    h = (60 * ((r - g) / delta) + 240) % 360;
+  }
+
+  const s = max === 0 ? 0 : delta / max;
+  const v = max;
+
+  return { h, s, v };
+}
+
 function App() {
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
@@ -59,12 +87,13 @@ function App() {
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
+  const [hexInput, setHexInput] = useState(DEFAULT_COLOR);
   const [urlInput, setUrlInput] = useState('');
-  const [hexColor, setHexColor] = useState(DEFAULT_COLOR);
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('hextraTheme');
     return savedTheme || 'dark';
   });
+  const [isDropdownSelection, setIsDropdownSelection] = useState(false);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -74,11 +103,11 @@ function App() {
 
   const handleHexInputChange = (e) => {
     const value = e.target.value;
-    setHexColor(value);
+    setHexInput(value);
     
     // If empty and we have a selectedColor, use that
     if (!value && selectedColor) {
-      setHexColor(selectedColor);
+      setHexInput(selectedColor);
       return;
     }
 
@@ -108,7 +137,7 @@ function App() {
       // Allow the default color to pass through
       if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
         setSelectedColor(value);
-        setHexColor(value);
+        setHexInput(value);
         setRgbColor(hexToRgb(value));
         applyColor();
       }
@@ -118,7 +147,7 @@ function App() {
   const resetColor = () => {
     const defaultRgb = hexToRgb(DEFAULT_COLOR);
     setSelectedColor(DEFAULT_COLOR);
-    setHexColor(DEFAULT_COLOR);
+    setHexInput(DEFAULT_COLOR);
     setRgbColor(defaultRgb);
     // Force update the color wheel
     if (wheelRef.current) {
@@ -129,7 +158,7 @@ function App() {
   const handleColorChange = (color) => {
     const hexValue = color.hex.toUpperCase();
     setSelectedColor(hexValue);
-    setHexColor(hexValue);
+    setHexInput(hexValue);
     setRgbColor(hexToRgb(hexValue));
     // Update gray value bar
     if (grayValueRef.current) {
@@ -182,6 +211,13 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    if (isDropdownSelection) {
+      applyColor();
+      setIsDropdownSelection(false);
+    }
+  }, [rgbColor, selectedColor, hexInput]);
+
   const handleUrlKeyPress = (e) => {
     console.log(e.key);
   };
@@ -206,7 +242,7 @@ function App() {
   useEffect(() => {
     // Set initial color states
     setSelectedColor(DEFAULT_COLOR);
-    setHexColor(DEFAULT_COLOR);
+    setHexInput(DEFAULT_COLOR);
     setRgbColor(hexToRgb(DEFAULT_COLOR));
     
     // Load default image
@@ -444,18 +480,44 @@ function App() {
               />
 
               {/* HEX Input with Reset Icon */}
-              <IconTextField
-                value={hexColor}
-                onChange={handleHexInputChange}
+              <SwatchDropdownField
+                value={hexInput}
+                onChange={(e) => setHexInput(e.target.value)}
                 onKeyDown={handleHexInputKeyDown}
-                placeholder="Enter HEX code"
+                placeholder="#FED141"
+                startIcon={<TagIcon />}
                 hasReset
                 onReset={resetColor}
-                sx={{ width: '200px' }}
+                options={[
+                  '#FED141',
+                  '#D50032',
+                  '#00805E',
+                  '#224D8F',
+                  '#FF4400',
+                  '#CABFAD'
+                ]}
+                onSelectionChange={(color) => {
+                  const rgb = hexToRgb(color);
+                  if (rgb) {
+                    setRgbColor(rgb);
+                    setSelectedColor(color);
+                    setHexInput(color);
+                    if (wheelRef.current) {
+                      wheelRef.current.setHsva({
+                        h: rgbToHsv(rgb.r, rgb.g, rgb.b).h,
+                        s: rgbToHsv(rgb.r, rgb.g, rgb.b).s,
+                        v: rgbToHsv(rgb.r, rgb.g, rgb.b).v,
+                        a: 1
+                      });
+                    }
+                  }
+                }}
+                onAutoApply={applyColor}
+                sx={{ width: '140px' }}
               />
-
               {/* Apply Button */}
               <GlowTextButton
+                id="apply-button"
                 variant="contained"
                 onClick={applyColor}
                 disabled={isProcessing || !imageLoaded}
