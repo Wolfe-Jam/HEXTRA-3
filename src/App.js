@@ -23,7 +23,7 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
-const VERSION = '1.2.5'; // Added Image Sliders and Magic Button
+const VERSION = '1.2.6'; // Starting new features
 
 function hexToRgb(hex) {
   // Remove the hash if present
@@ -79,7 +79,6 @@ function App() {
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [imageFile, setImageFile] = useState(null);
-  const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGE_URL);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [originalImage, setOriginalImage] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);
@@ -89,6 +88,7 @@ function App() {
   const [canDownload, setCanDownload] = useState(false);
   const [hexInput, setHexInput] = useState(DEFAULT_COLOR);
   const [urlInput, setUrlInput] = useState('');
+  const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGE_URL);
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('hextraTheme');
     return savedTheme || 'dark';
@@ -213,6 +213,14 @@ function App() {
   const handleImageUpload = async (file) => {
     if (!file) return;
     
+    // Reset states for new upload
+    setProcessedImage(null);
+    setProcessedImageUrl('');
+    setCanDownload(false);
+    setError('');
+    setImageUrl(''); // Clear any previous URL
+    setIsProcessing(true);
+    
     try {
       const image = await Jimp.read(await file.arrayBuffer());
       setOriginalImage(image);
@@ -224,10 +232,14 @@ function App() {
           setProcessedImageUrl(base64);
           setCanDownload(true);
         }
+        setIsProcessing(false);
       });
     } catch (err) {
       console.error('Error loading image:', err);
       setError('Failed to load image');
+      setImageLoaded(false);
+      setCanDownload(false);
+      setIsProcessing(false);
     }
   };
 
@@ -236,6 +248,8 @@ function App() {
       window.open('https://www.google.com/search?q=white+t-shirt+mockup&tbm=isch', '_blank');
       return;
     }
+    // Reset file input by clearing imageFile state
+    setImageFile(null);
     const url = urlInput.trim();
     setImageUrl(url);
   };
@@ -243,6 +257,8 @@ function App() {
   const handleUrlKeyPress = (e) => {
     if (e.key === 'Enter' && urlInput.trim()) {
       e.preventDefault();
+      // Reset file input by clearing imageFile state
+      setImageFile(null);
       const url = urlInput.trim();
       setImageUrl(url);
     }
@@ -330,36 +346,6 @@ function App() {
       });
   }, []);
 
-  useEffect(() => {
-    const loadImage = async () => {
-      if (!imageUrl || imageUrl === DEFAULT_IMAGE_URL) return;
-      
-      setIsProcessing(true);
-      try {
-        const image = await Jimp.read(imageUrl);
-        setOriginalImage(image);
-        setImageLoaded(true);
-        
-        image.getBase64(Jimp.MIME_PNG, (err, base64) => {
-          if (!err) {
-            setProcessedImage(image);
-            setProcessedImageUrl(base64);
-            setCanDownload(true);
-          }
-        });
-      } catch (err) {
-        console.error('Error loading image:', err);
-        setError('Failed to load image');
-        setImageLoaded(false);
-        setCanDownload(false);
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-
-    loadImage();
-  }, [imageUrl]);
-
   // Theme effect
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -438,6 +424,38 @@ function App() {
     document.body.removeChild(link);
   };
 
+  useEffect(() => {
+    if (!imageUrl || imageUrl === DEFAULT_IMAGE_URL) return;
+    
+    // Reset states before loading new image
+    setProcessedImage(null);
+    setProcessedImageUrl('');
+    setCanDownload(false);
+    setError('');
+    setIsProcessing(true);
+    
+    Jimp.read(imageUrl)
+      .then(image => {
+        setOriginalImage(image);
+        setImageLoaded(true);
+        image.getBase64(Jimp.MIME_PNG, (err, base64) => {
+          if (!err) {
+            setProcessedImage(image);
+            setProcessedImageUrl(base64);
+            setCanDownload(true);
+          }
+          setIsProcessing(false);
+        });
+      })
+      .catch(err => {
+        console.error('Error loading image:', err);
+        setError('Failed to load image');
+        setImageLoaded(false);
+        setCanDownload(false);
+        setIsProcessing(false);
+      });
+  }, [imageUrl]);
+
   return (
     <Box
       sx={{
@@ -451,7 +469,7 @@ function App() {
       }}
     >
       <Banner 
-        version="1.2.5"
+        version="1.2.6"
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
@@ -669,21 +687,39 @@ function App() {
           <Box
             sx={{
               width: '100%',
-              height: '1px',
-              backgroundColor: 'var(--border-color)',
-              my: 1
+              height: '4px',
+              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+              mb: 1
             }}
           />
 
+          {/* Image Section Title */}
+          <Typography 
+            variant="subtitle1" 
+            component="h2" 
+            sx={{ 
+              mb: 1,
+              textAlign: 'center',
+              fontWeight: 500,
+              fontFamily: "'League Spartan', sans-serif",
+              fontSize: '1rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            THE IMAGE FACTORY
+          </Typography>
+
           {/* Image Section */}
           <Box sx={{ 
-            position: 'relative',
-            display: 'flex',
+            display: 'flex', 
+            gap: 2,
             alignItems: 'center',
             mt: 1,
             mb: 3,
-            gap: 2,
-            pr: '12px'  // Match the image padding
+            width: '100%',
+            pr: '12px'  // Restore the padding for USE URL alignment
           }}>
             <GlowTextButton
               component="label"
