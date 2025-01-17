@@ -233,29 +233,18 @@ function App() {
 
   const handleLoadUrl = () => {
     if (!urlInput.trim()) {
-      window.open('https://www.google.com/search?q=white+t-shirt&tbm=isch', '_blank');
+      window.open('https://www.google.com/search?q=white+t-shirt+mockup&tbm=isch', '_blank');
       return;
     }
-    setImageUrl(urlInput);
-  };
-
-  const handleQuickDownload = () => {
-    if (!processedImageUrl || !canDownload) return;
-    
-    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.png`;
-    
-    const link = document.createElement('a');
-    link.href = processedImageUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const url = urlInput.trim();
+    setImageUrl(url);
   };
 
   const handleUrlKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleLoadUrl();
+    if (e.key === 'Enter' && urlInput.trim()) {
+      e.preventDefault();
+      const url = urlInput.trim();
+      setImageUrl(url);
     }
   };
 
@@ -341,6 +330,36 @@ function App() {
       });
   }, []);
 
+  useEffect(() => {
+    const loadImage = async () => {
+      if (!imageUrl || imageUrl === DEFAULT_IMAGE_URL) return;
+      
+      setIsProcessing(true);
+      try {
+        const image = await Jimp.read(imageUrl);
+        setOriginalImage(image);
+        setImageLoaded(true);
+        
+        image.getBase64(Jimp.MIME_PNG, (err, base64) => {
+          if (!err) {
+            setProcessedImage(image);
+            setProcessedImageUrl(base64);
+            setCanDownload(true);
+          }
+        });
+      } catch (err) {
+        console.error('Error loading image:', err);
+        setError('Failed to load image');
+        setImageLoaded(false);
+        setCanDownload(false);
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    loadImage();
+  }, [imageUrl]);
+
   // Theme effect
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -403,6 +422,20 @@ function App() {
         });
       }
     }
+  };
+
+  const handleQuickDownload = () => {
+    if (!processedImageUrl || !canDownload) return;
+    
+    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.png`;
+    
+    const link = document.createElement('a');
+    link.href = processedImageUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -644,10 +677,13 @@ function App() {
 
           {/* Image Section */}
           <Box sx={{ 
-            display: 'flex', 
-            gap: 3,
+            position: 'relative',
+            display: 'flex',
             alignItems: 'center',
-            mt: 1
+            mt: 1,
+            mb: 3,
+            gap: 2,
+            pr: '12px'  // Match the image padding
           }}>
             <GlowTextButton
               component="label"
@@ -664,26 +700,35 @@ function App() {
               />
             </GlowTextButton>
 
-            <Typography sx={{ mx: 3, fontFamily: "'Inter', sans-serif" }}>OR</Typography>
-            
-            <IconTextField
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              onKeyDown={handleUrlKeyPress}
-              placeholder="Enter image URL"
-              startIcon={<LinkIcon />}
-              hasReset
-              onReset={resetUrl}
-              sx={{ flex: 1 }}
-            />
+            <Box sx={{ flex: 1, mr: 'auto' }}>
+              <IconTextField
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onKeyDown={handleUrlKeyPress}
+                placeholder="Enter image URL..."
+                startIcon={<LinkIcon />}
+                hasReset
+                onReset={resetUrl}
+                sx={{ width: '100%' }}
+              />
+            </Box>
 
-            <GlowTextButton
+            <Button
               variant="contained"
               onClick={handleLoadUrl}
-              disabled={isProcessing}
+              sx={{
+                minWidth: 'auto',
+                px: 2,
+                fontFamily: "'Inter', sans-serif",
+                color: theme === 'dark' ? 'black' : 'white',
+                bgcolor: theme === 'dark' ? 'white' : 'black',
+                '&:hover': {
+                  bgcolor: theme === 'dark' ? '#e0e0e0' : '#333333'
+                }
+              }}
             >
-              LOAD
-            </GlowTextButton>
+              USE URL
+            </Button>
           </Box>
 
           {/* Result section */}
