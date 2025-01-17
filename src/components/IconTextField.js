@@ -19,9 +19,13 @@ const StyledTextField = styled(TextField)(() => ({
       boxShadow: '0 0 0 3px var(--glow-subtle)'
     }
   },
+  '& .MuiOutlinedInput-input': {
+    padding: '14px 12px',
+    minWidth: '80px'
+  },
   '& .MuiAutocomplete-input': {
     height: '20px',
-    padding: '0 !important'
+    padding: '0 8px !important'
   }
 }));
 

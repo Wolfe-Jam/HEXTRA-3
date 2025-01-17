@@ -9,7 +9,7 @@ import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';  // Bolder icon
+import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
 
@@ -121,8 +121,11 @@ function App() {
     }
   };
 
-  const handleHexInputKeyDown = (e) => {
+  const handleHexKeyPress = (e) => {
     if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent default behavior
+      e.stopPropagation(); // Stop event from bubbling up
+      
       let value = e.target.value;
       // If no value, use the current selectedColor
       if (!value && selectedColor) {
@@ -160,12 +163,6 @@ function App() {
     setSelectedColor(hexValue);
     setHexInput(hexValue);
     setRgbColor(hexToRgb(hexValue));
-    // Update gray value bar
-    if (grayValueRef.current) {
-      const rgb = hexToRgb(hexValue);
-      const grayValue = Math.round((rgb.r + rgb.g + rgb.b) / 3);
-      grayValueRef.current.value = grayValue;
-    }
   };
 
   const applyColor = async () => {
@@ -211,32 +208,81 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    if (isDropdownSelection) {
-      applyColor();
-      setIsDropdownSelection(false);
+  const handleImageUpload = async (file) => {
+    if (!file) return;
+    
+    try {
+      const image = await Jimp.read(await file.arrayBuffer());
+      setOriginalImage(image);
+      setImageLoaded(true);
+      
+      image.getBase64(Jimp.MIME_PNG, (err, base64) => {
+        if (!err) {
+          setProcessedImage(image);
+          setProcessedImageUrl(base64);
+          setCanDownload(true);
+        }
+      });
+    } catch (err) {
+      console.error('Error loading image:', err);
+      setError('Failed to load image');
     }
-  }, [rgbColor, selectedColor, hexInput]);
+  };
+
+  const handleLoadUrl = () => {
+    if (!urlInput.trim()) {
+      window.open('https://www.google.com/search?q=white+t-shirt&tbm=isch', '_blank');
+      return;
+    }
+    setImageUrl(urlInput);
+  };
+
+  const handleQuickDownload = () => {
+    if (!processedImageUrl || !canDownload) return;
+    
+    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.png`;
+    
+    const link = document.createElement('a');
+    link.href = processedImageUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleUrlKeyPress = (e) => {
-    console.log(e.key);
+    if (e.key === 'Enter') {
+      handleLoadUrl();
+    }
   };
 
   const resetUrl = () => {
     setUrlInput('');
   };
 
-  const handleLoadUrl = () => {
-    setImageUrl(urlInput);
-  };
-
-  const handleQuickDownload = () => {
-    console.log('Download');
-  };
-
   // Add refs
   const wheelRef = useRef(null);
   const grayValueRef = useRef(null);
+
+  const handleGraySwatchClick = () => {
+    const grayValue = Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3);
+    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
+    setHexInput(grayHex);
+    setSelectedColor(grayHex);
+    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
+  };
+
+  const handleGradientClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = Math.min(Math.max(x / rect.width, 0), 1);
+    const grayValue = Math.round(percentage * 255);
+    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
+    setHexInput(grayHex);
+    setSelectedColor(grayHex);
+    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
+  };
 
   // Load default image on mount
   useEffect(() => {
@@ -303,6 +349,31 @@ function App() {
     document.head.appendChild(style);
     return () => document.head.removeChild(style);
   }, [theme]);
+
+  useEffect(() => {
+    if (isDropdownSelection) {
+      applyColor();
+      setIsDropdownSelection(false);  // Reset the flag after applying
+    }
+  }, [isDropdownSelection]);  
+
+  const handleDropdownSelection = (color) => {
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      setRgbColor(rgb);
+      setSelectedColor(color);
+      setHexInput(color);
+      setIsDropdownSelection(true);
+      if (wheelRef.current) {
+        wheelRef.current.setHsva({
+          h: rgbToHsv(rgb.r, rgb.g, rgb.b).h,
+          s: rgbToHsv(rgb.r, rgb.g, rgb.b).s,
+          v: rgbToHsv(rgb.r, rgb.g, rgb.b).v,
+          a: 1
+        });
+      }
+    }
+  };
 
   return (
     <Box
@@ -376,66 +447,78 @@ function App() {
             {/* Section C: Grayscale Display Bar */}
             <Box sx={{ 
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              width: '240px',
-              mx: 'auto',
-              mb: 3
+              gap: 2,
+              width: '100%',
+              mb: 3,
+              pl: '40px'  // Match the HEX input bar padding
             }}>
-              {/* Slider first */}
-              <Slider
-                ref={grayValueRef}
-                value={Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}
-                min={0}
-                max={255}
-                sx={{
-                  width: '100%',
-                  height: '24px',
-                  mb: 1,
-                  '& .MuiSlider-rail': {
-                    height: '24px',
-                    borderRadius: '12px',
-                    backgroundColor: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                  },
-                  '& .MuiSlider-track': {
-                    height: '24px',
-                    borderRadius: '12px',
-                    border: 'none',
-                    background: 'linear-gradient(to right, #000000, #FFFFFF)',
-                  },
-                  '& .MuiSlider-thumb': {
-                    width: '2px',
-                    height: '24px',
-                    borderRadius: '1px',
-                    backgroundColor: 'var(--glow-color)',
-                    '&:hover, &.Mui-active': {
-                      boxShadow: '0 0 0 8px var(--glow-subtle)',
-                    },
-                  },
-                }}
-              />
-              
-              {/* Value display below */}
+              {/* GRAY Value Display */}
               <Typography sx={{ 
                 fontFamily: "'Inter', sans-serif",
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
+                whiteSpace: 'nowrap',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                justifyContent: 'center',
-                width: '100%'
+                width: '120px'
               }}>
                 <Box component="span" sx={{ flexShrink: 0 }}>GRAY Value:</Box>
                 <Box component="span" sx={{ 
                   fontFamily: 'monospace',
-                  width: '40px',  // Fixed width for number
                   textAlign: 'left'
                 }}>
-                  {rgbColor.r}
+                  {`${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}`.padStart(3, ' ')}
                 </Box>
               </Typography>
+
+              {/* Gray Swatch */}
+              <Box
+                onClick={handleGraySwatchClick}
+                sx={{
+                  width: '36px',
+                  height: '36px',
+                  flexShrink: 0,
+                  backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
+                  borderRadius: '50%',
+                  border: '1px solid var(--border-color)',
+                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
+                  cursor: 'pointer',
+                  transition: 'box-shadow 0.2s',
+                  '&:hover': {
+                    boxShadow: '0 0 0 2px var(--glow-color)',
+                  }
+                }}
+              />
+
+              {/* Slider */}
+              <Box 
+                onClick={handleGradientClick}
+                sx={{
+                  position: 'relative',
+                  width: '200px',
+                  height: '24px',
+                  backgroundColor: 'transparent',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-color)',
+                  background: 'linear-gradient(to right, #000000, #FFFFFF)',
+                  overflow: 'hidden',
+                  cursor: 'pointer'
+                }}
+              >
+                <Box sx={{
+                  position: 'absolute',
+                  left: `${(Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3) / 255) * 100}%`,
+                  top: 0,
+                  width: '2px',
+                  height: '100%',
+                  backgroundColor: 'var(--glow-color)',
+                  transform: 'translateX(-50%)',
+                  boxShadow: '0 0 4px var(--glow-color)',
+                  pointerEvents: 'none'
+                }} />
+              </Box>
             </Box>
 
             {/* Section D: HEX Input Bar */}
@@ -474,7 +557,8 @@ function App() {
                   height: '48px',
                   backgroundColor: selectedColor,
                   borderRadius: '50%',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  border: '1px solid var(--border-color)',
+                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
                   flexShrink: 0
                 }}
               />
@@ -483,7 +567,7 @@ function App() {
               <SwatchDropdownField
                 value={hexInput}
                 onChange={(e) => setHexInput(e.target.value)}
-                onKeyDown={handleHexInputKeyDown}
+                onKeyDown={handleHexKeyPress}
                 placeholder="#FED141"
                 startIcon={<TagIcon />}
                 hasReset
@@ -496,24 +580,13 @@ function App() {
                   '#FF4400',
                   '#CABFAD'
                 ]}
-                onSelectionChange={(color) => {
-                  const rgb = hexToRgb(color);
-                  if (rgb) {
-                    setRgbColor(rgb);
-                    setSelectedColor(color);
-                    setHexInput(color);
-                    if (wheelRef.current) {
-                      wheelRef.current.setHsva({
-                        h: rgbToHsv(rgb.r, rgb.g, rgb.b).h,
-                        s: rgbToHsv(rgb.r, rgb.g, rgb.b).s,
-                        v: rgbToHsv(rgb.r, rgb.g, rgb.b).v,
-                        a: 1
-                      });
-                    }
+                onSelectionChange={handleDropdownSelection}
+                sx={{ 
+                  width: '180px',  
+                  '& .MuiOutlinedInput-root': {
+                    paddingLeft: '8px'  
                   }
                 }}
-                onAutoApply={applyColor}
-                sx={{ width: '140px' }}
               />
               {/* Apply Button */}
               <GlowTextButton
@@ -554,7 +627,7 @@ function App() {
                 type="file"
                 hidden
                 accept="image/*"
-                onChange={(e) => setImageFile(e.target.files[0])}
+                onChange={(e) => handleImageUpload(e.target.files[0])}
                 disabled={false}
               />
             </GlowTextButton>
@@ -637,123 +710,6 @@ function App() {
                 >
                   <FileDownloadIcon />
                 </GlowButton>
-              </Box>
-              {/* Image Processing Controls */}
-              <Box sx={{ 
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 3,
-                width: '100%',
-                mt: 3
-              }}>
-                {/* Existing Image Processing Buttons */}
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'center',
-                  gap: 3
-                }}>
-                  <GlowTextButton
-                    variant="contained"
-                    onClick={() => console.log('NATURAL')}
-                    sx={{
-                      minWidth: 'unset',
-                      height: '32px',
-                      padding: '0 12px',
-                      whiteSpace: 'nowrap',
-                      marginLeft: '8px'
-                    }}
-                  >
-                    NATURAL
-                  </GlowTextButton>
-                  <GlowTextButton
-                    variant="contained"
-                    onClick={() => console.log('VIBRANT')}
-                    sx={{
-                      minWidth: 'unset',
-                      height: '32px',
-                      padding: '0 12px',
-                      whiteSpace: 'nowrap',
-                      marginLeft: '8px'
-                    }}
-                  >
-                    VIBRANT
-                  </GlowTextButton>
-                  <GlowTextButton
-                    variant="contained"
-                    onClick={() => console.log('BALANCED')}
-                    sx={{
-                      minWidth: 'unset',
-                      height: '32px',
-                      padding: '0 12px',
-                      whiteSpace: 'nowrap',
-                      marginLeft: '8px'
-                    }}
-                  >
-                    BALANCED
-                  </GlowTextButton>
-                </Box>
-
-                {/* Image Effect Controls */}
-                <Box sx={{ 
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2,
-                  mt: 3
-                }}>
-                  {/* Matte Slider */}
-                  <Box>
-                    <Typography sx={{ 
-                      fontFamily: "'Inter', sans-serif",
-                      color: 'var(--text-disabled)',
-                      mb: 1
-                    }}>
-                      Matte Effect
-                    </Typography>
-                    <Slider
-                      disabled
-                      value={50}
-                      sx={{
-                        width: '100%',
-                        '& .MuiSlider-rail': {
-                          backgroundColor: 'var(--disabled-bg)',
-                        },
-                        '& .MuiSlider-track': {
-                          backgroundColor: 'var(--disabled-bg)',
-                        },
-                        '& .MuiSlider-thumb': {
-                          backgroundColor: 'var(--disabled-bg)',
-                        }
-                      }}
-                    />
-                  </Box>
-
-                  {/* Texture Slider */}
-                  <Box>
-                    <Typography sx={{ 
-                      fontFamily: "'Inter', sans-serif",
-                      color: 'var(--text-disabled)',
-                      mb: 1
-                    }}>
-                      Texture Blend
-                    </Typography>
-                    <Slider
-                      disabled
-                      value={50}
-                      sx={{
-                        width: '100%',
-                        '& .MuiSlider-rail': {
-                          backgroundColor: 'var(--disabled-bg)',
-                        },
-                        '& .MuiSlider-track': {
-                          backgroundColor: 'var(--disabled-bg)',
-                        },
-                        '& .MuiSlider-thumb': {
-                          backgroundColor: 'var(--disabled-bg)',
-                        }
-                      }}
-                    />
-                  </Box>
-                </Box>
               </Box>
             </Box>
           </Box>

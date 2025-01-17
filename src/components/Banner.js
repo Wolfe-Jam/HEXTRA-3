@@ -13,6 +13,7 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
 
   return (
     <Box
+      onMouseLeave={() => document.activeElement.blur()}
       sx={{
         display: 'flex',
         justifyContent: 'space-between',
