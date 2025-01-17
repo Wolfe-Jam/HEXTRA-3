@@ -23,7 +23,7 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
-const VERSION = '1.2.3'; // Added Image Sliders and Magic Button
+const VERSION = '1.2.5'; // Added Image Sliders and Magic Button
 
 function hexToRgb(hex) {
   // Remove the hash if present
@@ -94,6 +94,8 @@ function App() {
     return savedTheme || 'dark';
   });
   const [isDropdownSelection, setIsDropdownSelection] = useState(false);
+  const [lastClickColor, setLastClickColor] = useState(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -284,6 +286,34 @@ function App() {
     setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
   };
 
+  const handleWheelClick = (e) => {
+    const now = Date.now();
+    const timeDiff = now - lastClickTime;
+    
+    if (lastClickColor && timeDiff < 500) {  // 500ms window for double-click
+      // Average the colors for quick double-click
+      const last = hexToRgb(lastClickColor);
+      const current = hexToRgb(selectedColor);
+      const avgColor = {
+        r: Math.round((last.r + current.r) / 2),
+        g: Math.round((last.g + current.g) / 2),
+        b: Math.round((last.b + current.b) / 2)
+      };
+      const avgHex = `#${avgColor.r.toString(16).padStart(2, '0')}${avgColor.g.toString(16).padStart(2, '0')}${avgColor.b.toString(16).padStart(2, '0')}`.toUpperCase();
+      setSelectedColor(avgHex);
+      setHexInput(avgHex);
+      setRgbColor(avgColor);
+      applyColor();
+      // Reset after applying
+      setLastClickColor(null);
+      setLastClickTime(0);
+    } else {
+      // Store first click info
+      setLastClickColor(selectedColor);
+      setLastClickTime(now);
+    }
+  };
+
   // Load default image on mount
   useEffect(() => {
     // Set initial color states
@@ -388,7 +418,7 @@ function App() {
       }}
     >
       <Banner 
-        version="1.2.3"
+        version="1.2.5"
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
@@ -439,6 +469,8 @@ function App() {
                 ref={wheelRef}
                 color={selectedColor}
                 onChange={handleColorChange}
+                onClick={handleWheelClick}
+                onDoubleClick={() => applyColor()}
                 width={240}
                 height={240}
               />
