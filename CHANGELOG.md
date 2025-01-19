@@ -4,6 +4,15 @@ All notable changes to HEXTRA-3 will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2025-01-19
+### Fixed
+- Batch processing UI improvements
+  - Added progress overlay with status
+  - Implemented chunked processing
+  - Prevented UI freeze during large batches
+  - Enhanced error handling
+  - Optimistic updates for better UX
+
 ## [2.0.0] - 2025-01-19
 ### Major Release
 - Complete professional overhaul of UI/UX
