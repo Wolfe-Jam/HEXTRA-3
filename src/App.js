@@ -733,96 +733,88 @@ function App() {
       const zip = new JSZip();
       const folder = zip.folder("hextra-colors");
       
-      for (let i = 0; i < colors.length; i++) {
-        const color = colors[i];
-        console.log(`Processing color: ${color.name} (${color.hex})`);
-        
-        const rgb = hexToRgb(color.hex);
-        if (!rgb) {
-          console.error(`Invalid hex color: ${color.hex}`);
-          continue;
-        }
-        
-        // Clone the original image for this color
-        const colorized = originalImage.clone();
-        
-        // Process the image
-        colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-          const red = this.bitmap.data[idx + 0];
-          const green = this.bitmap.data[idx + 1];
-          const blue = this.bitmap.data[idx + 2];
-          const alpha = this.bitmap.data[idx + 3];
-          
-          if (alpha > 0) {
-            const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-            
-            this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
-            this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
-            this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
-          }
-        });
-        
-        // Get base64 data
-        const base64 = await new Promise((resolve, reject) => {
-          colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
-            if (err) {
-              console.error('Error generating base64:', err);
-              reject(err);
-            } else {
-              resolve(base64);
-            }
-          });
-        });
-        
-        // Add to zip with descriptive filename
-        const colorCode = color.hex.replace('#', '');
-        const colorName = color.name ? color.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'color';
-        const filename = `${colorName}_${colorCode}.png`;
-        
-        // Convert base64 to binary and add to zip
-        const imageData = base64.replace(/^data:image\/\w+;base64,/, "");
-        folder.file(filename, imageData, {base64: true});
-        
-        console.log(`Added ${filename} to ZIP`);
-        
-        // Update progress
-        setProcessedCount(i + 1);
-        setTotalCount(colors.length);
-        setBatchProgress(Math.round(((i + 1) / colors.length) * 100));
+      // Process in chunks to prevent UI freeze
+      const CHUNK_SIZE = 5;
+      const chunks = [];
+      for (let i = 0; i < colors.length; i += CHUNK_SIZE) {
+        chunks.push(colors.slice(i, i + CHUNK_SIZE));
       }
       
-      console.log('Generating final ZIP file...');
+      for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+        const chunk = chunks[chunkIndex];
+        
+        // Process chunk
+        await Promise.all(chunk.map(async (color) => {
+          console.log(`Processing color: ${color.name} (${color.hex})`);
+          
+          const rgb = hexToRgb(color.hex);
+          if (!rgb) {
+            console.error(`Invalid hex color: ${color.hex}`);
+            return;
+          }
+          
+          const colorized = originalImage.clone();
+          
+          // Process image
+          colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
+            const red = this.bitmap.data[idx + 0];
+            const green = this.bitmap.data[idx + 1];
+            const blue = this.bitmap.data[idx + 2];
+            const alpha = this.bitmap.data[idx + 3];
+            
+            if (alpha > 0) {
+              const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
+              this.bitmap.data[idx + 0] = Math.round(luminance * rgb.r);
+              this.bitmap.data[idx + 1] = Math.round(luminance * rgb.g);
+              this.bitmap.data[idx + 2] = Math.round(luminance * rgb.b);
+            }
+          });
+          
+          const buffer = await colorized.getBufferAsync(Jimp.MIME_PNG);
+          folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, buffer);
+        }));
+        
+        // Update progress after each chunk
+        const progress = Math.round(((chunkIndex + 1) * CHUNK_SIZE / colors.length) * 100);
+        setBatchProgress(Math.min(progress, 100));
+        
+        // Let UI update
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
       
-      // Generate and download zip
+      console.log('Generating ZIP file...');
+      setBatchStatus('saving');
+      
       const content = await zip.generateAsync({
         type: "blob",
         compression: "DEFLATE",
         compressionOptions: {
-          level: 9
+          level: 5
         }
+      }, (metadata) => {
+        setBatchProgress(Math.round(metadata.percent));
       });
       
-      console.log('ZIP generated, size:', content.size);
-      
       // Create download link
-      const url = window.URL.createObjectURL(content);
+      const url = URL.createObjectURL(content);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `hextra-colors-${activeCatalog.toLowerCase()}.zip`;
+      link.download = `HEXTRA-${activeCatalog}-${new Date().toISOString().split('T')[0]}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url);
       
-      console.log('Download initiated');
       setBatchStatus('complete');
+      console.log('Batch processing complete');
       
     } catch (err) {
       console.error('Error in batch processing:', err);
-      setError(`Error generating all: ${err.message}`);
+      setError('Error processing batch: ' + err.message);
       setBatchStatus('error');
     } finally {
       setIsProcessing(false);
+      setBatchProgress(0);
     }
   };
 
@@ -1575,6 +1567,45 @@ function App() {
         </Box>
       </Box>
       <ColorDemo catalog={catalogColors} />
+      {isProcessing && (
+        <Box
+          position="fixed"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bgcolor="rgba(0, 0, 0, 0.7)"
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          zIndex={9999}
+        >
+          <CircularProgress size={60} thickness={4} />
+          <Typography variant="h6" color="white" mt={2}>
+            {batchStatus === 'processing' ? 'Processing Images...' : 'Preparing Download...'}
+          </Typography>
+          {batchProgress > 0 && (
+            <Box sx={{ width: '200px', mt: 2 }}>
+              <LinearProgress 
+                variant="determinate" 
+                value={batchProgress} 
+                sx={{
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 4,
+                  }
+                }}
+              />
+              <Typography variant="body2" color="white" align="center" mt={1}>
+                {batchProgress}%
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      )}
     </Box>
   );
 }
