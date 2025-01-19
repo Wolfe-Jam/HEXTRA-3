@@ -1,0 +1,9 @@
+Color Code,Color Name,Description
+#FF0000,Pure Red,Primary color - red
+rgb(0,255,0),Pure Green,Primary color - green
+0000FF,Pure Blue,Primary color - blue
+rgb(255 255 0),Yellow,Secondary color - yellow
+16711935,Magenta,Secondary color - magenta (decimal)
+00FFFF,Cyan,Secondary color - cyan
+128 0 0,Dark Red,Dark shade of red (RGB values)
+008000,Forest Green,Dark shade of green

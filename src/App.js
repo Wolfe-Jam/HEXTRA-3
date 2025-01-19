@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Tooltip, Slider, CircularProgress } from '@mui/material';
+import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import Jimp from 'jimp';
 import Banner from './components/Banner';
@@ -9,11 +9,14 @@ import GlowToggleGroup from './components/GlowToggleGroup';
 import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
+import ColorDemo from './components/ColorDemo';
+import GILDAN_64 from './data/catalogs/gildan64';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
+import { saveAs } from 'file-saver';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
@@ -106,6 +109,18 @@ function App() {
   const [useTestImage, setUseTestImage] = useState(false);
   const [lastWorkingImage, setLastWorkingImage] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  // MEZMERIZE States
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [batchResults, setBatchResults] = useState([]);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchStatus, setBatchStatus] = useState('idle'); // idle, processing, complete, error
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
+
+  // Add state for catalog colors
+  const [catalogColors, setCatalogColors] = useState(GILDAN_64);
 
   // Image processing methods
   const LUMINANCE_METHODS = {
@@ -510,6 +525,321 @@ function App() {
       });
   }, [workingImageUrl]);
 
+  const isValidHex = (hex) => {
+    // Remove hash if present
+    hex = hex.replace('#', '');
+    // Check if it's a valid 6-digit hex color
+    return /^[0-9A-F]{6}$/i.test(hex);
+  };
+
+  // Color parsing utilities
+  const parseColor = (input) => {
+    if (!input) return null;
+    console.log('Parsing color input:', input);
+    
+    // Remove any spaces, #, or other common prefixes
+    input = input.trim().replace(/^[#\s]+/, '');
+    console.log('After cleanup:', input);
+
+    // If it's already a hex code (with or without #)
+    // Check this first to avoid treating hex as decimal
+    if (/^[0-9A-F]{6}$/i.test(input)) {
+      const hex = '#' + input.toUpperCase();
+      console.log('Valid hex code:', hex);
+      return hex;
+    }
+    
+    // Handle RGB format like "rgb(255, 0, 0)" or "rgb(255 0 0)"
+    if (input.toLowerCase().includes('rgb')) {
+      // Extract numbers from rgb format, handling both comma and space separation
+      const numbers = input.match(/\d+/g);
+      if (numbers && numbers.length >= 3) {
+        const rgb = numbers.slice(0, 3).map(n => parseInt(n.trim()));
+        console.log('RGB values from rgb():', rgb);
+        if (rgb.every(n => !isNaN(n) && n >= 0 && n <= 255)) {
+          const hex = '#' + rgb.map(n => 
+            Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')
+          ).join('');
+          console.log('Converted RGB to hex:', hex);
+          return hex.toUpperCase();
+        }
+      }
+      return null; // Invalid RGB format
+    }
+    
+    // Handle comma or space separated RGB values like "255,0,0" or "255 0 0"
+    const rgbParts = input.split(/[\s,]+/);
+    if (rgbParts.length === 3) {
+      const rgb = rgbParts.map(n => parseInt(n.trim()));
+      console.log('Space/comma-separated RGB values:', rgb);
+      if (rgb.every(n => !isNaN(n) && n >= 0 && n <= 255)) {
+        const hex = '#' + rgb.map(n => 
+          Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')
+        ).join('');
+        console.log('Converted space/comma RGB to hex:', hex);
+        return hex.toUpperCase();
+      }
+    }
+    
+    // Handle decimal numbers (convert to hex)
+    if (!isNaN(input)) {
+      const num = parseInt(input);
+      console.log('Decimal number:', num);
+      if (num >= 0 && num <= 16777215) { // Valid 24-bit color range
+        const hex = '#' + num.toString(16).padStart(6, '0').toUpperCase();
+        console.log('Converted decimal to hex:', hex);
+        return hex;
+      }
+    }
+    
+    console.log('Failed to parse color');
+    return null;
+  };
+
+  const handleCSVUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setBatchStatus('processing');
+    setBatchProgress(0);
+
+    try {
+      const text = await file.text();
+      // Split by newlines first, then handle each line's CSV parsing
+      const lines = text.split('\n').map(line => {
+        // Custom CSV parsing to handle rgb(x,y,z) format
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        let inRGB = false;
+        
+        for (let char of line) {
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === '(' && current.toLowerCase().endsWith('rgb')) {
+            inRGB = true;
+            current += char;
+          } else if (char === ')' && inRGB) {
+            inRGB = false;
+            current += char;
+          } else if (char === ',' && !inQuotes && !inRGB) {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        if (current) {
+          result.push(current.trim());
+        }
+        return result;
+      });
+      
+      const colors = [];
+      let validLines = 0;
+      let totalLines = lines.filter(line => line.length > 0).length;
+      
+      // Try to detect format from header
+      const header = lines[0].map(col => col.toLowerCase());
+      let colorColumn = 0;  // Default to first column
+      let nameColumn = 1;   // Default to second column
+      
+      // Common column names for colors
+      const colorKeywords = ['hex', 'color', 'code', 'rgb', 'value'];
+      const nameKeywords = ['name', 'description', 'label', 'title'];
+      
+      console.log('Header columns:', header);
+      
+      // Only override defaults if we find matching columns
+      header.forEach((col, index) => {
+        if (colorKeywords.some(keyword => col.includes(keyword))) {
+          if (col.includes('name')) {
+            // Skip if it's "color name" instead of just "color"
+            return;
+          }
+          colorColumn = index;
+          console.log('Found color column:', index, col);
+        }
+        if (nameKeywords.some(keyword => col.includes(keyword))) {
+          nameColumn = index;
+          console.log('Found name column:', index, col);
+        }
+      });
+      
+      console.log('Using columns - Color:', colorColumn, 'Name:', nameColumn);
+      
+      // Process each line
+      for (let i = 1; i < lines.length; i++) {
+        const columns = lines[i];
+        if (!columns.length) continue;
+        
+        console.log('\nProcessing line', i, ':', columns);
+        
+        const colorValue = columns[colorColumn];
+        const name = columns[nameColumn];
+        
+        console.log('Color value:', colorValue);
+        console.log('Name:', name);
+        
+        if (colorValue) {
+          const hex = parseColor(colorValue);
+          console.log('Parsed hex:', hex);
+          
+          if (hex) {
+            colors.push({
+              hex: hex,
+              name: name || `Color ${validLines + 1}`,
+              family: 'custom',
+              tags: ['imported']
+            });
+            validLines++;
+            console.log('Added color:', hex, name);
+          }
+        }
+        
+        setBatchProgress(Math.round((i / totalLines) * 100));
+      }
+      
+      console.log('Final colors:', colors);
+      
+      if (colors.length > 0) {
+        setCatalogColors(colors);
+        setBatchResults(colors);
+      }
+      
+      setBatchStatus('complete');
+    } catch (error) {
+      console.error('Error processing CSV:', error);
+      setBatchStatus('error');
+    }
+  };
+
+  const handleGenerateAll = async () => {
+    if (!imageLoaded || !originalImage) return;
+    
+    setIsProcessing(true);
+    setError('');
+    
+    try {
+      const colors = batchResults;
+      const results = [];
+      
+      for (let i = 0; i < colors.length; i++) {
+        const color = colors[i];
+        const rgb = hexToRgb(color.hex);
+        
+        const colorized = originalImage.clone();
+        
+        colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
+          const red = this.bitmap.data[idx + 0];
+          const green = this.bitmap.data[idx + 1];
+          const blue = this.bitmap.data[idx + 2];
+          const alpha = this.bitmap.data[idx + 3];
+          
+          if (alpha > 0) {
+            const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
+            
+            this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
+            this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
+            this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
+          }
+        });
+        
+        const base64 = await new Promise((resolve, reject) => {
+          colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
+            if (err) reject(err);
+            else resolve(base64);
+          });
+        });
+        
+        results.push({
+          color: color.hex,
+          image: base64
+        });
+        
+        setBatchProgress(Math.round(((i + 1) / colors.length) * 100));
+      }
+      
+      console.log('Generated all:', results);
+      
+      // Download all images as a zip file
+      const blob = new Blob(results.map(result => result.image.split(',')[1]), { type: 'image/png' });
+      saveAs(blob, 'generated-images.zip');
+    } catch (err) {
+      console.error('Error generating all:', err);
+      setError('Error generating all');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleGenerateSelected = async () => {
+    if (!imageLoaded || !originalImage) return;
+    
+    setIsProcessing(true);
+    setError('');
+    
+    try {
+      const colors = selectedColors;
+      const results = [];
+      
+      for (let i = 0; i < colors.length; i++) {
+        const color = colors[i];
+        const rgb = hexToRgb(color);
+        
+        const colorized = originalImage.clone();
+        
+        colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
+          const red = this.bitmap.data[idx + 0];
+          const green = this.bitmap.data[idx + 1];
+          const blue = this.bitmap.data[idx + 2];
+          const alpha = this.bitmap.data[idx + 3];
+          
+          if (alpha > 0) {
+            const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
+            
+            this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
+            this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
+            this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
+          }
+        });
+        
+        const base64 = await new Promise((resolve, reject) => {
+          colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
+            if (err) reject(err);
+            else resolve(base64);
+          });
+        });
+        
+        results.push({
+          color: color,
+          image: base64
+        });
+        
+        setBatchProgress(Math.round(((i + 1) / colors.length) * 100));
+      }
+      
+      console.log('Generated selected:', results);
+      
+      // Download all images as a zip file
+      const blob = new Blob(results.map(result => result.image.split(',')[1]), { type: 'image/png' });
+      saveAs(blob, 'generated-images.zip');
+    } catch (err) {
+      console.error('Error generating selected:', err);
+      setError('Error generating selected');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleColorSelect = (color) => {
+    if (selectedColors.includes(color)) {
+      setSelectedColors(selectedColors.filter(c => c !== color));
+    } else {
+      setSelectedColors([...selectedColors, color]);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -849,8 +1179,15 @@ function App() {
               sx={{
                 position: 'absolute',
                 right: '12px',
-                top: '12px',
-                backgroundColor: 'var(--element-bg)',
+                bottom: '12px',
+                minWidth: 'auto',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
               <FileDownloadIcon />
@@ -973,39 +1310,169 @@ function App() {
             </Box>
           </Box>
 
-          {/* Section H: Results */}
-          <Box sx={{ position: 'relative' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 3
+          {/* Section H: MESMERIZE */}
+          <Box sx={{ 
+            width: '100%',
+            mt: 4,
+            pt: 4,
+            borderTop: '1px solid var(--border-subtle)'
+          }}>
+            {/* MESMERIZE Section Title */}
+            <Typography 
+              variant="subtitle1" 
+              component="h2" 
+              sx={{ 
+                mb: 3,
+                textAlign: 'center',
+                fontWeight: 500,
+                fontFamily: "'League Spartan', sans-serif",
+                fontSize: '1rem',
+                letterSpacing: '0.25em',
+                textTransform: 'uppercase',
+                color: 'var(--text-secondary)'
               }}
             >
-              {isProcessing && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                    borderRadius: '4px',
-                    zIndex: 1
-                  }}
+              MESMERIZE
+            </Typography>
+
+            {/* Batch Processing Controls */}
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              alignItems: 'center',
+              p: 3,
+              borderRadius: '8px',
+              bgcolor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-subtle)'
+            }}>
+              <Typography variant="h6" sx={{ 
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: 500,
+                color: 'var(--text-primary)'
+              }}>
+                Batch Processing
+              </Typography>
+
+              {/* Main Action Buttons */}
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 2,
+                mb: 2
+              }}>
+                <GlowTextButton
+                  variant="contained"
+                  onClick={handleGenerateAll}
+                  disabled={isProcessing || !imageLoaded}
+                  sx={{ minWidth: '180px' }}
                 >
-                  <CircularProgress sx={{ color: 'var(--glow-color)' }} />
+                  GENERATE ALL
+                </GlowTextButton>
+                <GlowTextButton
+                  variant="contained"
+                  onClick={handleGenerateSelected}
+                  disabled={isProcessing || !imageLoaded || !selectedColors.length}
+                  sx={{ minWidth: '180px' }}
+                >
+                  GENERATE SELECTED
+                </GlowTextButton>
+              </Box>
+
+              {/* CSV Upload Button */}
+              <GlowTextButton
+                component="label"
+                variant="contained"
+                disabled={isProcessing || batchStatus === 'processing'}
+                sx={{ width: '200px' }}
+              >
+                UPLOAD CSV
+                <input
+                  type="file"
+                  hidden
+                  accept=".csv"
+                  onChange={handleCSVUpload}
+                />
+              </GlowTextButton>
+
+              {/* Progress Indicator */}
+              {batchStatus === 'processing' && (
+                <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
+                  <Typography variant="body2" sx={{ mb: 1, textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    Processing: {batchProgress}% ({processedCount} of {totalCount})
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={batchProgress} 
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: 'var(--border-subtle)',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: 'var(--glow-color)',
+                        borderRadius: 4
+                      }
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* Color Results */}
+              {batchResults && batchResults.length > 0 && (
+                <Box sx={{ 
+                  width: '100%',
+                  mt: 3
+                }}>
+                  <Typography variant="subtitle2" sx={{ 
+                    mb: 2, 
+                    textAlign: 'center',
+                    color: 'var(--text-secondary)',
+                    letterSpacing: '0.1em'
+                  }}>
+                    Available Colors
+                  </Typography>
+                  <Box sx={{ 
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 1.5,
+                    justifyContent: 'center',
+                    maxWidth: '100%',
+                    p: 2
+                  }}>
+                    {batchResults.map((color, index) => (
+                      <Tooltip 
+                        key={index} 
+                        title={color.name || color.hex}
+                        arrow
+                        placement="top"
+                      >
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            backgroundColor: color.hex,
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            border: '1px solid var(--border-color)',
+                            boxShadow: theme => `0 0 0 ${selectedColors.includes(color.hex) ? '2px var(--glow-color)' : '1px rgba(0, 0, 0, 0.1)'}`,
+                            transition: 'transform 0.2s, box-shadow 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              boxShadow: '0 0 0 2px var(--glow-color)',
+                            }
+                          }}
+                          onClick={() => handleColorSelect(color.hex)}
+                        />
+                      </Tooltip>
+                    ))}
+                  </Box>
                 </Box>
               )}
             </Box>
           </Box>
+
         </Box>
       </Box>
+      <ColorDemo catalog={catalogColors} />
     </Box>
   );
 }
