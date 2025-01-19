@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import Jimp from 'jimp';
+import JSZip from 'jszip';
 import Banner from './components/Banner';
 import GlowButton from './components/GlowButton';
 import GlowTextButton from './components/GlowTextButton';
@@ -11,12 +12,12 @@ import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import ColorDemo from './components/ColorDemo';
 import GILDAN_64 from './data/catalogs/gildan64';
+import GILDAN_3000 from './data/catalogs/gildan3000';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
-import { saveAs } from 'file-saver';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
@@ -120,6 +121,7 @@ function App() {
   const [processedCount, setProcessedCount] = useState(0);
 
   // Add state for catalog colors
+  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64');
   const [catalogColors, setCatalogColors] = useState(GILDAN_64);
 
   // Image processing methods
@@ -715,21 +717,36 @@ function App() {
   };
 
   const handleGenerateAll = async () => {
-    if (!imageLoaded || !originalImage) return;
+    if (!imageLoaded || !originalImage) {
+      console.log('No image loaded');
+      return;
+    }
     
     setIsProcessing(true);
+    setBatchStatus('processing');
     setError('');
     
     try {
-      const colors = batchResults;
-      const results = [];
+      const colors = catalogColors; // Use current catalog
+      console.log(`Processing ${colors.length} colors from ${activeCatalog}`);
+      
+      const zip = new JSZip();
+      const folder = zip.folder("hextra-colors");
       
       for (let i = 0; i < colors.length; i++) {
         const color = colors[i];
-        const rgb = hexToRgb(color.hex);
+        console.log(`Processing color: ${color.name} (${color.hex})`);
         
+        const rgb = hexToRgb(color.hex);
+        if (!rgb) {
+          console.error(`Invalid hex color: ${color.hex}`);
+          continue;
+        }
+        
+        // Clone the original image for this color
         const colorized = originalImage.clone();
         
+        // Process the image
         colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
           const red = this.bitmap.data[idx + 0];
           const green = this.bitmap.data[idx + 1];
@@ -745,29 +762,65 @@ function App() {
           }
         });
         
+        // Get base64 data
         const base64 = await new Promise((resolve, reject) => {
           colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
-            if (err) reject(err);
-            else resolve(base64);
+            if (err) {
+              console.error('Error generating base64:', err);
+              reject(err);
+            } else {
+              resolve(base64);
+            }
           });
         });
         
-        results.push({
-          color: color.hex,
-          image: base64
-        });
+        // Add to zip with descriptive filename
+        const colorCode = color.hex.replace('#', '');
+        const colorName = color.name ? color.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'color';
+        const filename = `${colorName}_${colorCode}.png`;
         
+        // Convert base64 to binary and add to zip
+        const imageData = base64.replace(/^data:image\/\w+;base64,/, "");
+        folder.file(filename, imageData, {base64: true});
+        
+        console.log(`Added ${filename} to ZIP`);
+        
+        // Update progress
+        setProcessedCount(i + 1);
+        setTotalCount(colors.length);
         setBatchProgress(Math.round(((i + 1) / colors.length) * 100));
       }
       
-      console.log('Generated all:', results);
+      console.log('Generating final ZIP file...');
       
-      // Download all images as a zip file
-      const blob = new Blob(results.map(result => result.image.split(',')[1]), { type: 'image/png' });
-      saveAs(blob, 'generated-images.zip');
+      // Generate and download zip
+      const content = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: {
+          level: 9
+        }
+      });
+      
+      console.log('ZIP generated, size:', content.size);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `hextra-colors-${activeCatalog.toLowerCase()}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('Download initiated');
+      setBatchStatus('complete');
+      
     } catch (err) {
-      console.error('Error generating all:', err);
-      setError('Error generating all');
+      console.error('Error in batch processing:', err);
+      setError(`Error generating all: ${err.message}`);
+      setBatchStatus('error');
     } finally {
       setIsProcessing(false);
     }
@@ -777,11 +830,12 @@ function App() {
     if (!imageLoaded || !originalImage) return;
     
     setIsProcessing(true);
+    setBatchStatus('processing');
     setError('');
     
     try {
       const colors = selectedColors;
-      const results = [];
+      const zip = new JSZip();
       
       for (let i = 0; i < colors.length; i++) {
         const color = colors[i];
@@ -810,23 +864,37 @@ function App() {
             else resolve(base64);
           });
         });
+
+        // Add to zip with color code in filename
+        const colorCode = color.replace('#', '');
+        const filename = `color_${colorCode}.png`;
         
-        results.push({
-          color: color,
-          image: base64
-        });
+        // Convert base64 to binary
+        const imageData = base64.replace(/^data:image\/\w+;base64,/, "");
+        zip.file(filename, imageData, {base64: true});
         
+        setProcessedCount(i + 1);
+        setTotalCount(colors.length);
         setBatchProgress(Math.round(((i + 1) / colors.length) * 100));
       }
       
-      console.log('Generated selected:', results);
+      // Generate and download zip
+      const content = await zip.generateAsync({type: "blob"});
+      const url = window.URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'hextra-selected-colors.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
-      // Download all images as a zip file
-      const blob = new Blob(results.map(result => result.image.split(',')[1]), { type: 'image/png' });
-      saveAs(blob, 'generated-images.zip');
+      setBatchStatus('complete');
+      
     } catch (err) {
       console.error('Error generating selected:', err);
       setError('Error generating selected');
+      setBatchStatus('error');
     } finally {
       setIsProcessing(false);
     }
@@ -837,6 +905,22 @@ function App() {
       setSelectedColors(selectedColors.filter(c => c !== color));
     } else {
       setSelectedColors([...selectedColors, color]);
+    }
+  };
+
+  const handleCatalogSwitch = (catalogName) => {
+    switch(catalogName) {
+      case 'GILDAN_64':
+        setActiveCatalog('GILDAN_64');
+        setCatalogColors(GILDAN_64);
+        break;
+      case 'GILDAN_3000':
+        setActiveCatalog('GILDAN_3000');
+        setCatalogColors(GILDAN_3000);
+        break;
+      default:
+        setActiveCatalog('GILDAN_64');
+        setCatalogColors(GILDAN_64);
     }
   };
 
@@ -1334,6 +1418,24 @@ function App() {
             >
               MESMERIZE
             </Typography>
+
+            {/* Catalog selector */}
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 2 }}>
+              <GlowTextButton
+                variant={activeCatalog === 'GILDAN_64' ? 'contained' : 'outlined'}
+                onClick={() => handleCatalogSwitch('GILDAN_64')}
+                sx={{ minWidth: '140px' }}
+              >
+                GILDAN 64
+              </GlowTextButton>
+              <GlowTextButton
+                variant={activeCatalog === 'GILDAN_3000' ? 'contained' : 'outlined'}
+                onClick={() => handleCatalogSwitch('GILDAN_3000')}
+                sx={{ minWidth: '140px' }}
+              >
+                GILDAN 3000
+              </GlowTextButton>
+            </Box>
 
             {/* Batch Processing Controls */}
             <Box sx={{
