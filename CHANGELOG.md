@@ -4,6 +4,19 @@ All notable changes to HEXTRA-3 will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.7] - 2025-01-19
+### Improved
+- About dialog layout and design
+- Banner styling and positioning
+- Dark/Light mode consistency
+- Content organization and readability
+
+### Fixed
+- Banner spacing and alignment
+- Logo positioning in About dialog
+- Border color consistency
+- Dialog content overflow
+
 ## [1.2.1] - 2025-01-15
 ### Added
 - Comprehensive style guide with visual reference

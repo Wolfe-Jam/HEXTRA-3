@@ -1,84 +1,132 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import AboutDialog from './AboutDialog';
 
 const Banner = ({ version, isDarkMode, onThemeToggle }) => {
+  const [aboutOpen, setAboutOpen] = useState(false);
+  
   const COLORS = {
-    dark: '#141414',    // RGB(20,20,20)
-    light: '#F8F8F8',   // Soft white
-    textDark: '#141414',
+    textDark: '#E8E8E8',
     textLight: '#F8F8F8'
   };
 
   return (
-    <Box
+    <Box 
+      className="app-banner"
       onMouseLeave={() => document.activeElement.blur()}
       sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start', 
-        padding: '8px 16px 0', 
-        backgroundColor: isDarkMode ? COLORS.light : COLORS.dark,
-        borderBottom: `1px solid ${isDarkMode ? COLORS.dark : COLORS.light}`,
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '64px', 
-        zIndex: 1100,
-        transition: 'background-color 0.3s, border-color 0.3s',
-        overflow: 'visible' 
+        width: '100%',
+        margin: 0,
+        padding: 0,
+        overflow: 'visible'
       }}
     >
-      <Typography
-        sx={{
-          fontSize: '0.875rem',
-          color: isDarkMode ? COLORS.textDark : COLORS.textLight,
-          fontFamily: "'Inter', sans-serif",
-          marginTop: '8px' 
-        }}
-      >
-        v{version}
-      </Typography>
-
-      {/* Logo with overflow */}
       <Box
-        component="img"
-        src={isDarkMode ? '/images/HEXTRA-3-logo-Wht.svg' : '/images/HEXTRA-3-logo-Blk.svg'}
-        alt="HEXTRA-3"
+        className="banner-content"
         sx={{
-          height: '90px',
-          width: 'auto',
-          objectFit: 'contain',
-          display: 'block',
-          marginTop: '-8px', 
-          position: 'relative', 
-          zIndex: 1200
-        }}
-      />
-      
-      <IconButton
-        onClick={onThemeToggle}
-        sx={{
-          width: '42px',
-          height: '42px',
-          color: isDarkMode ? COLORS.textDark : COLORS.textLight,
-          padding: '8px',
-          marginTop: '8px',
-          border: '1px solid transparent',
-          transition: 'all 0.2s ease-in-out',
-          '&:hover': {
-            backgroundColor: 'transparent',
-            borderColor: '#FED141',
-            color: '#FED141',
-            boxShadow: `0 0 0 3px ${isDarkMode ? 'rgba(254, 209, 65, 0.25)' : 'rgba(254, 209, 65, 0.2)'}`,
-            transform: 'scale(1.05)'
-          }
+          background: isDarkMode 
+            ? 'linear-gradient(45deg, #f5f5f5 30%, #ffffff 90%)'
+            : 'linear-gradient(45deg, #1a1a1a 30%, #2d2d2d 90%)',
+          borderBottom: isDarkMode
+            ? '1px solid rgba(0, 0, 0, 0.12)'
+            : '1px solid rgba(255, 255, 255, 0.12)',
+          width: '100%',
+          margin: 0
         }}
       >
-        {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
-      </IconButton>
+        {/* Left side - About and Version */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          minWidth: '100px'
+        }}>
+          <Typography
+            component="span"
+            sx={{
+              color: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              '&:hover': {
+                color: '#D50032',
+                textShadow: '0 0 8px rgba(213, 0, 50, 0.4)'
+              }
+            }}
+            onClick={() => setAboutOpen(true)}
+          >
+            About
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '0.875rem',
+              color: isDarkMode ? '#000000' : COLORS.textDark,
+              opacity: 0.7
+            }}
+          >
+            v{version}
+          </Typography>
+        </Box>
+
+        {/* Center - Logo */}
+        <Box
+          sx={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1200
+          }}
+        >
+          <Box
+            component="img"
+            src={isDarkMode ? '/images/HEXTRA-3-logo-Wht.svg' : '/images/HEXTRA-3-logo-Blk.svg'}
+            alt="HEXTRA-3"
+            sx={{
+              height: '90px',
+              width: 'auto',
+              objectFit: 'contain',
+              display: 'block',
+              marginTop: '-8px'
+            }}
+          />
+        </Box>
+
+        {/* Right side - Theme Toggle */}
+        <Box sx={{ 
+          minWidth: '100px', 
+          display: 'flex', 
+          justifyContent: 'flex-end',
+          marginRight: '24px'
+        }}>
+          <IconButton
+            onClick={onThemeToggle}
+            sx={{
+              width: '42px',
+              height: '42px',
+              color: isDarkMode ? '#000000' : COLORS.textDark,
+              padding: '8px',
+              border: '1px solid transparent',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                backgroundColor: 'transparent',
+                borderColor: '#FED141',
+                color: '#FED141',
+                boxShadow: `0 0 0 3px ${isDarkMode ? 'rgba(254, 209, 65, 0.2)' : 'rgba(254, 209, 65, 0.25)'}`,
+                transform: 'scale(1.05)'
+              }
+            }}
+          >
+            {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+        </Box>
+      </Box>
+
+      <AboutDialog
+        open={aboutOpen}
+        onClose={() => setAboutOpen(false)}
+        version={`v${version}`}
+      />
     </Box>
   );
 };
