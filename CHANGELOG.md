@@ -4,6 +4,31 @@ All notable changes to HEXTRA-3 will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-01-19
+### Major Release
+- Complete professional overhaul of UI/UX
+- Enhanced brand identity and messaging
+- Streamlined workflow and interactions
+- Optimized performance and responsiveness
+
+### Added
+- Redesigned About dialog with grid layout
+- Professional documentation and guides
+- Improved error handling and feedback
+- Enhanced accessibility features
+
+### Improved
+- Banner styling and positioning
+- Dark/Light mode consistency
+- Content organization and readability
+- Overall user experience
+
+### Fixed
+- Banner spacing and alignment
+- Logo positioning in About dialog
+- Border color consistency
+- Dialog content overflow
+
 ## [1.2.7] - 2025-01-19
 ### Improved
 - About dialog layout and design
