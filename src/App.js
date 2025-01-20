@@ -11,6 +11,7 @@ import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import ColorDemo from './components/ColorDemo';
+import { ToggleButton } from '@mui/material';
 import GILDAN_64 from './data/catalogs/gildan64';
 import GILDAN_3000 from './data/catalogs/gildan3000';
 import './theme.css';
@@ -124,6 +125,9 @@ function App() {
   // Add state for catalog colors
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64');
   const [catalogColors, setCatalogColors] = useState(GILDAN_64);
+
+  // Add state for advanced settings toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Image processing methods
   const LUMINANCE_METHODS = {
@@ -951,6 +955,24 @@ function App() {
     height: '36px',  // Consistent height
   };
 
+  const handleTestImageToggle = (e) => {
+    setUseTestImage(e.target.checked);
+  };
+
+  const handleEnhanceChange = (e) => {
+    setEnhanceEffect(e.target.checked);
+    if (imageLoaded) {
+      applyColor();
+    }
+  };
+
+  const handleLuminanceMethodChange = (value) => {
+    setLuminanceMethod(value);
+    if (imageLoaded) {
+      setTimeout(() => applyColor(), 0);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -965,7 +987,7 @@ function App() {
     >
       {/* Section A: Banner */}
       <Banner 
-        version="2.0.2"
+        version="2.0.1"
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
@@ -1245,13 +1267,12 @@ function App() {
             </Box>
           </Box>
 
-          {/* Separator */}
           <Box
             sx={{
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              mb: 1
+              my: 3
             }}
           />
 
@@ -1271,6 +1292,7 @@ function App() {
               `
             }}>VISUALIZE</Box> | MESMERIZE
           </Typography>
+
           {/* Section E: Image Loading */}
           <Box sx={{ 
             display: 'flex', 
@@ -1356,13 +1378,11 @@ function App() {
             overflow: 'hidden'
           }}>
             <img
-              src={useTestImage ? TEST_IMAGE_URL : workingProcessedUrl}
-              alt={useTestImage ? "Test Gradient" : "Processed Image"}
+              src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
+              alt="Working"
               style={{
                 maxWidth: '100%',
                 height: 'auto',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
                 display: 'block' // Remove any extra space below image
               }}
             />
@@ -1395,120 +1415,176 @@ function App() {
             position: 'relative',
             zIndex: 2  // Higher z-index for controls
           }}>
-            {/* Luminance Method Buttons */}
-            <Box sx={{ mb: 3 }}>
-              <GlowToggleGroup
-                options={Object.entries(LUMINANCE_METHODS).map(([key, method]) => ({
-                  value: key,
-                  label: method.label,
-                  tooltip: method.tooltip
-                }))}
-                value={luminanceMethod}
-                onChange={(value) => {
-                  setLuminanceMethod(value);
-                  if (imageLoaded) {
-                    setTimeout(() => applyColor(), 0);
-                  }
-                }}
-                showTooltips={showTooltips}
-              />
+            {/* Advanced Settings Toggle Section */}
+            <Box sx={{ 
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              mb: 2
+            }}>
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}>
+                <GlowSwitch
+                  checked={showAdvanced}
+                  onChange={(e) => setShowAdvanced(e.target.checked)}
+                  size="small"
+                />
+                <Typography sx={{ 
+                  fontSize: '0.75rem',
+                  color: 'var(--text-secondary)',
+                  mt: 0.5
+                }}>
+                  Advanced
+                </Typography>
+              </Box>
             </Box>
 
-            {/* Enhancement and Tooltip Controls */}
+            {/* Image Processing Section */}
             <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: 4,
-              mb: 3
+              width: '100%',
+              opacity: showAdvanced ? 1 : 0.6,
+              transition: 'opacity 0.2s',
+              pointerEvents: showAdvanced ? 'auto' : 'none'
             }}>
-              <GlowSwitch
-                checked={enhanceEffect}
-                onChange={(e) => {
-                  setEnhanceEffect(e.target.checked);
-                  if (imageLoaded) {
-                    applyColor();
-                  }
-                }}
-                label="Enhanced"
-              />
-              <GlowSwitch
-                checked={showTooltips}
-                onChange={(e) => setShowTooltips(e.target.checked)}
-                label="Tooltips"
-              />
-              <GlowSwitch
-                checked={useTestImage}
-                onChange={(e) => setUseTestImage(e.target.checked)}
-                label="Test Image"
-              />
-            </Box>
-            {/* Sliders */}
-            <Box sx={{ px: 3 }}>
-              <Box sx={{ mb: 2 }}>
-                <Typography gutterBottom sx={{ 
-                  fontFamily: "'Inter', sans-serif",
-                  letterSpacing: '0.05em',
-                  color: 'rgba(128, 128, 128, 0.5)'
-                }}>
-                  Matte Effect
-                </Typography>
-                <Slider
-                  value={matteValue}
-                  onChange={(e, newValue) => setMatteValue(newValue)}
-                  min={0}
-                  max={100}
-                  disabled={true}
-                  sx={{ 
-                    color: 'rgba(128, 128, 128, 0.5)',
-                    '& .MuiSlider-thumb': {
-                      color: 'rgba(128, 128, 128, 0.5)',
-                    },
-                    '& .MuiSlider-track': {
-                      color: 'rgba(128, 128, 128, 0.5)',
-                    },
-                    '& .MuiSlider-rail': {
-                      color: 'rgba(128, 128, 128, 0.5)',
+              {/* Luminance Method Buttons */}
+              <Box sx={{ mb: 3 }}>
+                <GlowToggleGroup
+                  options={Object.entries(LUMINANCE_METHODS).map(([key, method]) => ({
+                    value: key,
+                    label: method.label,
+                    tooltip: method.tooltip
+                  }))}
+                  value={luminanceMethod}
+                  onChange={(value) => {
+                    setLuminanceMethod(value);
+                    if (imageLoaded) {
+                      setTimeout(() => applyColor(), 0);
                     }
                   }}
+                  showTooltips={showTooltips}
                 />
               </Box>
-              <Box>
-                <Typography gutterBottom sx={{ 
-                  fontFamily: "'Inter', sans-serif",
-                  letterSpacing: '0.05em',
-                  color: 'rgba(128, 128, 128, 0.5)'
-                }}>
-                  Texture Effect
-                </Typography>
-                <Slider
-                  value={textureValue}
-                  onChange={(e, newValue) => setTextureValue(newValue)}
-                  min={0}
-                  max={100}
-                  disabled={true}
-                  sx={{ 
-                    color: 'rgba(128, 128, 128, 0.5)',
-                    '& .MuiSlider-thumb': {
-                      color: 'rgba(128, 128, 128, 0.5)',
-                    },
-                    '& .MuiSlider-track': {
-                      color: 'rgba(128, 128, 128, 0.5)',
-                    },
-                    '& .MuiSlider-rail': {
-                      color: 'rgba(128, 128, 128, 0.5)',
+
+              {/* Controls Row */}
+              <Box sx={{ 
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 4,
+                mb: 3
+              }}>
+                <GlowSwitch
+                  checked={enhanceEffect}
+                  onChange={(e) => {
+                    setEnhanceEffect(e.target.checked);
+                    if (imageLoaded) {
+                      applyColor();
                     }
                   }}
+                  label="Enhanced"
                 />
+                <GlowSwitch
+                  checked={showTooltips}
+                  onChange={(e) => setShowTooltips(e.target.checked)}
+                  label="Tooltips"
+                />
+                <GlowSwitch
+                  checked={useTestImage}
+                  onChange={(e) => setUseTestImage(e.target.checked)}
+                  label="Test Image"
+                />
+              </Box>
+
+              {/* Sliders */}
+              <Box sx={{ px: 3 }}>
+                <Box sx={{ mb: 2 }}>
+                  <Typography gutterBottom sx={{ 
+                    fontFamily: "'Inter', sans-serif",
+                    letterSpacing: '0.05em',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    Matte Effect
+                  </Typography>
+                  <Slider
+                    value={matteValue}
+                    onChange={(e, newValue) => setMatteValue(newValue)}
+                    min={0}
+                    max={100}
+                    disabled={true}
+                    sx={{ 
+                      color: 'var(--text-secondary)',
+                      '& .MuiSlider-thumb': {
+                        color: 'var(--text-secondary)',
+                      },
+                      '& .MuiSlider-track': {
+                        color: 'var(--text-secondary)',
+                      },
+                      '& .MuiSlider-rail': {
+                        color: 'var(--text-secondary)',
+                      }
+                    }}
+                  />
+                </Box>
+                <Box>
+                  <Typography gutterBottom sx={{ 
+                    fontFamily: "'Inter', sans-serif",
+                    letterSpacing: '0.05em',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    Texture Effect
+                  </Typography>
+                  <Slider
+                    value={textureValue}
+                    onChange={(e, newValue) => setTextureValue(newValue)}
+                    min={0}
+                    max={100}
+                    disabled={true}
+                    sx={{ 
+                      color: 'var(--text-secondary)',
+                      '& .MuiSlider-thumb': {
+                        color: 'var(--text-secondary)',
+                      },
+                      '& .MuiSlider-track': {
+                        color: 'var(--text-secondary)',
+                      },
+                      '& .MuiSlider-rail': {
+                        color: 'var(--text-secondary)',
+                      }
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
           </Box>
+
+          <Box sx={{ my: 3 }}>
+            <Box
+              sx={{
+                width: '100%',
+                height: '4px',
+                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
+              }}
+            />
+          </Box>
+
+          {/* Third separator - before MESMERIZE section */}
+          <Box
+            sx={{
+              width: '100%',
+              height: '4px',
+              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+              my: 3
+            }}
+          />
 
           {/* Section H: MESMERIZE */}
           <Box sx={{ 
             width: '100%',
             maxWidth: '800px',
-            mt: 4 
+            mt: 3 
           }}>
             {/* MESMERIZE Section Title */}
             <Typography 
@@ -1702,6 +1778,26 @@ function App() {
               )}
             </Box>
           </Box>
+
+          <Box sx={{ my: 3 }}>
+            <Box
+              sx={{
+                width: '100%',
+                height: '4px',
+                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
+              }}
+            />
+          </Box>
+
+          {/* Fourth separator - before HEXTRA section */}
+          <Box
+            sx={{
+              width: '100%',
+              height: '4px',
+              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+              my: 3
+            }}
+          />
 
         </Box>
       </Box>
