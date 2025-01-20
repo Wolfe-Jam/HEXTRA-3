@@ -966,8 +966,20 @@ function App() {
           display: 'flex',
           flexDirection: 'column',
           gap: 3,
-          maxWidth: '600px',
-          margin: '0 auto'
+          minWidth: '532px',  // Driven by VISUALIZE optimal width
+          width: '100%',
+          maxWidth: '800px',  // Maximum before image quality suffers
+          mx: 'auto',
+          p: 3,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+          alignItems: 'center',
+          '@media (max-width: 532px)': {
+            minWidth: 'unset',
+            width: '100%',
+            p: 2
+          }
         }}>
           {/* Color Section */}
           <Box sx={{ mb: 1 }}>
@@ -1068,10 +1080,20 @@ function App() {
             {/* Section D: HEX Input Bar */}
             <Box sx={{ 
               display: 'flex',
+              flexWrap: 'wrap',  // Allow wrapping
               gap: 2,
               alignItems: 'center',
               width: '100%',
-              pl: '40px'  // Consistent left padding
+              pl: '40px',  // Consistent left padding
+              '@media (max-width: 532px)': {
+                justifyContent: 'center',
+                pl: 2,  // Reduce padding on mobile
+                '& #apply-button': {
+                  width: '100%',  // Full width apply button on mobile
+                  maxWidth: '200px',
+                  marginTop: '8px'
+                }
+              }
             }}>
               {/* RGB Display */}
               <Typography sx={{ 
@@ -1138,6 +1160,13 @@ function App() {
                 variant="contained"
                 onClick={applyColor}
                 disabled={isProcessing || !imageLoaded}
+                sx={{
+                  width: '120px',  // Standard button width
+                  '@media (max-width: 532px)': {
+                    width: '120px',  // Keep same width on mobile
+                    marginTop: '8px'
+                  }
+                }}
               >
                 APPLY
               </GlowTextButton>
@@ -1163,10 +1192,14 @@ function App() {
               textAlign: 'center',
               fontWeight: 500,
               fontFamily: "'League Spartan', sans-serif",
-              fontSize: '1rem',
-              letterSpacing: '0.25em',
+              fontSize: '0.875rem',  // Reduced from 1rem
+              letterSpacing: '0.2em', // Slightly reduced from 0.25em
               textTransform: 'uppercase',
-              color: 'var(--text-secondary)'
+              color: 'var(--text-secondary)',
+              '@media (max-width: 532px)': {
+                fontSize: '0.75rem',
+                letterSpacing: '0.15em'
+              }
             }}
           >
             THE IMAGE FACTORY
@@ -1175,17 +1208,25 @@ function App() {
           {/* Section E: Image Loading */}
           <Box sx={{ 
             display: 'flex', 
+            flexWrap: 'wrap',
             gap: 2,
             alignItems: 'center',
             mt: 1,
             mb: 3,
             width: '100%',
-            pr: '12px'  // Restore the padding for USE URL alignment
+            '@media (max-width: 532px)': {
+              flexDirection: 'column',
+              '& > *': { // All direct children
+                width: '100%',
+                maxWidth: '300px'
+              }
+            }
           }}>
             <GlowTextButton
               component="label"
               variant="contained"
               disabled={isProcessing}
+              sx={{ width: '120px' }}  // Match APPLY width
             >
               UPLOAD
               <input
@@ -1210,22 +1251,13 @@ function App() {
               />
             </Box>
 
-            <Button
+            <GlowTextButton
               variant="contained"
               onClick={handleLoadUrl}
-              sx={{
-                minWidth: 'auto',
-                px: 2,
-                fontFamily: "'Inter', sans-serif",
-                color: theme === 'dark' ? 'black' : 'white',
-                bgcolor: theme === 'dark' ? 'white' : 'black',
-                '&:hover': {
-                  bgcolor: theme === 'dark' ? '#e0e0e0' : '#333333'
-                }
-              }}
+              sx={{ width: '120px' }}  // Match APPLY width
             >
               USE URL
-            </Button>
+            </GlowTextButton>
           </Box>
 
           {/* Section F: Main Image (with integrated download button) */}
@@ -1402,10 +1434,14 @@ function App() {
                 textAlign: 'center',
                 fontWeight: 500,
                 fontFamily: "'League Spartan', sans-serif",
-                fontSize: '1rem',
-                letterSpacing: '0.25em',
+                fontSize: '0.875rem',  // Reduced from 1rem
+                letterSpacing: '0.2em', // Slightly reduced from 0.25em
                 textTransform: 'uppercase',
-                color: 'var(--text-secondary)'
+                color: 'var(--text-secondary)',
+                '@media (max-width: 532px)': {
+                  fontSize: '0.75rem',
+                  letterSpacing: '0.15em'
+                }
               }}
             >
               MESMERIZE

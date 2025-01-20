@@ -8,24 +8,43 @@ import SwatchInfoCard from './SwatchInfoCard';
 const Container = styled(Box)`
   display: flex;
   gap: 24px;
-  align-items: flex-start;
+  width: 100%;
+  @media (max-width: 532px) {
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const LeftPanel = styled(Box)`
-  flex: 1;
+  width: 232px;  /* 200px + (16px * 2) padding */
   display: flex;
   flex-direction: column;
+  @media (max-width: 532px) {
+    width: 100%;
+    max-width: 232px;
+  }
 `;
 
 const RightPanel = styled(Box)`
+  min-width: 232px;
   flex: 1;
+  @media (max-width: 532px) {
+    width: 100%;
+    max-width: 532px;
+  }
 `;
 
 const ColorPanel = styled(Box)`
+  width: 200px;
   padding: 16px;
   background: #f5f5f5;
   border-radius: 4px;
   margin-bottom: 16px;
+  @media (max-width: 532px) {
+    width: calc(100% - 32px);  /* Account for padding */
+    max-width: 200px;
+    margin: 0 auto 16px;
+  }
 `;
 
 const RoundSwatch = styled.div`
