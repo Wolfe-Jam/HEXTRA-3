@@ -31,7 +31,7 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
-const VERSION = '2.0.0'; // MESMERIZE: Complete Batch Color Processing Implementation
+const VERSION = '2.0.4'; // Starting new features after THE IMAGE FACTORY
 
 function hexToRgb(hex) {
   // Remove the hash if present
@@ -987,7 +987,7 @@ function App() {
     >
       {/* Section A: Banner */}
       <Banner 
-        version="2.0.1"
+        version="2.0.4"
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
