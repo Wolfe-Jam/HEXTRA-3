@@ -11,7 +11,15 @@ const ColorDemo = ({ catalog }) => {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h3" gutterBottom>
+      <Typography 
+        variant="h3" 
+        gutterBottom
+        sx={{
+          fontFamily: "'League Spartan', sans-serif",
+          fontSize: '32px',
+          textAlign: 'left'
+        }}
+      >
         HEXTRA Color System
       </Typography>
       

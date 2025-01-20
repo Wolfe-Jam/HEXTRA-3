@@ -110,6 +110,7 @@ function App() {
   const [useTestImage, setUseTestImage] = useState(false);
   const [lastWorkingImage, setLastWorkingImage] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
 
   // MEZMERIZE States
   const [isBatchMode, setIsBatchMode] = useState(false);
@@ -223,7 +224,10 @@ function App() {
     const hexValue = color.hex.toUpperCase();
     setSelectedColor(hexValue);
     setHexInput(hexValue);
-    setRgbColor(hexToRgb(hexValue));
+    const newRgb = hexToRgb(hexValue);
+    setRgbColor(newRgb);
+    // Update grayscale value based on RGB average
+    setGrayscaleValue(Math.round((newRgb.r + newRgb.g + newRgb.b) / 3));
   };
 
   const applyColor = async () => {
@@ -316,7 +320,8 @@ function App() {
 
   const handleLoadUrl = () => {
     if (!urlInput.trim()) {
-      window.open('https://www.google.com/search?q=white+t-shirt+mockup&tbm=isch', '_blank');
+      // If no URL, open Google search for blank white t-shirts
+      window.open('https://www.google.com/search?q=blank+white+t-shirts', '_blank');
       return;
     }
     // Reset file input by clearing imageFile state
@@ -346,6 +351,15 @@ function App() {
   const handleGraySwatchClick = () => {
     const grayValue = Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3);
     const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
+    setHexInput(grayHex);
+    setSelectedColor(grayHex);
+    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
+  };
+
+  const handleGrayscaleChange = (event, newValue) => {
+    const grayValue = newValue;
+    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
+    setGrayscaleValue(grayValue);
     setHexInput(grayHex);
     setSelectedColor(grayHex);
     setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
@@ -429,8 +443,8 @@ function App() {
     document.documentElement.style.setProperty('--border-color', theme === 'light' ? '#E0E0E0' : '#2A2A2A');
     document.documentElement.style.setProperty('--border-subtle', theme === 'light' ? 'rgba(20, 20, 20, 0.1)' : 'rgba(248, 248, 248, 0.15)');
     document.documentElement.style.setProperty('--input-border', theme === 'light' ? '#E0E0E0' : '#333333');
-    document.documentElement.style.setProperty('--glow-color', '#FED141');
-    document.documentElement.style.setProperty('--glow-subtle', theme === 'light' ? 'rgba(254, 209, 65, 0.2)' : 'rgba(254, 209, 65, 0.25)');
+    document.documentElement.style.setProperty('--glow-color', '#FF9900');
+    document.documentElement.style.setProperty('--glow-subtle', theme === 'light' ? 'rgba(255, 153, 0, 0.2)' : 'rgba(255, 153, 0, 0.25)');
     document.documentElement.style.setProperty('--accent-color', '#FF4400');
     document.documentElement.style.setProperty('--accent-color-hover', '#FF5500');
     document.documentElement.style.setProperty('--accent-color-subtle', theme === 'light' ? 'rgba(255, 68, 0, 0.15)' : 'rgba(255, 68, 0, 0.25)');
@@ -916,6 +930,27 @@ function App() {
     }
   };
 
+  const sectionHeaderStyle = {
+    mb: 1,
+    textAlign: 'center',
+    fontWeight: 500,
+    fontFamily: "'League Spartan', sans-serif",
+    fontSize: '0.875rem',
+    letterSpacing: '0.2em',
+    textTransform: 'uppercase',
+    color: 'var(--text-secondary)',
+    '@media (max-width: 532px)': {
+      fontSize: '0.75rem',
+      letterSpacing: '0.15em'
+    }
+  };
+
+  const actionButtonStyle = {
+    width: '110px',  // Slightly smaller, consistent width
+    minWidth: '110px',  // Ensure minimum width
+    height: '36px',  // Consistent height
+  };
+
   return (
     <Box
       sx={{
@@ -930,7 +965,7 @@ function App() {
     >
       {/* Section A: Banner */}
       <Banner 
-        version="2.0.0"
+        version="2.0.2"
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
@@ -945,20 +980,36 @@ function App() {
         transition: 'background-color 0.3s'
       }}>
         <Typography 
-          variant="subtitle1" 
-          component="h2" 
+          variant="h1" 
           sx={{ 
-            mb: 3,
+            mb: 2,
             textAlign: 'center',
             fontWeight: 500,
-            fontFamily: "'Inter', sans-serif",
-            fontSize: '0.75rem',
-            letterSpacing: '0.25em',
+            fontFamily: "'League Spartan', sans-serif",
+            fontSize: '0.65rem',  
+            letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            color: 'var(--text-secondary)'
+            color: 'var(--text-secondary)',
+            '@media (max-width: 532px)': {
+              fontSize: '0.6rem'
+            }
           }}
         >
-          Colorize | Visualize | Mesmerize
+          <Typography 
+            variant="subtitle1" 
+            component="h2" 
+            sx={sectionHeaderStyle}
+          >
+            <Box component="span" sx={{ 
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              textShadow: `
+                0 0 10px rgba(255, 153, 0, 0.2),
+                0 0 20px rgba(255, 153, 0, 0.1),
+                0 0 30px rgba(255, 153, 0, 0.05)
+              `
+            }}>COLORIZE</Box> | VISUALIZE | MESMERIZE
+          </Typography>
         </Typography>
 
         {/* Main content in vertical layout */}
@@ -966,18 +1017,13 @@ function App() {
           display: 'flex',
           flexDirection: 'column',
           gap: 3,
-          minWidth: '532px',  // Driven by VISUALIZE optimal width
           width: '100%',
           maxWidth: '800px',  // Maximum before image quality suffers
           mx: 'auto',
           p: 3,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 3,
           alignItems: 'center',
-          '@media (max-width: 532px)': {
-            minWidth: 'unset',
-            width: '100%',
+          '@media (max-width: 832px)': { // 800px + 2 * 16px padding
+            maxWidth: 'calc(100% - 32px)', // Maintain right border padding
             p: 2
           }
         }}>
@@ -1049,31 +1095,57 @@ function App() {
               />
 
               {/* Slider */}
-              <Box 
-                onClick={handleGradientClick}
-                sx={{
-                  position: 'relative',
-                  width: '200px',
-                  height: '24px',
-                  backgroundColor: 'transparent',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-color)',
-                  background: 'linear-gradient(to right, #000000, #FFFFFF)',
-                  overflow: 'hidden',
-                  cursor: 'pointer'
-                }}
-              >
-                <Box sx={{
-                  position: 'absolute',
-                  left: `${(Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3) / 255) * 100}%`,
-                  top: 0,
-                  width: '2px',
-                  height: '100%',
-                  backgroundColor: 'var(--glow-color)',
-                  transform: 'translateX(-50%)',
-                  boxShadow: '0 0 4px var(--glow-color)',
-                  pointerEvents: 'none'
-                }} />
+              <Box sx={{
+                position: 'relative',
+                width: '200px',
+                height: '24px',
+                backgroundColor: 'transparent',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                background: 'linear-gradient(to right, #000000, #FFFFFF)',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                px: 1
+              }}>
+                <Slider
+                  value={grayscaleValue}
+                  onChange={handleGrayscaleChange}
+                  min={0}
+                  max={255}
+                  sx={{
+                    width: '100%',
+                    '& .MuiSlider-thumb': {
+                      width: 20,
+                      height: 20,
+                      backgroundColor: 'transparent',
+                      border: '2px solid var(--glow-color)',
+                      outline: '1px solid rgba(0, 0, 0, 0.3)',
+                      boxShadow: 'inset 0 0 4px var(--glow-color), 0 0 4px var(--glow-color)',
+                      '&:before': {
+                        content: '""',
+                        position: 'absolute',
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: 'transparent',
+                      },
+                      '&:hover, &.Mui-focusVisible': {
+                        outline: '1px solid rgba(0, 0, 0, 0.4)',
+                        boxShadow: 'inset 0 0 6px var(--glow-color), 0 0 8px var(--glow-color)',
+                      }
+                    },
+                    '& .MuiSlider-track': {
+                      display: 'none'
+                    },
+                    '& .MuiSlider-rail': {
+                      opacity: 0
+                    }
+                  }}
+                />
               </Box>
             </Box>
 
@@ -1161,9 +1233,9 @@ function App() {
                 onClick={applyColor}
                 disabled={isProcessing || !imageLoaded}
                 sx={{
-                  width: '120px',  // Standard button width
+                  width: '110px',
                   '@media (max-width: 532px)': {
-                    width: '120px',  // Keep same width on mobile
+                    width: '110px',
                     marginTop: '8px'
                   }
                 }}
@@ -1183,42 +1255,37 @@ function App() {
             }}
           />
 
-          {/* Image Section Title */}
+          {/* Section D: Main Image Window Title */}
           <Typography 
             variant="subtitle1" 
             component="h2" 
-            sx={{ 
-              mb: 1,
-              textAlign: 'center',
-              fontWeight: 500,
-              fontFamily: "'League Spartan', sans-serif",
-              fontSize: '0.875rem',  // Reduced from 1rem
-              letterSpacing: '0.2em', // Slightly reduced from 0.25em
-              textTransform: 'uppercase',
-              color: 'var(--text-secondary)',
-              '@media (max-width: 532px)': {
-                fontSize: '0.75rem',
-                letterSpacing: '0.15em'
-              }
-            }}
+            sx={sectionHeaderStyle}
           >
-            THE IMAGE FACTORY
+            COLORIZE | <Box component="span" sx={{ 
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              textShadow: `
+                0 0 10px rgba(255, 153, 0, 0.2),
+                0 0 20px rgba(255, 153, 0, 0.1),
+                0 0 30px rgba(255, 153, 0, 0.05)
+              `
+            }}>VISUALIZE</Box> | MESMERIZE
           </Typography>
-
           {/* Section E: Image Loading */}
           <Box sx={{ 
             display: 'flex', 
-            flexWrap: 'wrap',
             gap: 2,
             alignItems: 'center',
+            justifyContent: 'center', // Center the upload button when stacked
             mt: 1,
             mb: 3,
             width: '100%',
-            '@media (max-width: 532px)': {
+            '@media (max-width: 600px)': {
               flexDirection: 'column',
-              '& > *': { // All direct children
-                width: '100%',
-                maxWidth: '300px'
+              alignItems: 'center', // Center all items when stacked
+              '& > button': {
+                width: '110px', // Keep buttons at normal width even when stacked
+                alignSelf: 'center'
               }
             }
           }}>
@@ -1226,7 +1293,10 @@ function App() {
               component="label"
               variant="contained"
               disabled={isProcessing}
-              sx={{ width: '120px' }}  // Match APPLY width
+              sx={{ 
+                width: '110px',
+                flexShrink: 0
+              }}
             >
               UPLOAD
               <input
@@ -1238,15 +1308,24 @@ function App() {
               />
             </GlowTextButton>
 
-            <Box sx={{ flex: 1, mr: 'auto' }}>
+            <Box sx={{ 
+              flex: 1,
+              minWidth: 0, // Allow box to shrink below minWidth
+              maxWidth: '600px', // Maximum width for URL input
+              '@media (max-width: 600px)': {
+                width: '100%',
+                maxWidth: '300px',
+                alignSelf: 'center'
+              }
+            }}>
               <IconTextField
+                placeholder="Paste image URL here..."
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 onKeyDown={handleUrlKeyPress}
-                placeholder="Enter image URL..."
                 startIcon={<LinkIcon />}
                 hasReset
-                onReset={resetUrl}
+                onReset={() => setUrlInput('')}
                 sx={{ width: '100%' }}
               />
             </Box>
@@ -1254,7 +1333,10 @@ function App() {
             <GlowTextButton
               variant="contained"
               onClick={handleLoadUrl}
-              sx={{ width: '120px' }}  // Match APPLY width
+              sx={{ 
+                width: '110px',
+                flexShrink: 0
+              }}
             >
               USE URL
             </GlowTextButton>
@@ -1263,12 +1345,15 @@ function App() {
           {/* Section F: Main Image (with integrated download button) */}
           <Box sx={{
             position: 'relative',
-            zIndex: 1,  // Lower z-index for image container
+            zIndex: 1,
             mt: 2,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            minHeight: '200px'
+            minHeight: '200px',
+            width: '100%',
+            maxWidth: '800px', // Match container max-width
+            overflow: 'hidden'
           }}>
             <img
               src={useTestImage ? TEST_IMAGE_URL : workingProcessedUrl}
@@ -1277,7 +1362,8 @@ function App() {
                 maxWidth: '100%',
                 height: 'auto',
                 borderRadius: '4px',
-                border: '1px solid var(--border-color)'
+                border: '1px solid var(--border-color)',
+                display: 'block' // Remove any extra space below image
               }}
             />
             {/* Download button using GlowButton */}
@@ -1421,45 +1507,60 @@ function App() {
           {/* Section H: MESMERIZE */}
           <Box sx={{ 
             width: '100%',
-            mt: 4,
-            pt: 4,
-            borderTop: '1px solid var(--border-subtle)'
+            maxWidth: '800px',
+            mt: 4 
           }}>
             {/* MESMERIZE Section Title */}
             <Typography 
               variant="subtitle1" 
               component="h2" 
-              sx={{ 
-                mb: 3,
-                textAlign: 'center',
-                fontWeight: 500,
-                fontFamily: "'League Spartan', sans-serif",
-                fontSize: '0.875rem',  // Reduced from 1rem
-                letterSpacing: '0.2em', // Slightly reduced from 0.25em
-                textTransform: 'uppercase',
-                color: 'var(--text-secondary)',
-                '@media (max-width: 532px)': {
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.15em'
-                }
-              }}
+              sx={sectionHeaderStyle}
             >
-              MESMERIZE
+              COLORIZE | VISUALIZE | <Box component="span" sx={{ 
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                textShadow: `
+                  0 0 10px rgba(255, 153, 0, 0.2),
+                  0 0 20px rgba(255, 153, 0, 0.1),
+                  0 0 30px rgba(255, 153, 0, 0.05)
+                `
+              }}>MESMERIZE</Box>
             </Typography>
 
             {/* Catalog selector */}
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 2 }}>
+            <Box sx={{ 
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 2,
+              mb: 3,
+              mt: 2,
+              flexWrap: 'wrap'
+            }}>
               <GlowTextButton
-                variant={activeCatalog === 'GILDAN_64' ? 'contained' : 'outlined'}
+                variant="contained"
                 onClick={() => handleCatalogSwitch('GILDAN_64')}
-                sx={{ minWidth: '140px' }}
+                sx={{
+                  width: '140px',
+                  height: '36px',
+                  fontSize: '0.8rem',
+                  letterSpacing: '0.05em',
+                  whiteSpace: 'nowrap',
+                  opacity: activeCatalog === 'GILDAN_64' ? 1 : 0.7
+                }}
               >
-                GILDAN 64
+                GILDAN 6400
               </GlowTextButton>
               <GlowTextButton
-                variant={activeCatalog === 'GILDAN_3000' ? 'contained' : 'outlined'}
+                variant="contained"
                 onClick={() => handleCatalogSwitch('GILDAN_3000')}
-                sx={{ minWidth: '140px' }}
+                sx={{
+                  width: '140px',
+                  height: '36px',
+                  fontSize: '0.8rem',
+                  letterSpacing: '0.05em',
+                  whiteSpace: 'nowrap',
+                  opacity: activeCatalog === 'GILDAN_3000' ? 1 : 0.7
+                }}
               >
                 GILDAN 3000
               </GlowTextButton>
@@ -1494,7 +1595,7 @@ function App() {
                   variant="contained"
                   onClick={handleGenerateAll}
                   disabled={isProcessing || !imageLoaded}
-                  sx={{ minWidth: '180px' }}
+                  sx={{ width: '140px' }}
                 >
                   GENERATE ALL
                 </GlowTextButton>
@@ -1502,9 +1603,9 @@ function App() {
                   variant="contained"
                   onClick={handleGenerateSelected}
                   disabled={isProcessing || !imageLoaded || !selectedColors.length}
-                  sx={{ minWidth: '180px' }}
+                  sx={{ width: '140px' }}
                 >
-                  GENERATE SELECTED
+                  SELECTED
                 </GlowTextButton>
               </Box>
 
@@ -1513,7 +1614,7 @@ function App() {
                 component="label"
                 variant="contained"
                 disabled={isProcessing || batchStatus === 'processing'}
-                sx={{ width: '200px' }}
+                sx={{ width: '140px' }}
               >
                 UPLOAD CSV
                 <input
@@ -1527,7 +1628,7 @@ function App() {
               {/* Progress Indicator */}
               {batchStatus === 'processing' && (
                 <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1, textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
                     Processing: {batchProgress}% ({processedCount} of {totalCount})
                   </Typography>
                   <LinearProgress 
@@ -1550,6 +1651,7 @@ function App() {
               {batchResults && batchResults.length > 0 && (
                 <Box sx={{ 
                   width: '100%',
+                  maxWidth: '800px',
                   mt: 3
                 }}>
                   <Typography variant="subtitle2" sx={{ 
@@ -1579,6 +1681,7 @@ function App() {
                           sx={{
                             width: 36,
                             height: 36,
+                            aspectRatio: '1/1',
                             backgroundColor: color.hex,
                             borderRadius: '50%',
                             cursor: 'pointer',
@@ -1623,6 +1726,9 @@ function App() {
           </Typography>
           {batchProgress > 0 && (
             <Box sx={{ width: '200px', mt: 2 }}>
+              <Typography variant="body2" color="white" align="center" mt={1}>
+                Processing: {batchProgress}%
+              </Typography>
               <LinearProgress 
                 variant="determinate" 
                 value={batchProgress} 
@@ -1635,9 +1741,6 @@ function App() {
                   }
                 }}
               />
-              <Typography variant="body2" color="white" align="center" mt={1}>
-                {batchProgress}%
-              </Typography>
             </Box>
           )}
         </Box>

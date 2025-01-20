@@ -126,7 +126,14 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
         open={aboutOpen}
         onClose={() => setAboutOpen(false)}
         version={`v${version}`}
-      />
+      >
+        <Typography variant="body2" sx={{ mb: 1, color: 'var(--text-secondary)' }}>
+          Version {version}
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
+          2024 HEXTRA Color System. All rights reserved.
+        </Typography>
+      </AboutDialog>
     </Box>
   );
 };
