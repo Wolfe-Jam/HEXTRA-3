@@ -7,7 +7,7 @@ import SwatchInfoCard from './SwatchInfoCard';
 
 const Container = styled(Box)`
   display: flex;
-  gap: 24px;
+  gap: 16px;
   width: 100%;
   @media (max-width: 532px) {
     flex-direction: column;
@@ -16,17 +16,17 @@ const Container = styled(Box)`
 `;
 
 const LeftPanel = styled(Box)`
-  width: 232px;  /* 200px + (16px * 2) padding */
+  width: 216px;
   display: flex;
   flex-direction: column;
   @media (max-width: 532px) {
     width: 100%;
-    max-width: 232px;
+    max-width: 216px;
   }
 `;
 
 const RightPanel = styled(Box)`
-  min-width: 232px;
+  min-width: 280px;
   flex: 1;
   @media (max-width: 532px) {
     width: 100%;

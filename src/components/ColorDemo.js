@@ -10,23 +10,33 @@ const ColorDemo = ({ catalog }) => {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography 
-        variant="h3" 
-        gutterBottom
-        sx={{
-          fontFamily: "'League Spartan', sans-serif",
-          fontSize: '32px',
-          textAlign: 'left'
-        }}
-      >
-        HEXTRA Color System
-      </Typography>
-      
-      <Grid container spacing={4}>
+    <Box sx={{ 
+      position: 'relative',
+      zIndex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '200px',
+      width: '100%',
+      maxWidth: '800px',
+      overflow: 'hidden',
+      mt: 2,
+      p: 3,
+      mx: 'auto',
+      bgcolor: '#FFFFFF',  // Explicit white for both themes
+      '@media (max-width: 832px)': {
+        maxWidth: 'calc(100% - 32px)',
+        p: 2
+      }
+    }}>
+      <Grid container sx={{ width: '100%' }}>
         {/* Color Picker */}
         <Grid item xs={12}>
-          <Paper sx={{ p: 2, height: '100%' }}>
+          <Paper sx={{ 
+            width: '100%',
+            bgcolor: 'transparent',
+            boxShadow: 'none'
+          }}>
             <ColorPicker 
               onColorSelect={handleColorSelect}
               catalog={catalog}
