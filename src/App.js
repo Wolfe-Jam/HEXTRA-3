@@ -1030,7 +1030,23 @@ function App() {
                 0 0 20px rgba(255, 153, 0, 0.1),
                 0 0 30px rgba(255, 153, 0, 0.05)
               `
-            }}>COLORIZE</Box> | VISUALIZE | MESMERIZE
+            }}>COLORIZE</Box> | <Box component="span" sx={{ 
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              textShadow: `
+                0 0 10px rgba(255, 153, 0, 0.2),
+                0 0 20px rgba(255, 153, 0, 0.1),
+                0 0 30px rgba(255, 153, 0, 0.05)
+              `
+            }}>VISUALIZE</Box> | <Box component="span" sx={{ 
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              textShadow: `
+                0 0 10px rgba(255, 153, 0, 0.2),
+                0 0 20px rgba(255, 153, 0, 0.1),
+                0 0 30px rgba(255, 153, 0, 0.05)
+              `
+            }}>MESMERIZE</Box>
           </Typography>
         </Typography>
 
@@ -1282,7 +1298,7 @@ function App() {
             component="h2" 
             sx={sectionHeaderStyle}
           >
-            COLORIZE | <Box component="span" sx={{ 
+            COLORIZE | VISUALIZE | <Box component="span" sx={{ 
               fontWeight: 700,
               color: 'var(--text-primary)',
               textShadow: `
@@ -1290,7 +1306,7 @@ function App() {
                 0 0 20px rgba(255, 153, 0, 0.1),
                 0 0 30px rgba(255, 153, 0, 0.05)
               `
-            }}>VISUALIZE</Box> | MESMERIZE
+            }}>MESMERIZE</Box>
           </Typography>
 
           {/* Section E: Image Loading */}
@@ -1590,7 +1606,16 @@ function App() {
             <Typography 
               variant="subtitle1" 
               component="h2" 
-              sx={sectionHeaderStyle}
+              sx={{ 
+                mb: 1,  // Reduced from mb: 3 to create space between title and buttons
+                textAlign: 'center',
+                fontWeight: 500,
+                fontFamily: "'League Spartan', sans-serif",
+                fontSize: '1rem',
+                letterSpacing: '0.25em',
+                textTransform: 'uppercase',
+                color: 'var(--text-secondary)'
+              }}
             >
               COLORIZE | VISUALIZE | <Box component="span" sx={{ 
                 fontWeight: 700,
@@ -1605,12 +1630,11 @@ function App() {
 
             {/* Catalog selector */}
             <Box sx={{ 
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 2,
-              mb: 3,
-              mt: 2,
-              flexWrap: 'wrap'
+              display: 'flex', 
+              gap: 2, 
+              justifyContent: 'center', 
+              mb: 2,
+              mt: 4  // This creates the space between title and buttons
             }}>
               <GlowTextButton
                 variant="contained"

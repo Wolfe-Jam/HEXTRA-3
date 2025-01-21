@@ -48,8 +48,8 @@ const ColorPanel = styled(Box)`
 `;
 
 const RoundSwatch = styled.div`
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 40px;
   border-radius: 50%;
   background-color: ${props => props.color};
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
@@ -96,6 +96,7 @@ const CatalogTitle = styled(Typography)`
   font-weight: 700;
   color: #333;
   margin-bottom: 16px;
+  text-transform: uppercase;
 `;
 
 const SubTitle = styled(Typography)`
@@ -225,7 +226,7 @@ const ColorPicker = ({ onColorSelect, catalog }) => {
       {/* Right Panel - Color Catalog */}
       <RightPanel>
         <CatalogTitle>
-          Color Catalog
+          COLOR CATALOG
         </CatalogTitle>
         
         <Box sx={{ 
