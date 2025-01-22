@@ -3,10 +3,10 @@ import { Box, Typography, TextField, useTheme } from '@mui/material';
 import styled from 'styled-components';
 import { Wheel } from '@uiw/react-color';
 import debounce from 'lodash/debounce';
-import useColorStore from '../../../state/ColorState';
-import { RoundSwatch } from '../styles/SwatchStyles';
+import useColorStore from '../../../state/ColorState.js';
+import { RoundSwatch } from '../styles/SwatchStyles.js';
 import CatalogGrid from './CatalogGrid';
-import NearestMatches from './NearestMatches';
+import NearestMatches from './NearestMatches.js';
 
 // Fast color conversion
 const hexToRgb = hex => {

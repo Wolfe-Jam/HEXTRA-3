@@ -12,7 +12,7 @@ import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import ColorDemo from './components/ColorDemo';
 import { ToggleButton } from '@mui/material';
-import GILDAN_64000 from './data/catalogs/gildan64000';
+import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import GILDAN_3000 from './data/catalogs/gildan3000';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
