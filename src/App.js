@@ -980,7 +980,7 @@ function App() {
         minHeight: '100vh',
         width: '100%',
         maxWidth: '100%',
-        pt: '50px',
+        pt: '82px',  // Logo height (90px) - margin-top (-8px)
         color: 'var(--text-primary)',
         transition: 'background-color 0.3s, color 0.3s'
       }}
@@ -997,9 +997,9 @@ function App() {
         flexDirection: 'column',
         alignItems: 'center',
         minHeight: '100vh',
-        paddingTop: '45px', 
         backgroundColor: 'var(--bg-primary)',
-        transition: 'background-color 0.3s'
+        transition: 'background-color 0.3s',
+        pt: '82px'  // Logo height (90px) - margin-top (-8px)
       }}>
         <Typography 
           variant="h1" 
@@ -1054,7 +1054,7 @@ function App() {
         <Box sx={{ 
           display: 'flex',
           flexDirection: 'column',
-          gap: 3,
+          gap: 4,
           width: '100%',
           maxWidth: '800px',  // Maximum before image quality suffers
           mx: 'auto',
@@ -1288,7 +1288,7 @@ function App() {
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 3
+              my: 5  // Increased vertical margin
             }}
           />
 
@@ -1296,7 +1296,7 @@ function App() {
           <Typography 
             variant="h2" 
             sx={{ 
-              mb: 3,
+              mb: 4,  // Increased bottom margin
               textAlign: 'center',
               fontFamily: "'Inter', sans-serif",
               fontSize: '1.25rem',
@@ -1577,7 +1577,7 @@ function App() {
             </Box>
           </Box>
 
-          <Box sx={{ my: 3 }}>
+          <Box sx={{ my: 5 }}>
             <Box
               sx={{
                 width: '100%',
@@ -1593,7 +1593,7 @@ function App() {
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 3
+              my: 5  // Increased vertical margin
             }}
           />
 
@@ -1607,7 +1607,7 @@ function App() {
             <Typography 
               variant="h2" 
               sx={{ 
-                mb: 3,
+                mb: 4,  // Increased bottom margin
                 textAlign: 'center',
                 fontFamily: "'Inter', sans-serif",
                 fontSize: '1.25rem',
@@ -1796,7 +1796,7 @@ function App() {
             </Box>
           </Box>
 
-          <Box sx={{ my: 3 }}>
+          <Box sx={{ my: 5 }}>
             <Box
               sx={{
                 width: '100%',
@@ -1812,7 +1812,7 @@ function App() {
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 3
+              my: 5  // Increased vertical margin
             }}
           />
 
