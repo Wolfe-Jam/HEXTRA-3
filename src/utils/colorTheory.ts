@@ -23,26 +23,58 @@ interface NearestColorResult {
 export class ColorTheory {
   // Convert HEX to RGB
   static hexToRgb(hex: string): RGBColor {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
+    if (!hex || typeof hex !== 'string') {
+      console.warn('Invalid hex color provided:', hex);
+      return { r: 0, g: 0, b: 0 };
+    }
+    
+    // Remove # if present
+    hex = hex.replace(/^#/, '');
+    
+    // Handle shorthand hex (#fff)
+    if (hex.length === 3) {
+      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+    
+    const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) {
+      console.warn('Invalid hex color format:', hex);
+      return { r: 0, g: 0, b: 0 };
+    }
+    
+    return {
       r: parseInt(result[1], 16),
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
+    };
   }
 
   // Convert RGB to HEX
   static rgbToHex(rgb: RGBColor): string {
-    return '#' + [rgb.r, rgb.g, rgb.b]
+    if (!rgb || typeof rgb !== 'object') {
+      console.warn('Invalid RGB color provided:', rgb);
+      return '#000000';
+    }
+    
+    const r = Math.min(255, Math.max(0, rgb.r || 0));
+    const g = Math.min(255, Math.max(0, rgb.g || 0));
+    const b = Math.min(255, Math.max(0, rgb.b || 0));
+    
+    return '#' + [r, g, b]
       .map(x => x.toString(16).padStart(2, '0'))
       .join('');
   }
 
   // Convert RGB to HSL
   static rgbToHsl(rgb: RGBColor): HSLColor {
-    const r = rgb.r / 255;
-    const g = rgb.g / 255;
-    const b = rgb.b / 255;
+    if (!rgb || typeof rgb !== 'object') {
+      console.warn('Invalid RGB color provided:', rgb);
+      return { h: 0, s: 0, l: 0 };
+    }
+    
+    const r = Math.min(255, Math.max(0, rgb.r || 0)) / 255;
+    const g = Math.min(255, Math.max(0, rgb.g || 0)) / 255;
+    const b = Math.min(255, Math.max(0, rgb.b || 0)) / 255;
 
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
@@ -78,6 +110,11 @@ export class ColorTheory {
 
   // Convert HSL to RGB
   static hslToRgb(hsl: HSLColor): RGBColor {
+    if (!hsl || typeof hsl !== 'object') {
+      console.warn('Invalid HSL color provided:', hsl);
+      return { r: 0, g: 0, b: 0 };
+    }
+    
     const h = hsl.h / 360;
     const s = hsl.s / 100;
     const l = hsl.l / 100;
@@ -113,6 +150,11 @@ export class ColorTheory {
 
   // Get opposite color (180° hue shift)
   static getOpposite(hsl: HSLColor): HSLColor {
+    if (!hsl || typeof hsl !== 'object') {
+      console.warn('Invalid HSL color provided:', hsl);
+      return { h: 0, s: 0, l: 0 };
+    }
+    
     return {
       h: (hsl.h + 180) % 360,
       s: hsl.s,
@@ -122,6 +164,11 @@ export class ColorTheory {
 
   // Get split complements (150° and 210° from original)
   static getSplitComplements(hsl: HSLColor): [HSLColor, HSLColor] {
+    if (!hsl || typeof hsl !== 'object') {
+      console.warn('Invalid HSL color provided:', hsl);
+      return [{ h: 0, s: 0, l: 0 }, { h: 0, s: 0, l: 0 }];
+    }
+    
     return [
       {
         h: (hsl.h + 150) % 360,
@@ -138,6 +185,11 @@ export class ColorTheory {
 
   // Get triad (120° and 240° from original)
   static getTriad(hsl: HSLColor): [HSLColor, HSLColor] {
+    if (!hsl || typeof hsl !== 'object') {
+      console.warn('Invalid HSL color provided:', hsl);
+      return [{ h: 0, s: 0, l: 0 }, { h: 0, s: 0, l: 0 }];
+    }
+    
     return [
       {
         h: (hsl.h + 120) % 360,
@@ -152,31 +204,13 @@ export class ColorTheory {
     ];
   }
 
-  // Enhanced nearest color finder
-  static findNearest(target: RGBColor, catalog: Array<{ rgb: RGBColor; name: string; }>): NearestColorResult[] {
-    // Convert colors to Lab color space for better perceptual matching
-    const targetLab = this.rgbToLab(target);
-    
-    // Calculate distances and sort by closest
-    const results = catalog.map(entry => {
-      const entryLab = this.rgbToLab(entry.rgb);
-      const distance = this.calculateDeltaE(targetLab, entryLab);
-      
-      return {
-        color: entry.rgb,
-        name: entry.name,
-        distance,
-        // Convert distance to confidence (closer = higher confidence)
-        confidence: Math.max(0, Math.min(100, 100 - (distance * 2)))
-      };
-    }).sort((a, b) => a.distance - b.distance);
-
-    // Return top 3 matches
-    return results.slice(0, 3);
-  }
-
   // Convert RGB to Lab color space for better matching
   private static rgbToLab(rgb: RGBColor): { l: number; a: number; b: number; } {
+    if (!rgb || typeof rgb !== 'object') {
+      console.warn('Invalid RGB color provided:', rgb);
+      return { l: 0, a: 0, b: 0 };
+    }
+    
     // First, convert RGB to XYZ
     let r = rgb.r / 255;
     let g = rgb.g / 255;
@@ -213,20 +247,101 @@ export class ColorTheory {
   // Calculate color difference using Delta E (CIE 2000)
   private static calculateDeltaE(lab1: { l: number; a: number; b: number; }, 
                                lab2: { l: number; a: number; b: number; }): number {
+    if (!lab1 || !lab2 || typeof lab1 !== 'object' || typeof lab2 !== 'object') {
+      console.warn('Invalid Lab colors provided:', lab1, lab2);
+      return 0;
+    }
+    
     const deltaL = lab2.l - lab1.l;
     const deltaA = lab2.a - lab1.a;
     const deltaB = lab2.b - lab1.b;
-
-    // Simplified Delta E calculation
+    
+    const L1 = lab1.l;
+    const L2 = lab2.l;
+    const C1 = Math.sqrt(lab1.a * lab1.a + lab1.b * lab1.b);
+    const C2 = Math.sqrt(lab2.a * lab2.a + lab2.b * lab2.b);
+    const deltaC = C2 - C1;
+    
+    // Calculate h1 and h2
+    let h1 = Math.atan2(lab1.b, lab1.a);
+    let h2 = Math.atan2(lab2.b, lab2.a);
+    
+    // Make sure h1 and h2 are in [0, 2π]
+    if (h1 < 0) h1 += 2 * Math.PI;
+    if (h2 < 0) h2 += 2 * Math.PI;
+    
+    // Calculate ΔH
+    let deltaH = 0;
+    const deltaHabs = Math.abs(h1 - h2);
+    if (C1 * C2 !== 0) {
+      if (deltaHabs <= Math.PI) {
+        deltaH = h2 - h1;
+      } else if (deltaHabs > Math.PI && h2 <= h1) {
+        deltaH = h2 - h1 + 2 * Math.PI;
+      } else {
+        deltaH = h2 - h1 - 2 * Math.PI;
+      }
+    }
+    
+    // Calculate ΔH'
+    const deltaHprime = 2 * Math.sqrt(C1 * C2) * Math.sin(deltaH / 2);
+    
+    // Calculate L', C', H' terms
+    const Lprime = (L1 + L2) / 2;
+    const Cprime = (C1 + C2) / 2;
+    
+    // Weighting factors
+    const SL = 1;
+    const SC = 1 + 0.045 * Cprime;
+    const SH = 1 + 0.015 * Cprime;
+    
+    // Calculate total color difference
     return Math.sqrt(
-      Math.pow(deltaL, 2) +
-      Math.pow(deltaA, 2) +
-      Math.pow(deltaB, 2)
+      Math.pow(deltaL / SL, 2) +
+      Math.pow(deltaC / SC, 2) +
+      Math.pow(deltaHprime / SH, 2)
     );
+  }
+
+  // Enhanced nearest color finder with improved perceptual matching
+  static findNearest(target: RGBColor, catalog: Array<{ rgb: RGBColor; name: string; hex?: string; }>): NearestColorResult[] {
+    if (!target || !catalog || typeof target !== 'object' || !Array.isArray(catalog)) {
+      console.warn('Invalid target or catalog provided:', target, catalog);
+      return [];
+    }
+    
+    // Use simpler RGB distance for better performance
+    const results = catalog.map(entry => {
+      if (!entry.rgb) return null;
+      
+      // Calculate weighted RGB distance
+      const dr = (target.r - entry.rgb.r) * 0.30; // Red weighted more heavily
+      const dg = (target.g - entry.rgb.g) * 0.59; // Green weighted most heavily
+      const db = (target.b - entry.rgb.b) * 0.11; // Blue weighted least
+      
+      const distance = Math.sqrt(dr * dr + dg * dg + db * db);
+      
+      return {
+        color: entry.rgb,
+        name: entry.name,
+        distance,
+        confidence: Math.max(0, Math.min(100, 100 - (distance * 0.3))) // Adjusted confidence calculation
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.distance - b.distance);
+
+    // Return top 3 matches
+    return results.slice(0, 3);
   }
 
   // Get all relationships for a color
   static getRelationships(hex: string, catalog: RGBColor[]): ColorRelationships {
+    if (!hex || !catalog || typeof hex !== 'string' || !Array.isArray(catalog)) {
+      console.warn('Invalid hex or catalog provided:', hex, catalog);
+      return { opposite: { h: 0, s: 0, l: 0 }, splitComplements: [{ h: 0, s: 0, l: 0 }, { h: 0, s: 0, l: 0 }], triad: [{ h: 0, s: 0, l: 0 }, { h: 0, s: 0, l: 0 }], nearest: undefined };
+    }
+    
     const rgb = this.hexToRgb(hex);
     const hsl = this.rgbToHsl(rgb);
     

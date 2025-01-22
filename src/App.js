@@ -12,7 +12,7 @@ import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import ColorDemo from './components/ColorDemo';
 import { ToggleButton } from '@mui/material';
-import GILDAN_64 from './data/catalogs/gildan64';
+import GILDAN_64000 from './data/catalogs/gildan64000';
 import GILDAN_3000 from './data/catalogs/gildan3000';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -123,8 +123,8 @@ function App() {
   const [processedCount, setProcessedCount] = useState(0);
 
   // Add state for catalog colors
-  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64');
-  const [catalogColors, setCatalogColors] = useState(GILDAN_64);
+  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
+  const [catalogColors, setCatalogColors] = useState(GILDAN_64000);
 
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -920,17 +920,17 @@ function App() {
 
   const handleCatalogSwitch = (catalogName) => {
     switch(catalogName) {
-      case 'GILDAN_64':
-        setActiveCatalog('GILDAN_64');
-        setCatalogColors(GILDAN_64);
+      case 'GILDAN_64000':
+        setActiveCatalog('GILDAN_64000');
+        setCatalogColors(GILDAN_64000);
         break;
       case 'GILDAN_3000':
         setActiveCatalog('GILDAN_3000');
         setCatalogColors(GILDAN_3000);
         break;
       default:
-        setActiveCatalog('GILDAN_64');
-        setCatalogColors(GILDAN_64);
+        setActiveCatalog('GILDAN_64000');
+        setCatalogColors(GILDAN_64000);
     }
   };
 
@@ -1638,17 +1638,17 @@ function App() {
             }}>
               <GlowTextButton
                 variant="contained"
-                onClick={() => handleCatalogSwitch('GILDAN_64')}
+                onClick={() => handleCatalogSwitch('GILDAN_64000')}
                 sx={{
                   width: '140px',
                   height: '36px',
                   fontSize: '0.8rem',
                   letterSpacing: '0.05em',
                   whiteSpace: 'nowrap',
-                  opacity: activeCatalog === 'GILDAN_64' ? 1 : 0.7
+                  opacity: activeCatalog === 'GILDAN_64000' ? 1 : 0.7
                 }}
               >
-                GILDAN 6400
+                GILDAN 64000
               </GlowTextButton>
               <GlowTextButton
                 variant="contained"
