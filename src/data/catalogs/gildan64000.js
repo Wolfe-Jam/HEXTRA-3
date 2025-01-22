@@ -55,7 +55,7 @@ const GILDAN_64 = [
   { hex: '#948794', name: 'Paragon', family: 'purple' },
   { hex: '#A15A95', name: 'Heather Radiant Orchid', family: 'purple', tags: ['heather'] },
   { hex: '#614B79', name: 'Heather Purple', family: 'purple', tags: ['heather'] },
-  { hex: '#464E7E', name: 'Purple', family: 'purple' },
+  { hex: '#3c214e', name: 'Purple', family: 'purple' },
   { hex: '#E4C6D4', name: 'Light Pink', family: 'pink' },
   { hex: '#994878', name: 'Heather Berry', family: 'pink', tags: ['heather'] },
   { hex: '#AA0061', name: 'Antique Heliconia', family: 'pink', tags: ['antique'] },
