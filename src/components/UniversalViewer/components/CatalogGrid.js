@@ -6,10 +6,18 @@ import { CatalogSwatch, SwatchLabel } from '../styles/SwatchStyles';
 
 const GridContainer = styled(Box)`
   display: grid;
-  grid-template-columns: repeat(8, minmax(60px, 1fr));
-  gap: 8px;
-  width: 100%;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
   padding: 16px;
+  width: calc(832px - 232px - 64px);
+  height: auto;
+  
+  @media (max-width: 768px) {
+    width: 232px;
+    grid-template-columns: repeat(4, 1fr);
+    justify-content: center;
+    margin: 0 auto;
+  }
 `;
 
 const Title = styled(Typography)`
@@ -41,11 +49,9 @@ const CatalogGrid = ({ colors, showHex = true }) => {
               onClick={() => handleColorSelect(color)}
               className={color.hex.toUpperCase() === currentColor.toUpperCase() ? 'selected' : ''}
             >
-              {showHex && (
-                <SwatchLabel>
-                  {color.hex.toUpperCase()}
-                </SwatchLabel>
-              )}
+              <SwatchLabel>
+                {color.name}
+              </SwatchLabel>
             </CatalogSwatch>
           </Box>
         ))}

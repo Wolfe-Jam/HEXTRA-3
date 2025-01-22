@@ -1825,7 +1825,29 @@ function App() {
 
         </Box>
       </Box>
+
       <ColorDemo catalog={catalogColors} />
+
+      {/* Footer */}
+      <Box 
+        component="footer" 
+        sx={{
+          width: '100%',
+          borderTop: '1px solid var(--border-color)',
+          bgcolor: 'var(--background-paper)',
+          p: 2,
+          mt: 'auto'
+        }}
+      >
+        <Typography 
+          variant="body2" 
+          color="text.secondary" 
+          align="center"
+        >
+          2025 HEXTRA Color System. All rights reserved.
+        </Typography>
+      </Box>
+
       {isProcessing && (
         <Box
           position="fixed"

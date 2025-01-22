@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useRef, useEffect } from 'react';
-import { Box, Typography, TextField } from '@mui/material';
+import { Box, Typography, TextField, useTheme } from '@mui/material';
 import styled from 'styled-components';
 import { Wheel } from '@uiw/react-color';
 import debounce from 'lodash/debounce';
@@ -47,17 +47,38 @@ const rgbToHsl = ({ r, g, b }) => {
 
 const Container = styled(Box)`
   display: flex;
-  gap: 0;
-  height: 100%;
-  background: #fff;
+  flex-direction: row;
+  gap: 16px;
+  width: 832px;
+  padding: 24px;
+  background: ${({ $mode }) => $mode === 'dark' ? '#1a1a1a' : '#fff'};
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid ${({ $mode }) => $mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 232px;
+    margin: 0 auto;
+  }
 `;
 
 const LeftPanel = styled(Box)`
-  min-width: 232px;
+  width: 260px;
+  min-width: 260px;
   height: 100%;
   background: #fff;
   display: flex;
   flex-direction: column;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    align-items: center;
+  }
 `;
 
 const RightPanel = styled(Box)`
@@ -66,17 +87,30 @@ const RightPanel = styled(Box)`
   background: #fff;
   margin-left: 0;
   padding-left: 0;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    height: auto;
+    min-height: 300px;
+    overflow: visible;
+  }
 `;
 
 const ColorPanel = styled(Box)`
-  width: 260px;
+  width: 232px;
+  min-width: 232px;
+  max-width: 232px;
   padding: 16px;
   background: #f5f5f5;
   border-radius: 4px;
-  margin: 0 auto 8px;
+  margin: 16px 0;
+  
   @media (max-width: 532px) {
-    width: calc(100% - 32px);
-    max-width: 260px;
+    width: 232px;
+    min-width: 232px;
+    max-width: 232px;
+    margin: 16px auto;
   }
 `;
 
@@ -160,6 +194,7 @@ const HexLabel = styled(Typography)`
 `;
 
 const ColorPicker = ({ catalog = [], onColorSelect }) => {
+  const theme = useTheme();
   const { currentColor, updateColorState } = useColorStore();
   const [localColor, setLocalColor] = useState(currentColor);
   const isDraggingRef = useRef(false);
@@ -243,7 +278,7 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
   }, [updateColor]);
 
   return (
-    <Container>
+    <Container $mode={theme.palette.mode}>
       <LeftPanel>
         <PanelTitle>
           COLOR PANEL
