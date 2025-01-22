@@ -1608,25 +1608,15 @@ function App() {
               variant="subtitle1" 
               component="h2" 
               sx={{ 
-                mb: 1,  // Reduced from mb: 3 to create space between title and buttons
+                mb: 1,
                 textAlign: 'center',
                 fontWeight: 500,
-                fontFamily: "'League Spartan', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: '1rem',
-                letterSpacing: '0.25em',
-                textTransform: 'uppercase',
-                color: 'var(--text-secondary)'
+                color: 'var(--text-primary)'
               }}
             >
-              COLORIZE | VISUALIZE | <Box component="span" sx={{ 
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                textShadow: `
-                  0 0 10px rgba(255, 153, 0, 0.2),
-                  0 0 20px rgba(255, 153, 0, 0.1),
-                  0 0 30px rgba(255, 153, 0, 0.05)
-                `
-              }}>MESMERIZE</Box>
+              Create your color T-shirt/product blanks in Bulk
             </Typography>
 
             {/* Catalog selector */}
