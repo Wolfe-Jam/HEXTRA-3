@@ -980,7 +980,7 @@ function App() {
         minHeight: '100vh',
         width: '100%',
         maxWidth: '100%',
-        pt: '82px',  // Logo height (90px) - margin-top (-8px)
+        pt: '48px',  // Increased by 8px
         color: 'var(--text-primary)',
         transition: 'background-color 0.3s, color 0.3s'
       }}
@@ -995,59 +995,29 @@ function App() {
       <Box sx={{ 
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
         minHeight: '100vh',
-        backgroundColor: 'var(--bg-primary)',
-        transition: 'background-color 0.3s',
-        pt: '82px'  // Logo height (90px) - margin-top (-8px)
+        width: '100%',
+        maxWidth: '100%',
+        pt: '48px',  // Increased by 8px
+        color: 'var(--text-primary)',
+        transition: 'background-color 0.3s, color 0.3s'
       }}>
         <Typography 
-          variant="h1" 
+          variant="h2" 
           sx={{ 
-            mb: 2,
             textAlign: 'center',
-            fontWeight: 500,
             fontFamily: "'League Spartan', sans-serif",
-            fontSize: '0.65rem',  
-            letterSpacing: '0.15em',
+            fontSize: '0.75rem',
+            letterSpacing: '0.25em',
             textTransform: 'uppercase',
             color: 'var(--text-secondary)',
+            mb: 5,  // Add margin below the text
             '@media (max-width: 532px)': {
-              fontSize: '0.6rem'
+              fontSize: '0.7rem'
             }
           }}
         >
-          <Typography 
-            variant="subtitle1" 
-            component="h2" 
-            sx={sectionHeaderStyle}
-          >
-            <Box component="span" sx={{ 
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              textShadow: `
-                0 0 10px rgba(255, 153, 0, 0.2),
-                0 0 20px rgba(255, 153, 0, 0.1),
-                0 0 30px rgba(255, 153, 0, 0.05)
-              `
-            }}>COLORIZE</Box> | <Box component="span" sx={{ 
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              textShadow: `
-                0 0 10px rgba(255, 153, 0, 0.2),
-                0 0 20px rgba(255, 153, 0, 0.1),
-                0 0 30px rgba(255, 153, 0, 0.05)
-              `
-            }}>VISUALIZE</Box> | <Box component="span" sx={{ 
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              textShadow: `
-                0 0 10px rgba(255, 153, 0, 0.2),
-                0 0 20px rgba(255, 153, 0, 0.1),
-                0 0 30px rgba(255, 153, 0, 0.05)
-              `
-            }}>MESMERIZE</Box>
-          </Typography>
+          <Box component="span">COLORIZE</Box> | <Box component="span">VISUALIZE</Box> | <Box component="span">MESMERIZE</Box>
         </Typography>
 
         {/* Main content in vertical layout */}
