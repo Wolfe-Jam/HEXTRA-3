@@ -1296,17 +1296,18 @@ function App() {
           <Typography 
             variant="subtitle1" 
             component="h2" 
-            sx={sectionHeaderStyle}
-          >
-            COLORIZE | VISUALIZE | <Box component="span" sx={{ 
-              fontWeight: 700,
+            sx={{
+              textAlign: 'center',
+              fontFamily: "'Inter', sans-serif",
+              fontSize: '1rem',
               color: 'var(--text-primary)',
-              textShadow: `
-                0 0 10px rgba(255, 153, 0, 0.2),
-                0 0 20px rgba(255, 153, 0, 0.1),
-                0 0 30px rgba(255, 153, 0, 0.05)
-              `
-            }}>MESMERIZE</Box>
+              mb: 2,
+              '@media (max-width: 532px)': {
+                fontSize: '0.9rem'
+              }
+            }}
+          >
+            Upload your T-shirt or other Image
           </Typography>
 
           {/* Section E: Image Loading */}
