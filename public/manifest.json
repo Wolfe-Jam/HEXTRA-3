@@ -1,6 +1,6 @@
 {
-  "short_name": "HEXTRA-3",
-  "name": "HEXTRA-3 Color Tool",
+  "short_name": "HEXTRA",
+  "name": "HEXTRA | Professional T-shirt Color Processing Tool",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,11 +20,28 @@
     {
       "src": "apple-touch-icon.png",
       "type": "image/png",
-      "sizes": "180x180"
+      "sizes": "180x180",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#D50032",
-  "background_color": "#ffffff"
+  "background_color": "#ffffff",
+  "description": "Transform your t-shirt designs with professional color processing. Perfect for print-on-demand and mockup generation.",
+  "categories": ["design", "productivity", "utilities"],
+  "orientation": "any",
+  "prefer_related_applications": false
 }

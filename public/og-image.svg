@@ -1,15 +1,49 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
     <rect width="1200" height="630" fill="#ffffff"/>
+    <rect width="1200" height="630" fill="#1A1A1A" opacity="0.95"/>
     
-    <!-- Cube -->
-    <g transform="translate(200,165) scale(2)">
-        <path d="M0 150 l100 -50 l100 50 l-100 50 z" fill="#D50032"/>
-        <path d="M0 150 l0 -100 l100 -50 l0 100 z" fill="#00805E"/>
-        <path d="M200 150 l0 -100 l-100 -50 l0 100 z" fill="#224D8F"/>
+    <!-- Gradient Accent -->
+    <path d="M0 0L1200 0L1000 630L0 630L0 0Z" fill="#D50032" opacity="0.1"/>
+    
+    <!-- Main Content Container -->
+    <g transform="translate(100, 100)">
+        <!-- HEXTRA Logo -->
+        <g transform="translate(0, 0)">
+            <text x="0" y="0" font-family="Inter, sans-serif" font-weight="600" font-size="64" fill="#ffffff">
+                HEXTRA
+            </text>
+            <text x="0" y="100" font-family="Inter, sans-serif" font-weight="400" font-size="32" fill="#ffffff" opacity="0.9">
+                Professional T-shirt Color Processing
+            </text>
+        </g>
+        
+        <!-- Feature Highlights -->
+        <g transform="translate(0, 200)">
+            <g transform="translate(0, 0)">
+                <rect width="24" height="24" rx="12" fill="#D50032"/>
+                <text x="40" y="18" font-family="Inter, sans-serif" font-size="24" fill="#ffffff" opacity="0.8">
+                    Bulk Color Processing
+                </text>
+            </g>
+            <g transform="translate(0, 50)">
+                <rect width="24" height="24" rx="12" fill="#D50032"/>
+                <text x="40" y="18" font-family="Inter, sans-serif" font-size="24" fill="#ffffff" opacity="0.8">
+                    Print-on-Demand Ready
+                </text>
+            </g>
+            <g transform="translate(0, 100)">
+                <rect width="24" height="24" rx="12" fill="#D50032"/>
+                <text x="40" y="18" font-family="Inter, sans-serif" font-size="24" fill="#ffffff" opacity="0.8">
+                    Mockup Generation
+                </text>
+            </g>
+        </g>
     </g>
     
-    <!-- Text -->
-    <text x="600" y="315" font-family="League Spartan" font-size="72" text-anchor="middle" fill="#000000">HEXTRA-3</text>
-    <text x="600" y="415" font-family="Inter" font-size="36" text-anchor="middle" fill="#666666">Colorize | Visualize | Mesmerize</text>
+    <!-- Bottom URL -->
+    <text x="100" y="580" font-family="Inter, sans-serif" font-size="24" fill="#ffffff" opacity="0.6">
+        hextra.io
+    </text>
 </svg>
