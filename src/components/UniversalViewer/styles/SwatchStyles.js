@@ -13,26 +13,40 @@ const glowEffects = css`
   }
 `;
 
-// Standard Round Swatch (48x48)
+// Standard Square Swatch (48x48)
 export const RoundSwatch = styled.div`
   width: 48px;
   height: 48px;
-  border-radius: 50%;
   background-color: ${props => props.color};
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
   transition: all 0.2s ease-in-out;
   ${glowEffects}
 `;
 
-// Catalog Swatch (Flex Grid)
+// Catalog Swatch with hover label
 export const CatalogSwatch = styled.div`
   position: relative;
+  width: 100%;
   aspect-ratio: 1;
   background-color: ${props => props.color};
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  ${glowEffects}
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    
+    & > div {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  &.selected {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000;
+    z-index: 1;
+  }
 `;
 
 // Swatch Name Label
@@ -41,20 +55,19 @@ export const SwatchLabel = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
   padding: 4px;
-  background: rgba(255,255,255,0.9);
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
   opacity: 0;
-  transition: opacity 0.2s;
+  transform: translateY(100%);
+  transition: all 0.2s ease-in-out;
+  pointer-events: none;
+  font-family: 'Inter', sans-serif;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
-  ${CatalogSwatch}:hover & {
-    opacity: 1;
-  }
 `;
 
 // Nearest Match Swatch Card (Smaller)
@@ -81,7 +94,6 @@ export const SwatchCard = styled.div`
 export const SwatchCardColor = styled.div`
   width: 36px;
   height: 36px;
-  border-radius: 4px;
   background-color: ${props => props.color};
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
   flex-shrink: 0;

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Grid, Paper, Typography } from '@mui/material';
+import { Box, Grid, Paper, Typography, useTheme } from '@mui/material';
 import ColorPicker from '../components/UniversalViewer/components/ColorPicker';
 
 const ColorDemo = ({ catalog }) => {
+  const theme = useTheme();
   const [selectedColor, setSelectedColor] = useState(null);
   
   const handleColorSelect = (color) => {
@@ -32,15 +33,13 @@ const ColorDemo = ({ catalog }) => {
         alignItems: 'center',
         minHeight: '200px',
         width: '100%',
-        maxWidth: '800px',
-        overflow: 'hidden',
+        maxWidth: '832px',
         mt: 2,
-        p: 3,
         mx: 'auto',
-        bgcolor: '#FFFFFF',  
+        bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+        borderRadius: '12px',
         '@media (max-width: 832px)': {
           maxWidth: 'calc(100% - 32px)',
-          p: 2
         }
       }}>
         <Grid container sx={{ width: '100%' }}>

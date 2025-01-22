@@ -19,6 +19,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
+import { VERSION } from './version';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
@@ -31,7 +32,6 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
-const VERSION = '2.0.4'; // Starting new features after THE IMAGE FACTORY
 
 function hexToRgb(hex) {
   // Remove the hash if present
@@ -987,7 +987,7 @@ function App() {
     >
       {/* Section A: Banner */}
       <Banner 
-        version="2.0.4"
+        version={VERSION}
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
@@ -1825,7 +1825,29 @@ function App() {
 
         </Box>
       </Box>
+
       <ColorDemo catalog={catalogColors} />
+
+      {/* Footer */}
+      <Box 
+        component="footer" 
+        sx={{
+          width: '100%',
+          borderTop: '1px solid var(--border-color)',
+          bgcolor: 'var(--background-paper)',
+          p: 2,
+          mt: 'auto'
+        }}
+      >
+        <Typography 
+          variant="body2" 
+          color="text.secondary" 
+          align="center"
+        >
+          2025 HEXTRA Color System v{VERSION}. All rights reserved.
+        </Typography>
+      </Box>
+
       {isProcessing && (
         <Box
           position="fixed"
