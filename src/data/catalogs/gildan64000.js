@@ -40,7 +40,7 @@ const GILDAN_64 = [
   { hex: '#00859B', name: 'Tropical Blue', family: 'blue' },
   { hex: '#006A8E', name: 'Antique Sapphire', family: 'blue', tags: ['antique'] },
   { hex: '#0076A8', name: 'Sapphire', family: 'blue' },
-  { hex: '#0076A8', name: 'Heather Sapphire', family: 'blue', tags: ['heather'] },
+  { hex: '#59A1CE', name: 'Heather Sapphire', family: 'blue', tags: ['heather'] },
   { hex: '#486D87', name: 'Indigo Blue', family: 'blue' },
   { hex: '#7E93A7', name: 'Stone Blue', family: 'blue' },
   { hex: '#464E7E', name: 'Metro Blue', family: 'blue' },
