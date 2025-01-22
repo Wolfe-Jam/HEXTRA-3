@@ -1294,16 +1294,16 @@ function App() {
 
           {/* Section D: Main Image Window Title */}
           <Typography 
-            variant="subtitle1" 
-            component="h2" 
-            sx={{
+            variant="h2" 
+            sx={{ 
+              mb: 3,
               textAlign: 'center',
               fontFamily: "'Inter', sans-serif",
-              fontSize: '1rem',
+              fontSize: '1.25rem',
+              fontWeight: 600,
               color: 'var(--text-primary)',
-              mb: 2,
               '@media (max-width: 532px)': {
-                fontSize: '0.9rem'
+                fontSize: '1.1rem'
               }
             }}
           >
