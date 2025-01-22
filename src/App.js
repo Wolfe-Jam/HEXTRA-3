@@ -1611,7 +1611,7 @@ function App() {
                   opacity: activeCatalog === 'GILDAN_64000' ? 1 : 0.7
                 }}
               >
-                GILDAN 64000
+                GILDAN 64,000
               </GlowTextButton>
               <GlowTextButton
                 variant="contained"
