@@ -1605,15 +1605,17 @@ function App() {
           }}>
             {/* MESMERIZE Section Title */}
             <Typography 
-              variant="subtitle1" 
-              component="h2" 
+              variant="h2" 
               sx={{ 
-                mb: 1,
+                mb: 3,
                 textAlign: 'center',
-                fontWeight: 500,
                 fontFamily: "'Inter', sans-serif",
-                fontSize: '1rem',
-                color: 'var(--text-primary)'
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                '@media (max-width: 532px)': {
+                  fontSize: '1.1rem'
+                }
               }}
             >
               Create your color T-shirt/product blanks in Bulk
