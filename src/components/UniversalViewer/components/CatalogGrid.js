@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { Box, Typography, Select, MenuItem, FormControl } from '@mui/material';
-import useColorStore from '../../../state/ColorState';
-import { CatalogSwatch, SwatchLabel } from '../styles/SwatchStyles';
-import { sortByName, sortByFamily, sortByPopularity } from '../../../data/catalogs/sortMethods';
+import useColorStore from '../../../state/ColorState.js';
+import { CatalogSwatch, SwatchLabel } from '../styles/SwatchStyles.js';
+import { sortByName, sortByFamily, sortByPopularity } from '../../../data/catalogs/sortMethods.js';
 
 const GridContainer = styled(Box)`
   display: grid;
@@ -60,7 +60,7 @@ const CatalogGrid = ({ colors, showHex = true }) => {
       case 'popularity':
         return sortByPopularity(colors);
       default:
-        return colors; // Default Printify order
+        return colors;
     }
   }, [colors, sortMethod]);
 

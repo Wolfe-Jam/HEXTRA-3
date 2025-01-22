@@ -58,6 +58,19 @@ const AboutDialog = ({ open, onClose, version }) => {
         />
       </DialogTitle>
       <DialogContent sx={{ mt: 4 }}>
+        <Box sx={{ height: '24px' }} />
+        <Typography 
+          variant="h2" 
+          sx={{ 
+            fontFamily: "'League Spartan', sans-serif",
+            fontSize: '24px',
+            textAlign: 'center',
+            color: '#000000',
+            mb: 2
+          }}
+        >
+          👕 T-shirt blanks 👚 On-Demand!
+        </Typography>
         <Typography variant="body1" paragraph sx={{ textAlign: 'left', mb: 2 }}>
           HEXTRA-3 is a powerful color processing tool for rapid, professional-grade, product visualization with streamlined batch color-line generation.
         </Typography>
