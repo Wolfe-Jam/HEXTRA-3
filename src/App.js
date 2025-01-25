@@ -114,6 +114,7 @@ function App() {
   const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
   const [useWebP, setUseWebP] = useState(true); // Default to WebP
   const [showCheckerboard, setShowCheckerboard] = useState(true);
+  const [useChroma, setUseChroma] = useState(false);
 
   // MEZMERIZE States
   const [isBatchMode, setIsBatchMode] = useState(false);
@@ -295,10 +296,14 @@ function App() {
   const handleImageUpload = async (file) => {
     if (!file) return;
     
+    setIsProcessing(true);
+    setError('');
+    
     const url = URL.createObjectURL(file);
     
     try {
       const image = await Jimp.read(await file.arrayBuffer());
+      const isTransparentFormat = file.type === 'image/png' || file.type === 'image/webp';
       
       if (useTestImage) {
         setTestImage(file);
@@ -314,13 +319,18 @@ function App() {
       setImageLoaded(true);
       setError('');
       
+      // Set background based on format
+      setShowCheckerboard(isTransparentFormat);
+      
       if (rgbColor) {
         setTimeout(() => applyColor(), 0);
       }
     } catch (err) {
       console.error('Error loading image:', err);
-      setError('Error loading image');
-      setImageLoaded(false);
+      setError('Error loading image. Please try a different file.');
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -502,17 +512,74 @@ function App() {
   };
 
   const handleQuickDownload = () => {
+    // Use the same download handler for consistency
+    handleDownload();
+  };
+
+  const handleDownload = () => {
     if (!processedImage || !canDownload) return;
     
-    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.png`;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const colorCode = selectedColor.replace('#', '');
+    const extension = useWebP ? 'webp' : 'png';
+    const filename = `hextra_${colorCode}_${timestamp}.${extension}`;
     
-    const link = document.createElement('a');
-    link.href = useTestImage ? testProcessedUrl : workingProcessedUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      if (useWebP) {
+        // For WebP, first get PNG buffer then convert to WebP
+        processedImage.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
+          if (err) {
+            console.error('Error getting PNG buffer:', err);
+            setError('Error preparing WebP download');
+            return;
+          }
+          
+          // Convert PNG buffer to WebP
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            canvas.toBlob((blob) => {
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+            }, 'image/webp');
+          };
+          img.src = URL.createObjectURL(new Blob([buffer], { type: 'image/png' }));
+        });
+      } else {
+        // For PNG, use direct Jimp buffer
+        processedImage.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
+          if (err) {
+            console.error('Error getting PNG buffer:', err);
+            setError('Error downloading image');
+            return;
+          }
+          
+          const blob = new Blob([buffer], { type: 'image/png' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        });
+      }
+    } catch (err) {
+      console.error('Error in download:', err);
+      setError('Error downloading image');
+    }
   };
 
   useEffect(() => {
@@ -1004,32 +1071,6 @@ function App() {
     }
   };
 
-  const handleDownload = () => {
-    if (!processedImage) return;
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const colorCode = selectedColor.replace('#', '');
-    const extension = useWebP ? 'webp' : 'png';
-    const filename = `hextra_${colorCode}_${timestamp}.${extension}`;
-    
-    processedImage.getBuffer(useWebP ? Jimp.MIME_WEBP : Jimp.MIME_PNG, (err, buffer) => {
-      if (err) {
-        console.error('Error getting image buffer:', err);
-        return;
-      }
-      
-      const blob = new Blob([buffer], { type: useWebP ? 'image/webp' : 'image/png' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    });
-  };
-
   return (
     <Box
       sx={{
@@ -1436,40 +1477,51 @@ function App() {
             </GlowTextButton>
           </Box>
 
-          {/* Background toggle */}
+          {/* Background toggles */}
           <Box sx={{ 
             display: 'flex', 
-            alignItems: 'center', 
-            gap: 1,
+            alignItems: 'center',
+            gap: 3,
             mb: 2
           }}>
-            <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-              Show Background
-            </Typography>
-            <GlowSwitch
-              checked={showCheckerboard}
-              onChange={(e) => setShowCheckerboard(e.target.checked)}
-              size="small"
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                Show Background
+              </Typography>
+              <GlowSwitch
+                checked={showCheckerboard}
+                onChange={(e) => setShowCheckerboard(e.target.checked)}
+                size="small"
+              />
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                Use Chroma
+              </Typography>
+              <GlowSwitch
+                checked={useChroma}
+                onChange={(e) => setUseChroma(e.target.checked)}
+                size="small"
+              />
+            </Box>
           </Box>
 
           {/* Main image container */}
           <Box sx={{
             position: 'relative',
-            zIndex: 1,
             width: '800px',
             height: '800px',
-            backgroundColor: 'var(--background-paper)',
-            borderRadius: '12px',
+            backgroundColor: showCheckerboard ? (useChroma ? '#00FF00' : 'transparent') : 'transparent',
+            backgroundImage: showCheckerboard && !useChroma ? 'var(--checkerboard-pattern)' : 'none',
+            borderRadius: '8px',
             overflow: 'hidden',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto'
+            boxShadow: 'var(--shadow-small)',
           }}>
             {/* Checkerboard background */}
-            {showCheckerboard && (
+            {showCheckerboard && !useChroma && (
               <Box sx={{
                 position: 'absolute',
                 top: 0,
@@ -1491,18 +1543,30 @@ function App() {
 
             {/* Image */}
             <Box sx={{ position: 'relative', zIndex: 2 }}>
-              <img
-                src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
-                alt="Working"
-                style={{
-                  maxWidth: '800px',
-                  maxHeight: '800px',
-                  width: 'auto',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  display: 'block'
-                }}
-              />
+              {isProcessing ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  width: '800px',
+                  height: '800px'
+                }}>
+                  <CircularProgress size={48} />
+                </Box>
+              ) : (
+                <img
+                  src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
+                  alt="Working"
+                  style={{
+                    maxWidth: '800px',
+                    maxHeight: '800px',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    display: 'block'
+                  }}
+                />
+              )}
             </Box>
 
             {/* Download button */}
