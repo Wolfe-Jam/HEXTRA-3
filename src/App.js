@@ -112,6 +112,7 @@ function App() {
   const [lastWorkingImage, setLastWorkingImage] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
+  const [useWebP, setUseWebP] = useState(true); // Default to WebP
 
   // MEZMERIZE States
   const [isBatchMode, setIsBatchMode] = useState(false);
@@ -973,6 +974,61 @@ function App() {
     }
   };
 
+  const handleWebPToggle = () => {
+    setUseWebP(!useWebP);
+    if (processedImage) {
+      updateProcessedImage(processedImage, !useWebP);
+    }
+  };
+
+  const updateProcessedImage = async (image, useWebPFormat = useWebP) => {
+    try {
+      const mimeType = useWebPFormat ? Jimp.MIME_WEBP : Jimp.MIME_PNG;
+      const base64 = await new Promise((resolve, reject) => {
+        image.getBase64(mimeType, (err, base64) => {
+          if (err) reject(err);
+          else resolve(base64);
+        });
+      });
+      
+      if (useTestImage) {
+        setTestProcessedUrl(base64);
+      } else {
+        setWorkingProcessedUrl(base64);
+      }
+      setCanDownload(true);
+    } catch (err) {
+      console.error('Error updating image format:', err);
+      setError('Failed to update image format');
+    }
+  };
+
+  const handleDownload = () => {
+    if (!processedImage) return;
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const colorCode = selectedColor.replace('#', '');
+    const extension = useWebP ? 'webp' : 'png';
+    const filename = `hextra_${colorCode}_${timestamp}.${extension}`;
+    
+    processedImage.getBuffer(useWebP ? Jimp.MIME_WEBP : Jimp.MIME_PNG, (err, buffer) => {
+      if (err) {
+        console.error('Error getting image buffer:', err);
+        return;
+      }
+      
+      const blob = new Blob([buffer], { type: useWebP ? 'image/webp' : 'image/png' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    });
+  };
+
   return (
     <Box
       sx={{
@@ -1380,7 +1436,7 @@ function App() {
             </GlowTextButton>
           </Box>
 
-          {/* Section F: Main Image (with integrated download button) */}
+          {/* Section F: Main Image */}
           <Box sx={{
             position: 'relative',
             zIndex: 1,
@@ -1402,14 +1458,14 @@ function App() {
                 display: 'block' // Remove any extra space below image
               }}
             />
-            {/* Download button using GlowButton */}
+            {/* Download button */}
             <GlowButton
-              onClick={handleQuickDownload}
+              onClick={handleDownload}
               disabled={!canDownload}
               sx={{
                 position: 'absolute',
                 right: '12px',
-                bottom: '12px',
+                bottom: '48px',
                 minWidth: 'auto',
                 width: '48px',
                 height: '48px',
@@ -1422,6 +1478,45 @@ function App() {
             >
               <FileDownloadIcon />
             </GlowButton>
+
+            {/* Format toggle */}
+            <Tooltip title="Toggle between PNG and WebP format">
+              <Box sx={{ 
+                position: 'absolute',
+                right: '12px',
+                bottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                backgroundColor: 'var(--background-paper)',
+                padding: '2px 6px',
+                borderRadius: '4px'
+              }}>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                    fontWeight: !useWebP ? 600 : 400
+                  }}
+                >
+                  PNG
+                </Typography>
+                <GlowSwitch
+                  checked={useWebP}
+                  onChange={handleWebPToggle}
+                  size="small"
+                />
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                    fontWeight: useWebP ? 600 : 400
+                  }}
+                >
+                  WebP
+                </Typography>
+              </Box>
+            </Tooltip>
           </Box>
 
           {/* Section G: Image Processing */}
