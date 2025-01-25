@@ -113,6 +113,7 @@ function App() {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
   const [useWebP, setUseWebP] = useState(true); // Default to WebP
+  const [showCheckerboard, setShowCheckerboard] = useState(true);
 
   // MEZMERIZE States
   const [isBatchMode, setIsBatchMode] = useState(false);
@@ -1352,17 +1353,13 @@ function App() {
           <Typography 
             variant="subtitle1" 
             component="h2" 
-            sx={sectionHeaderStyle}
+            sx={{
+              ...sectionHeaderStyle,
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 400
+            }}
           >
-            COLORIZE | VISUALIZE | <Box component="span" sx={{ 
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              textShadow: `
-                0 0 10px rgba(255, 153, 0, 0.2),
-                0 0 20px rgba(255, 153, 0, 0.1),
-                0 0 30px rgba(255, 153, 0, 0.05)
-              `
-            }}>MESMERIZE</Box>
+            Upload your T-shirt or other Image
           </Typography>
 
           {/* Section E: Image Loading */}
@@ -1437,86 +1434,131 @@ function App() {
           </Box>
 
           {/* Section F: Main Image */}
-          <Box sx={{
-            position: 'relative',
-            zIndex: 1,
-            mt: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '200px',
-            width: '100%',
-            maxWidth: '800px', // Match container max-width
-            overflow: 'hidden'
-          }}>
-            <img
-              src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
-              alt="Working"
-              style={{
-                maxWidth: '100%',
-                height: 'auto',
-                display: 'block' // Remove any extra space below image
-              }}
-            />
-            {/* Download button */}
-            <GlowButton
-              onClick={handleDownload}
-              disabled={!canDownload}
-              sx={{
-                position: 'absolute',
-                right: '12px',
-                bottom: '48px',
-                minWidth: 'auto',
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <FileDownloadIcon />
-            </GlowButton>
+          <Box sx={{ position: 'relative', mb: 2 }}>
+            {/* Background toggle */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              mb: 2
+            }}>
+              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                Show Background
+              </Typography>
+              <GlowSwitch
+                checked={showCheckerboard}
+                onChange={(e) => setShowCheckerboard(e.target.checked)}
+                size="small"
+              />
+            </Box>
+
+            {/* Main image container */}
+            <Box sx={{
+              position: 'relative',
+              zIndex: 1,
+              width: '800px',
+              height: '800px',
+              backgroundColor: 'var(--background-paper)',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto'
+            }}>
+              {/* Checkerboard background */}
+              {showCheckerboard && (
+                <Box sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 1,
+                  backgroundImage: `
+                    linear-gradient(45deg, #808080 25%, transparent 25%),
+                    linear-gradient(-45deg, #808080 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, #808080 75%),
+                    linear-gradient(-45deg, transparent 75%, #808080 75%)
+                  `,
+                  backgroundSize: '20px 20px',
+                  backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                  opacity: 0.1
+                }} />
+              )}
+
+              {/* Image */}
+              <Box sx={{ position: 'relative', zIndex: 2 }}>
+                <img
+                  src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
+                  alt="Working"
+                  style={{
+                    maxWidth: '800px',
+                    maxHeight: '800px',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    display: 'block'
+                  }}
+                />
+              </Box>
+
+              {/* Download button */}
+              <GlowButton
+                onClick={handleDownload}
+                disabled={!canDownload}
+                sx={{
+                  position: 'absolute',
+                  right: '12px',
+                  bottom: '12px',
+                  minWidth: 'auto',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 3
+                }}
+              >
+                <FileDownloadIcon />
+              </GlowButton>
+            </Box>
 
             {/* Format toggle */}
-            <Tooltip title="Toggle between PNG and WebP format">
-              <Box sx={{ 
-                position: 'absolute',
-                right: '12px',
-                bottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                backgroundColor: 'var(--background-paper)',
-                padding: '2px 6px',
-                borderRadius: '4px'
-              }}>
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                    fontWeight: !useWebP ? 600 : 400
-                  }}
-                >
-                  PNG
-                </Typography>
-                <GlowSwitch
-                  checked={useWebP}
-                  onChange={handleWebPToggle}
-                  size="small"
-                />
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                    fontWeight: useWebP ? 600 : 400
-                  }}
-                >
-                  WebP
-                </Typography>
-              </Box>
-            </Tooltip>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              gap: 1,
+              mt: 2
+            }}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                  fontWeight: !useWebP ? 600 : 400
+                }}
+              >
+                PNG
+              </Typography>
+              <GlowSwitch
+                checked={useWebP}
+                onChange={handleWebPToggle}
+                size="small"
+              />
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                  fontWeight: useWebP ? 600 : 400
+                }}
+              >
+                WebP
+              </Typography>
+            </Box>
           </Box>
 
           {/* Section G: Image Processing */}
