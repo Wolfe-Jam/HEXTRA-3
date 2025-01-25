@@ -12,14 +12,13 @@ import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import ColorDemo from './components/ColorDemo';
 import { ToggleButton } from '@mui/material';
-import GILDAN_64000 from './data/catalogs/gildan64000.js';
+import GILDAN_64 from './data/catalogs/gildan64';
 import GILDAN_3000 from './data/catalogs/gildan3000';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
-import { VERSION } from './version';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
@@ -32,6 +31,7 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
+const VERSION = '2.0.4'; // Starting new features after THE IMAGE FACTORY
 
 function hexToRgb(hex) {
   // Remove the hash if present
@@ -123,8 +123,8 @@ function App() {
   const [processedCount, setProcessedCount] = useState(0);
 
   // Add state for catalog colors
-  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
-  const [catalogColors, setCatalogColors] = useState(GILDAN_64000);
+  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64');
+  const [catalogColors, setCatalogColors] = useState(GILDAN_64);
 
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -920,17 +920,17 @@ function App() {
 
   const handleCatalogSwitch = (catalogName) => {
     switch(catalogName) {
-      case 'GILDAN_64000':
-        setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64000);
+      case 'GILDAN_64':
+        setActiveCatalog('GILDAN_64');
+        setCatalogColors(GILDAN_64);
         break;
       case 'GILDAN_3000':
         setActiveCatalog('GILDAN_3000');
         setCatalogColors(GILDAN_3000);
         break;
       default:
-        setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64000);
+        setActiveCatalog('GILDAN_64');
+        setCatalogColors(GILDAN_64);
     }
   };
 
@@ -980,14 +980,14 @@ function App() {
         minHeight: '100vh',
         width: '100%',
         maxWidth: '100%',
-        pt: '48px',  // Increased by 8px
+        pt: '50px',
         color: 'var(--text-primary)',
         transition: 'background-color 0.3s, color 0.3s'
       }}
     >
       {/* Section A: Banner */}
       <Banner 
-        version={VERSION}
+        version="2.0.4"
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
@@ -995,36 +995,66 @@ function App() {
       <Box sx={{ 
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
         minHeight: '100vh',
-        width: '100%',
-        maxWidth: '100%',
-        pt: '48px',  // Increased by 8px
-        color: 'var(--text-primary)',
-        transition: 'background-color 0.3s, color 0.3s'
+        paddingTop: '45px', 
+        backgroundColor: 'var(--bg-primary)',
+        transition: 'background-color 0.3s'
       }}>
         <Typography 
-          variant="h2" 
+          variant="h1" 
           sx={{ 
+            mb: 2,
             textAlign: 'center',
+            fontWeight: 500,
             fontFamily: "'League Spartan', sans-serif",
-            fontSize: '0.75rem',
-            letterSpacing: '0.25em',
+            fontSize: '0.65rem',  
+            letterSpacing: '0.15em',
             textTransform: 'uppercase',
             color: 'var(--text-secondary)',
-            mb: 5,  // Add margin below the text
             '@media (max-width: 532px)': {
-              fontSize: '0.7rem'
+              fontSize: '0.6rem'
             }
           }}
         >
-          <Box component="span">COLORIZE</Box> | <Box component="span">VISUALIZE</Box> | <Box component="span">MESMERIZE</Box>
+          <Typography 
+            variant="subtitle1" 
+            component="h2" 
+            sx={sectionHeaderStyle}
+          >
+            <Box component="span" sx={{ 
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              textShadow: `
+                0 0 10px rgba(255, 153, 0, 0.2),
+                0 0 20px rgba(255, 153, 0, 0.1),
+                0 0 30px rgba(255, 153, 0, 0.05)
+              `
+            }}>COLORIZE</Box> | <Box component="span" sx={{ 
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              textShadow: `
+                0 0 10px rgba(255, 153, 0, 0.2),
+                0 0 20px rgba(255, 153, 0, 0.1),
+                0 0 30px rgba(255, 153, 0, 0.05)
+              `
+            }}>VISUALIZE</Box> | <Box component="span" sx={{ 
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              textShadow: `
+                0 0 10px rgba(255, 153, 0, 0.2),
+                0 0 20px rgba(255, 153, 0, 0.1),
+                0 0 30px rgba(255, 153, 0, 0.05)
+              `
+            }}>MESMERIZE</Box>
+          </Typography>
         </Typography>
 
         {/* Main content in vertical layout */}
         <Box sx={{ 
           display: 'flex',
           flexDirection: 'column',
-          gap: 4,
+          gap: 3,
           width: '100%',
           maxWidth: '800px',  // Maximum before image quality suffers
           mx: 'auto',
@@ -1258,26 +1288,25 @@ function App() {
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  // Increased vertical margin
+              my: 3
             }}
           />
 
           {/* Section D: Main Image Window Title */}
           <Typography 
-            variant="h2" 
-            sx={{ 
-              mb: 4,  // Increased bottom margin
-              textAlign: 'center',
-              fontFamily: "'Inter', sans-serif",
-              fontSize: '1.25rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              '@media (max-width: 532px)': {
-                fontSize: '1.1rem'
-              }
-            }}
+            variant="subtitle1" 
+            component="h2" 
+            sx={sectionHeaderStyle}
           >
-            Upload your T-shirt or other Image
+            COLORIZE | VISUALIZE | <Box component="span" sx={{ 
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              textShadow: `
+                0 0 10px rgba(255, 153, 0, 0.2),
+                0 0 20px rgba(255, 153, 0, 0.1),
+                0 0 30px rgba(255, 153, 0, 0.05)
+              `
+            }}>MESMERIZE</Box>
           </Typography>
 
           {/* Section E: Image Loading */}
@@ -1547,7 +1576,7 @@ function App() {
             </Box>
           </Box>
 
-          <Box sx={{ my: 5 }}>
+          <Box sx={{ my: 3 }}>
             <Box
               sx={{
                 width: '100%',
@@ -1563,7 +1592,7 @@ function App() {
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  // Increased vertical margin
+              my: 3
             }}
           />
 
@@ -1575,20 +1604,28 @@ function App() {
           }}>
             {/* MESMERIZE Section Title */}
             <Typography 
-              variant="h2" 
+              variant="subtitle1" 
+              component="h2" 
               sx={{ 
-                mb: 4,  // Increased bottom margin
+                mb: 1,  // Reduced from mb: 3 to create space between title and buttons
                 textAlign: 'center',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                '@media (max-width: 532px)': {
-                  fontSize: '1.1rem'
-                }
+                fontWeight: 500,
+                fontFamily: "'League Spartan', sans-serif",
+                fontSize: '1rem',
+                letterSpacing: '0.25em',
+                textTransform: 'uppercase',
+                color: 'var(--text-secondary)'
               }}
             >
-              Create your color T-shirt/product blanks in Bulk
+              COLORIZE | VISUALIZE | <Box component="span" sx={{ 
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                textShadow: `
+                  0 0 10px rgba(255, 153, 0, 0.2),
+                  0 0 20px rgba(255, 153, 0, 0.1),
+                  0 0 30px rgba(255, 153, 0, 0.05)
+                `
+              }}>MESMERIZE</Box>
             </Typography>
 
             {/* Catalog selector */}
@@ -1601,17 +1638,17 @@ function App() {
             }}>
               <GlowTextButton
                 variant="contained"
-                onClick={() => handleCatalogSwitch('GILDAN_64000')}
+                onClick={() => handleCatalogSwitch('GILDAN_64')}
                 sx={{
                   width: '140px',
                   height: '36px',
                   fontSize: '0.8rem',
                   letterSpacing: '0.05em',
                   whiteSpace: 'nowrap',
-                  opacity: activeCatalog === 'GILDAN_64000' ? 1 : 0.7
+                  opacity: activeCatalog === 'GILDAN_64' ? 1 : 0.7
                 }}
               >
-                GILDAN 64,000
+                GILDAN 6400
               </GlowTextButton>
               <GlowTextButton
                 variant="contained"
@@ -1766,7 +1803,7 @@ function App() {
             </Box>
           </Box>
 
-          <Box sx={{ my: 5 }}>
+          <Box sx={{ my: 3 }}>
             <Box
               sx={{
                 width: '100%',
@@ -1782,35 +1819,13 @@ function App() {
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  // Increased vertical margin
+              my: 3
             }}
           />
 
         </Box>
       </Box>
-
       <ColorDemo catalog={catalogColors} />
-
-      {/* Footer */}
-      <Box 
-        component="footer" 
-        sx={{
-          width: '100%',
-          borderTop: '1px solid var(--border-color)',
-          bgcolor: 'var(--background-paper)',
-          p: 2,
-          mt: 'auto'
-        }}
-      >
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          align="center"
-        >
-          2025 HEXTRA Color System v{VERSION}. All rights reserved.
-        </Typography>
-      </Box>
-
       {isProcessing && (
         <Box
           position="fixed"
