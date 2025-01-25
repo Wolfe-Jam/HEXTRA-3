@@ -1,0 +1,72 @@
+Ooops, I did it<!DOCTYPE html>
+<html>
+<head>
+    <title>TCM Visualization - Research</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+            text-shadow: 1px 1px 2px black;
+        }
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">Textile Color Model - 3D Visualization</div>
+    <div id="controls">
+        <h3>Controls:</h3>
+        <p>Left Click + Drag: Rotate</p>
+        <p>Right Click + Drag: Pan</p>
+        <p>Scroll: Zoom</p>
+    </div>
+
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- Our visualization code -->
+    <script src="enhanced_visualization.js"></script>
+    
+    <script>
+        // Initialize visualization
+        const viz = new EnhancedTCMVisualization('container');
+        
+        // Handle window resizing
+        window.addEventListener('resize', () => viz.onWindowResize());
+        
+        // Optional: Add keyboard controls
+        window.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case 'g':
+                    // Toggle grid
+                    viz.colorSpace.material.uniforms.showGrid.value = 
+                        !viz.colorSpace.material.uniforms.showGrid.value;
+                    break;
+                case 'r':
+                    // Reset camera
+                    viz.camera.position.set(3, 2, 5);
+                    viz.camera.lookAt(0, 0, 0);
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
