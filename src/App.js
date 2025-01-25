@@ -1356,38 +1356,24 @@ function App() {
             sx={{
               ...sectionHeaderStyle,
               fontFamily: 'Inter, sans-serif',
-              fontWeight: 400
+              fontWeight: 400,
+              mb: 2
             }}
           >
             Upload your T-shirt or other Image
           </Typography>
 
-          {/* Section E: Image Loading */}
+          {/* Upload Button */}
           <Box sx={{ 
-            display: 'flex', 
-            gap: 2,
-            alignItems: 'center',
-            justifyContent: 'center', // Center the upload button when stacked
-            mt: 1,
-            mb: 3,
-            width: '100%',
-            '@media (max-width: 600px)': {
-              flexDirection: 'column',
-              alignItems: 'center', // Center all items when stacked
-              '& > button': {
-                width: '110px', // Keep buttons at normal width even when stacked
-                alignSelf: 'center'
-              }
-            }
+            display: 'flex',
+            justifyContent: 'center',
+            mb: 3
           }}>
             <GlowTextButton
               component="label"
               variant="contained"
               disabled={isProcessing}
-              sx={{ 
-                width: '110px',
-                flexShrink: 0
-              }}
+              sx={{ width: '110px' }}
             >
               UPLOAD
               <input
@@ -1395,14 +1381,31 @@ function App() {
                 hidden
                 accept="image/*"
                 onChange={(e) => handleImageUpload(e.target.files[0])}
-                disabled={false}
               />
             </GlowTextButton>
+          </Box>
 
+          {/* URL Input Section */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 3,
+            width: '100%',
+            '@media (max-width: 600px)': {
+              flexDirection: 'column',
+              alignItems: 'center',
+              '& > button': {
+                width: '110px',
+                alignSelf: 'center'
+              }
+            }
+          }}>
             <Box sx={{ 
               flex: 1,
-              minWidth: 0, // Allow box to shrink below minWidth
-              maxWidth: '600px', // Maximum width for URL input
+              minWidth: 0,
+              maxWidth: '600px',
               '@media (max-width: 600px)': {
                 width: '100%',
                 maxWidth: '300px',
@@ -1433,132 +1436,129 @@ function App() {
             </GlowTextButton>
           </Box>
 
-          {/* Section F: Main Image */}
-          <Box sx={{ position: 'relative', mb: 2 }}>
-            {/* Background toggle */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              mb: 2
-            }}>
-              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-                Show Background
-              </Typography>
-              <GlowSwitch
-                checked={showCheckerboard}
-                onChange={(e) => setShowCheckerboard(e.target.checked)}
-                size="small"
+          {/* Background toggle */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            mb: 2
+          }}>
+            <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+              Show Background
+            </Typography>
+            <GlowSwitch
+              checked={showCheckerboard}
+              onChange={(e) => setShowCheckerboard(e.target.checked)}
+              size="small"
+            />
+          </Box>
+
+          {/* Main image container */}
+          <Box sx={{
+            position: 'relative',
+            zIndex: 1,
+            width: '800px',
+            height: '800px',
+            backgroundColor: 'var(--background-paper)',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto'
+          }}>
+            {/* Checkerboard background */}
+            {showCheckerboard && (
+              <Box sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 1,
+                backgroundImage: `
+                  linear-gradient(45deg, #808080 25%, transparent 25%),
+                  linear-gradient(-45deg, #808080 25%, transparent 25%),
+                  linear-gradient(45deg, transparent 75%, #808080 75%),
+                  linear-gradient(-45deg, transparent 75%, #808080 75%)
+                `,
+                backgroundSize: '20px 20px',
+                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                opacity: 0.1
+              }} />
+            )}
+
+            {/* Image */}
+            <Box sx={{ position: 'relative', zIndex: 2 }}>
+              <img
+                src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
+                alt="Working"
+                style={{
+                  maxWidth: '800px',
+                  maxHeight: '800px',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block'
+                }}
               />
             </Box>
 
-            {/* Main image container */}
-            <Box sx={{
-              position: 'relative',
-              zIndex: 1,
-              width: '800px',
-              height: '800px',
-              backgroundColor: 'var(--background-paper)',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto'
-            }}>
-              {/* Checkerboard background */}
-              {showCheckerboard && (
-                <Box sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 1,
-                  backgroundImage: `
-                    linear-gradient(45deg, #808080 25%, transparent 25%),
-                    linear-gradient(-45deg, #808080 25%, transparent 25%),
-                    linear-gradient(45deg, transparent 75%, #808080 75%),
-                    linear-gradient(-45deg, transparent 75%, #808080 75%)
-                  `,
-                  backgroundSize: '20px 20px',
-                  backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                  opacity: 0.1
-                }} />
-              )}
+            {/* Download button */}
+            <GlowButton
+              onClick={handleDownload}
+              disabled={!canDownload}
+              sx={{
+                position: 'absolute',
+                right: '12px',
+                bottom: '12px',
+                minWidth: 'auto',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 3
+              }}
+            >
+              <FileDownloadIcon />
+            </GlowButton>
+          </Box>
 
-              {/* Image */}
-              <Box sx={{ position: 'relative', zIndex: 2 }}>
-                <img
-                  src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
-                  alt="Working"
-                  style={{
-                    maxWidth: '800px',
-                    maxHeight: '800px',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    display: 'block'
-                  }}
-                />
-              </Box>
-
-              {/* Download button */}
-              <GlowButton
-                onClick={handleDownload}
-                disabled={!canDownload}
-                sx={{
-                  position: 'absolute',
-                  right: '12px',
-                  bottom: '12px',
-                  minWidth: 'auto',
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '50%',
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 3
-                }}
-              >
-                <FileDownloadIcon />
-              </GlowButton>
-            </Box>
-
-            {/* Format toggle */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              gap: 1,
-              mt: 2
-            }}>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                  fontWeight: !useWebP ? 600 : 400
-                }}
-              >
-                PNG
-              </Typography>
-              <GlowSwitch
-                checked={useWebP}
-                onChange={handleWebPToggle}
-                size="small"
-              />
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                  fontWeight: useWebP ? 600 : 400
-                }}
-              >
-                WebP
-              </Typography>
-            </Box>
+          {/* Format toggle */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            gap: 1,
+            mt: 2
+          }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                fontWeight: !useWebP ? 600 : 400
+              }}
+            >
+              PNG
+            </Typography>
+            <GlowSwitch
+              checked={useWebP}
+              onChange={handleWebPToggle}
+              size="small"
+            />
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                fontWeight: useWebP ? 600 : 400
+              }}
+            >
+              WebP
+            </Typography>
           </Box>
 
           {/* Section G: Image Processing */}
