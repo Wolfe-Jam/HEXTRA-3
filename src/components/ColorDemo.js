@@ -17,9 +17,9 @@ const ColorDemo = ({ catalog }) => {
         sx={{
           fontFamily: "'League Spartan', sans-serif",
           fontSize: '32px',
-          textAlign: 'left',
+          textAlign: 'center',
           mb: 3,
-          ml: { xs: 4, sm: 'calc((100% - 800px) / 2 + 24px)' }  
+          width: '100%'
         }}
       >
         HEXTRA Color System
@@ -29,18 +29,15 @@ const ColorDemo = ({ catalog }) => {
         position: 'relative',
         zIndex: 1,
         display: 'flex',
-        justifyContent: 'center',
+        flexDirection: 'column',
         alignItems: 'center',
         minHeight: '200px',
         width: '100%',
-        maxWidth: '832px',
+        maxWidth: '800px',
         mt: 2,
         mx: 'auto',
         bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-        borderRadius: '12px',
-        '@media (max-width: 832px)': {
-          maxWidth: 'calc(100% - 32px)',
-        }
+        borderRadius: '12px'
       }}>
         <Grid container sx={{ width: '100%' }}>
           <Grid item xs={12}>
