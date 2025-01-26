@@ -65,6 +65,8 @@ const PanelTitle = styled(Typography)`
   font-weight: 700;
   color: #333;
   text-transform: uppercase;
+  text-align: center;
+  width: 100%;
   margin-bottom: -8px;
 `;
 

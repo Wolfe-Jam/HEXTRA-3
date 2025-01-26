@@ -33,13 +33,15 @@ const GridContainer = styled(Box)`
 
 const HeaderContainer = styled(Box)`
   padding: 16px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 `;
 
 const TitleRow = styled(Box)`
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 8px;
 `;
 
 const ControlsRow = styled(Box)`
@@ -50,10 +52,12 @@ const ControlsRow = styled(Box)`
 
 const Title = styled(Typography)`
   font-family: 'Inter', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #333;
   text-transform: uppercase;
+  text-align: center;
+  width: 100%;
 `;
 
 const Controls = styled(Box)`
