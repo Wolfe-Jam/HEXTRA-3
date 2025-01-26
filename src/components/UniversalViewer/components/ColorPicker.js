@@ -57,6 +57,7 @@ const LeftPanel = styled(Box)`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-top: 16px;
 `;
 
 const PanelTitle = styled(Typography)`
