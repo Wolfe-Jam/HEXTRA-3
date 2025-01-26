@@ -1,23 +1,33 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { Box, Typography, Select, MenuItem, FormControl } from '@mui/material';
+import { Box, Typography, Select, MenuItem, FormControl, Switch, FormControlLabel } from '@mui/material';
 import useColorStore from '../../../state/ColorState.js';
 import { CatalogSwatch, SwatchLabel } from '../styles/SwatchStyles.js';
-import { sortByName, sortByFamily, sortByPopularity } from '../../../data/catalogs/sortMethods.js';
+import { 
+  sortByName, 
+  sortByFamily, 
+  sortByPopularity,
+  sortByLightest,
+  sortByDarkest,
+  sortByIndex
+} from '../../../data/catalogs/sortMethods.js';
 
 const GridContainer = styled(Box)`
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 6px;
+  gap: 8px;
   padding: 16px;
-  width: calc(832px - 232px - 64px);
-  height: auto;
+  width: 100%;
   
-  @media (max-width: 768px) {
-    width: 232px;
+  &.size-4 {
     grid-template-columns: repeat(4, 1fr);
-    justify-content: center;
-    margin: 0 auto;
+  }
+  
+  &.size-6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  &.size-8 {
+    grid-template-columns: repeat(8, 1fr);
   }
 `;
 
@@ -36,7 +46,13 @@ const Title = styled(Typography)`
   text-transform: uppercase;
 `;
 
-const SortSelect = styled(Select)`
+const Controls = styled(Box)`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+`;
+
+const StyledSelect = styled(Select)`
   min-width: 150px;
   height: 32px;
   margin-left: 16px;
@@ -47,62 +63,84 @@ const SortSelect = styled(Select)`
   }
 `;
 
-const CatalogGrid = ({ colors, showHex = true }) => {
-  const { currentColor, updateColorState } = useColorStore();
+const CatalogGrid = ({ colors = [], showHex = true }) => {
   const [sortMethod, setSortMethod] = useState('default');
+  const [gridSize, setGridSize] = useState(6);
+  const [showLabels, setShowLabels] = useState(false);
+  const { currentColor, updateColorState } = useColorStore();
 
   const sortedColors = useMemo(() => {
     switch (sortMethod) {
-      case 'alphabetical':
+      case 'name':
         return sortByName(colors);
       case 'family':
         return sortByFamily(colors);
       case 'popularity':
         return sortByPopularity(colors);
+      case 'lightest':
+        return sortByLightest(colors);
+      case 'darkest':
+        return sortByDarkest(colors);
+      case 'default':
       default:
-        return colors;
+        return sortByIndex(colors);
     }
   }, [colors, sortMethod]);
 
-  const handleColorSelect = (color) => {
-    const hexValue = color.hex.startsWith('#') ? color.hex : `#${color.hex}`;
-    updateColorState(hexValue);
-  };
-
   return (
-    <>
+    <Box>
       <HeaderContainer>
-        <Title>COLOR CATALOG</Title>
-        <FormControl size="small">
-          <SortSelect
-            value={sortMethod}
-            onChange={(e) => setSortMethod(e.target.value)}
-            variant="outlined"
-          >
-            <MenuItem value="default">Printify Order (1-63)</MenuItem>
-            <MenuItem value="alphabetical">A-Z by Name</MenuItem>
-            <MenuItem value="family">Color Families</MenuItem>
-            <MenuItem value="popularity">Most Popular</MenuItem>
-          </SortSelect>
-        </FormControl>
-      </HeaderContainer>
-      <GridContainer>
-        {sortedColors.map((color) => (
-          <Box key={color.hex} sx={{ position: 'relative' }}>
-            <CatalogSwatch 
-              color={color.hex}
-              onClick={() => handleColorSelect(color)}
-              className={color.hex.toUpperCase() === currentColor.toUpperCase() ? 'selected' : ''}
+        <Title>Color Catalog</Title>
+        <Controls>
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                checked={showLabels}
+                onChange={(e) => setShowLabels(e.target.checked)}
+              />
+            }
+            label="Show All Labels"
+          />
+          <FormControl size="small">
+            <StyledSelect
+              value={gridSize}
+              onChange={(e) => setGridSize(e.target.value)}
             >
-              {showHex && <SwatchLabel>{color.hex}</SwatchLabel>}
-              <SwatchLabel>
-                {color.name}
-              </SwatchLabel>
-            </CatalogSwatch>
-          </Box>
+              <MenuItem value={4}>4 Per Row</MenuItem>
+              <MenuItem value={6}>6 Per Row</MenuItem>
+              <MenuItem value={8}>8 Per Row</MenuItem>
+            </StyledSelect>
+          </FormControl>
+          <FormControl size="small">
+            <StyledSelect
+              value={sortMethod}
+              onChange={(e) => setSortMethod(e.target.value)}
+            >
+              <MenuItem value="default">Printify Order (1-63)</MenuItem>
+              <MenuItem value="popularity">Most Popular</MenuItem>
+              <MenuItem value="name">Alphabetical</MenuItem>
+              <MenuItem value="family">Color Family</MenuItem>
+              <MenuItem value="lightest">Lightest First</MenuItem>
+              <MenuItem value="darkest">Darkest First</MenuItem>
+            </StyledSelect>
+          </FormControl>
+        </Controls>
+      </HeaderContainer>
+
+      <GridContainer className={`size-${gridSize}`}>
+        {sortedColors.map((color, index) => (
+          <CatalogSwatch
+            key={`${color.hex}-${index}`}
+            color={color.hex}
+            onClick={() => updateColorState(color.hex)}
+            className={`${color.hex.toUpperCase() === currentColor.toUpperCase() ? 'selected' : ''} ${showLabels ? 'show-all-labels' : ''}`}
+          >
+            <SwatchLabel className="swatch-label">{color.name}</SwatchLabel>
+          </CatalogSwatch>
         ))}
       </GridContainer>
-    </>
+    </Box>
   );
 };
 
