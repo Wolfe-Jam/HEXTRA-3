@@ -32,10 +32,20 @@ const GridContainer = styled(Box)`
 `;
 
 const HeaderContainer = styled(Box)`
+  padding: 16px 16px 8px;
+`;
+
+const TitleRow = styled(Box)`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 16px 8px;
+  margin-bottom: 8px;
+`;
+
+const ControlsRow = styled(Box)`
+  display: flex;
+  gap: 8px;
+  align-items: center;
 `;
 
 const Title = styled(Typography)`
@@ -90,8 +100,10 @@ const CatalogGrid = ({ colors = [], showHex = true }) => {
   return (
     <Box>
       <HeaderContainer>
-        <Title>Color Catalog</Title>
-        <Controls>
+        <TitleRow>
+          <Title>COLOR CATALOG</Title>
+        </TitleRow>
+        <ControlsRow>
           <FormControlLabel
             control={
               <Switch
@@ -125,7 +137,7 @@ const CatalogGrid = ({ colors = [], showHex = true }) => {
               <MenuItem value="darkest">Darkest First</MenuItem>
             </StyledSelect>
           </FormControl>
-        </Controls>
+        </ControlsRow>
       </HeaderContainer>
 
       <GridContainer className={`size-${gridSize}`}>
