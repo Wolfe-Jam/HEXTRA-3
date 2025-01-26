@@ -60,6 +60,15 @@ const Title = styled(Typography)`
   width: 100%;
 `;
 
+const Subtitle = styled(Typography)`
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  width: 100%;
+  margin-top: 4px;
+`;
+
 const Controls = styled(Box)`
   display: flex;
   gap: 8px;
@@ -105,7 +114,10 @@ const CatalogGrid = ({ colors = [], showHex = true }) => {
     <Box>
       <HeaderContainer>
         <TitleRow>
-          <Title>COLOR CATALOG</Title>
+          <Box>
+            <Title>COLOR CATALOG</Title>
+            <Subtitle>GILDAN 64000</Subtitle>
+          </Box>
         </TitleRow>
         <ControlsRow>
           <FormControlLabel
