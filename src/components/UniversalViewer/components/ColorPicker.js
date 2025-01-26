@@ -118,22 +118,24 @@ const ValueGroup = styled(Box)`
 
 const ValueLabel = styled(Box)`
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   color: #666;
   padding: 4px 8px;
   border-radius: 4px;
-  width: 36px;
+  width: 40px;
   text-align: center;
 `;
 
 const ValueDisplay = styled(Box)`
   font-family: 'Inter', monospace;
-  font-size: 12px;
+  font-size: 14px;
   color: #333;
   padding: 4px 8px;
   border-radius: 4px;
   flex: 1;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
 `;
 
 const RightPanel = styled(Box)`
@@ -268,13 +270,13 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
               <ValueGroup>
                 <ValueLabel sx={{ backgroundColor: '#f5f5f5' }}>RGB</ValueLabel>
                 <ValueDisplay sx={{ backgroundColor: '#f5f5f5' }}>
-                  {rgbValues.r}, {rgbValues.g}, {rgbValues.b}
+                  {rgbValues.r},{rgbValues.g},{rgbValues.b}
                 </ValueDisplay>
               </ValueGroup>
               <ValueGroup>
                 <ValueLabel sx={{ backgroundColor: '#f5f5f5' }}>HSL</ValueLabel>
                 <ValueDisplay sx={{ backgroundColor: '#f5f5f5' }}>
-                  {hslValues.h}°, {hslValues.s}%, {hslValues.l}%
+                  {hslValues.h}°,{hslValues.s}%,{hslValues.l}%
                 </ValueDisplay>
               </ValueGroup>
             </ColorValues>
