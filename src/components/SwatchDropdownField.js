@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TextField, InputAdornment, IconButton, Autocomplete } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { RefreshRounded as ResetIcon } from '@mui/icons-material';
+import { ColorTheory } from '../utils/colorTheory';
 
 const StyledTextField = styled(TextField)(() => ({
   '& .MuiOutlinedInput-root': {
@@ -46,6 +47,7 @@ const StyledTextField = styled(TextField)(() => ({
  * @param {Array} props.options - Array of color options
  * @param {function} props.onSelectionChange - Called when dropdown selection changes
  * @param {function} props.onAutoApply - Called after states update (auto-apply)
+ * @param {function} props.onSearch - Called when input changes for real-time color matching
  */
 const SwatchDropdownField = ({
   value,
@@ -59,19 +61,43 @@ const SwatchDropdownField = ({
   options = [],
   onSelectionChange,
   onAutoApply,
+  onSearch,
   InputProps = {},
   ...rest
 }) => {
-  // Track if selection came from dropdown
+  const [inputValue, setInputValue] = React.useState('');
   const [isDropdownSelection, setIsDropdownSelection] = React.useState(false);
+  const autoApplyTimeoutRef = React.useRef(null);
 
-  // Auto-apply after state updates from dropdown selection
+  // Auto-apply the first match after a delay
   React.useEffect(() => {
-    if (isDropdownSelection && onAutoApply) {
-      onAutoApply();
-      setIsDropdownSelection(false);
+    if (!isDropdownSelection && inputValue) {
+      // Clear any existing timeout
+      if (autoApplyTimeoutRef.current) {
+        clearTimeout(autoApplyTimeoutRef.current);
+      }
+
+      // Set new timeout to auto-apply
+      autoApplyTimeoutRef.current = setTimeout(() => {
+        const matches = onSearch?.(inputValue) || [];
+        if (matches.length > 0) {
+          onSelectionChange?.(matches[0]);
+          setIsDropdownSelection(true);
+        }
+      }, 800); // Slower auto-apply (800ms)
     }
-  }, [value, isDropdownSelection, onAutoApply]);
+
+    return () => {
+      if (autoApplyTimeoutRef.current) {
+        clearTimeout(autoApplyTimeoutRef.current);
+      }
+    };
+  }, [inputValue, isDropdownSelection, onSearch, onSelectionChange]);
+
+  // Reset isDropdownSelection when value changes externally
+  React.useEffect(() => {
+    setIsDropdownSelection(false);
+  }, [value]);
 
   // Combine any provided endAdornment with reset button if needed
   const endAdornment = hasReset ? (
@@ -113,41 +139,94 @@ const SwatchDropdownField = ({
     <Autocomplete
       freeSolo
       value={value}
+      inputValue={inputValue}
       onChange={(event, newValue) => {
         if (newValue) {
-          onSelectionChange?.(newValue);
+          onSelectionChange?.(newValue); // This will now immediately apply the color
           setIsDropdownSelection(true);
         }
       }}
       onInputChange={(event, newValue, reason) => {
-        if (reason === 'reset' || reason === 'clear') {
+        if (reason === 'reset' && !isDropdownSelection) {
           return;
         }
+        if (reason === 'clear') {
+          return;
+        }
+        setInputValue(newValue);
+        setIsDropdownSelection(false);
         onChange?.({ target: { value: newValue } });
       }}
+      filterOptions={(options) => {
+        if (onSearch) {
+          return onSearch(inputValue);
+        }
+        return options;
+      }}
+      autoHighlight
       selectOnFocus
+      clearOnBlur={false}
       handleHomeEndKeys
-      autoSelect
+      blurOnSelect="touch"
       options={options}
+      getOptionLabel={(option) => {
+        if (typeof option === 'string') return option;
+        return option.hex || (option.color && ColorTheory.rgbToHex(option.color)) || '';
+      }}
       renderOption={(props, option) => (
-        <li {...props} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <li {...props} 
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            padding: '8px 16px',
+            cursor: 'pointer',
+            '&:hover': {
+              backgroundColor: 'var(--hover-bg)'
+            }
+          }}
+        >
           <div style={{ 
             width: '20px', 
             height: '20px', 
             borderRadius: '4px',
-            backgroundColor: option,
+            backgroundColor: option.hex || option.color && ColorTheory.rgbToHex(option.color) || option,
             border: '1px solid var(--border-color)'
           }} />
-          <span style={{ fontFamily: 'monospace' }}>{option}</span>
+          <span style={{ 
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '0.875rem',
+            color: 'var(--text-primary)',
+            flex: 1
+          }}>
+            {option.name || option}
+          </span>
+          {option.confidence !== undefined && (
+            <span style={{ 
+              fontFamily: "'Inter', sans-serif",
+              fontSize: '0.75rem',
+              color: 'var(--text-secondary)'
+            }}>
+              {Math.round(option.confidence)}% match
+            </span>
+          )}
         </li>
       )}
-      getOptionLabel={(option) => option}
-      isOptionEqualToValue={(option, value) => option === value}
       renderInput={(params) => (
         <StyledTextField
           {...params}
           placeholder={placeholder}
-          onKeyDown={onKeyDown}
+          onKeyDown={(e) => {
+            // Handle enter key
+            if (e.key === 'Enter') {
+              const firstOption = onSearch?.(inputValue)?.[0];
+              if (firstOption) {
+                onSelectionChange?.(firstOption);
+                setIsDropdownSelection(true);
+              }
+            }
+            onKeyDown?.(e);
+          }}
           sx={{ ...sx }}
           InputProps={{
             ...params.InputProps,

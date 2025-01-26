@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import Jimp from 'jimp';
@@ -12,13 +12,14 @@ import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import HCS from './components/HCS';
 import { ToggleButton } from '@mui/material';
-import GILDAN_64000 from './data/catalogs/gildan64000';
+import GILDAN_64 from './data/catalogs/gildan64000';
 import GILDAN_3000 from './data/catalogs/gildan3000';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
+import { ColorTheory } from './utils/colorTheory';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
@@ -127,10 +128,36 @@ function App() {
 
   // Add state for catalog colors
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
-  const [catalogColors, setCatalogColors] = useState(GILDAN_64000);
+  const [catalogColors, setCatalogColors] = useState(GILDAN_64);
 
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Color catalog with RGB values for matching
+  const colorCatalog = useMemo(() => 
+    GILDAN_64.map(color => ({
+      ...color,
+      rgb: ColorTheory.hexToRgb(color.hex)
+    }))
+  , []);
+
+  // Find matching colors as user types
+  const handleColorSearch = (searchValue) => {
+    if (!searchValue) return colorCatalog;
+    
+    // If it's a valid hex color, find nearest matches
+    if (/^#?[0-9A-F]{6}$/i.test(searchValue.replace('#', ''))) {
+      const targetRgb = ColorTheory.hexToRgb(searchValue);
+      return ColorTheory.findNearest(targetRgb, colorCatalog);
+    }
+    
+    // Otherwise filter by name and family
+    const searchLower = searchValue.toLowerCase();
+    return colorCatalog.filter(color => 
+      color.name.toLowerCase().includes(searchLower) ||
+      color.family?.toLowerCase().includes(searchLower)
+    );
+  };
 
   // Image processing methods
   const LUMINANCE_METHODS = {
@@ -290,6 +317,39 @@ function App() {
       setCanDownload(false);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Fast update for single color changes
+  const updateSingleColor = async (hex) => {
+    if (!imageLoaded || !originalImage) return;
+    
+    try {
+      const rgb = hexToRgb(hex);
+      if (!rgb) return;
+      
+      const colorized = originalImage.clone();
+      
+      colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
+        const red = this.bitmap.data[idx + 0];
+        const green = this.bitmap.data[idx + 1];
+        const blue = this.bitmap.data[idx + 2];
+        const alpha = this.bitmap.data[idx + 3];
+        
+        if (alpha > 0) {
+          const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
+          this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
+          this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
+          this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
+        }
+      });
+      
+      const buffer = await colorized.getBufferAsync(Jimp.MIME_PNG);
+      const url = URL.createObjectURL(new Blob([buffer], { type: 'image/png' }));
+      setWorkingProcessedUrl(url);
+      
+    } catch (err) {
+      console.error('Error updating color:', err);
     }
   };
 
@@ -493,22 +553,10 @@ function App() {
     }
   }, [isDropdownSelection]);  
 
-  const handleDropdownSelection = (color) => {
-    const rgb = hexToRgb(color);
-    if (rgb) {
-      setRgbColor(rgb);
-      setSelectedColor(color);
-      setHexInput(color);
-      setIsDropdownSelection(true);
-      if (wheelRef.current) {
-        wheelRef.current.setHsva({
-          h: rgbToHsv(rgb.r, rgb.g, rgb.b).h,
-          s: rgbToHsv(rgb.r, rgb.g, rgb.b).s,
-          v: rgbToHsv(rgb.r, rgb.g, rgb.b).v,
-          a: 1
-        });
-      }
-    }
+  const handleDropdownSelection = (option) => {
+    const hex = typeof option === 'string' ? option : option.hex;
+    setHexInput(hex);
+    setSelectedColor(hex);
   };
 
   const handleQuickDownload = () => {
@@ -596,6 +644,7 @@ function App() {
       .then(image => {
         setOriginalImage(image);
         setImageLoaded(true);
+        // Get initial base64 for display
         image.getBase64(Jimp.MIME_PNG, (err, base64) => {
           if (!err) {
             setProcessedImage(image);
@@ -632,7 +681,7 @@ function App() {
 
     // If it's already a hex code (with or without #)
     // Check this first to avoid treating hex as decimal
-    if (/^[0-9A-F]{6}$/i.test(input)) {
+    if (/^#?[0-9A-F]{6}$/i.test(input.replace('#', ''))) {
       const hex = '#' + input.toUpperCase();
       console.log('Valid hex code:', hex);
       return hex;
@@ -966,7 +1015,7 @@ function App() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url);
       
       setBatchStatus('complete');
       
@@ -991,7 +1040,7 @@ function App() {
     switch(catalogName) {
       case 'GILDAN_64000':
         setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64000);
+        setCatalogColors(GILDAN_64);
         break;
       case 'GILDAN_3000':
         setActiveCatalog('GILDAN_3000');
@@ -999,7 +1048,7 @@ function App() {
         break;
       default:
         setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64000);
+        setCatalogColors(GILDAN_64);
     }
   };
 
@@ -1407,15 +1456,15 @@ function App() {
                   startIcon={<TagIcon />}
                   hasReset
                   onReset={resetColor}
-                  options={[
-                    '#FED141',
-                    '#D50032',
-                    '#00805E',
-                    '#224D8F',
-                    '#FF4400',
-                    '#CABFAD'
-                  ]}
-                  onSelectionChange={handleDropdownSelection}
+                  options={colorCatalog}
+                  onSearch={handleColorSearch}
+                  onSelectionChange={(selected) => {
+                    const hex = selected.hex || selected;
+                    setHexInput(hex);
+                    setSelectedColor(hex);
+                    setRgbColor(ColorTheory.hexToRgb(hex));
+                    updateSingleColor(hex); // Use fast update instead of handleGenerateAll
+                  }}
                   sx={{ 
                     flex: 1,
                     minWidth: '280px',
@@ -1569,7 +1618,7 @@ function App() {
                 variant="contained"
                 onClick={() => {
                   setActiveCatalog('GILDAN_64000');
-                  setCatalogColors(GILDAN_64000);
+                  setCatalogColors(GILDAN_64);
                 }}
                 sx={{ 
                   width: '180px',
