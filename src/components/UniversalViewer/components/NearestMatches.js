@@ -13,9 +13,9 @@ const CONFIDENCE_SCALE = 2; // Higher = more aggressive confidence dropoff
 
 // Styled Components
 const Container = styled(Box)`
-  width: 232px;
-  min-width: 232px;
-  max-width: 232px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
   padding: 0 16px 16px;
   background: #f5f5f5;
   border-radius: 4px;
@@ -23,9 +23,9 @@ const Container = styled(Box)`
   overflow: hidden;
 
   @media (max-width: 532px) {
-    width: 232px;
-    min-width: 232px;
-    max-width: 232px;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
     margin: -8px auto 0;
   }
 `;

@@ -49,148 +49,96 @@ const Container = styled(Box)`
   display: flex;
   flex-direction: row;
   gap: 16px;
-  width: 832px;
-  padding: 24px;
-  background: ${({ $mode }) => $mode === 'dark' ? '#1a1a1a' : '#fff'};
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border: 1px solid ${({ $mode }) => $mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 232px;
-    margin: 0 auto;
-  }
 `;
 
 const LeftPanel = styled(Box)`
-  width: 260px;
-  min-width: 260px;
-  height: 100%;
-  background: #fff;
+  width: 200px;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
-  
-  @media (max-width: 768px) {
-    width: 100%;
-    min-width: unset;
-    height: auto;
-    align-items: center;
-  }
+  gap: 16px;
 `;
 
-const RightPanel = styled(Box)`
-  flex: 1;
-  height: 100%;
-  background: #fff;
-  margin-left: 0;
-  padding-left: 0;
-  overflow: hidden;
-  
-  @media (max-width: 768px) {
-    width: 100%;
-    height: auto;
-    min-height: 300px;
-    overflow: visible;
-  }
+const PanelTitle = styled(Typography)`
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  text-transform: uppercase;
+  margin-bottom: -8px;
+`;
+
+const LeftPanelContent = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 `;
 
 const ColorPanel = styled(Box)`
-  width: 232px;
-  min-width: 232px;
-  max-width: 232px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   padding: 16px;
   background: #f5f5f5;
   border-radius: 4px;
-  margin: 16px 0;
-  
-  @media (max-width: 532px) {
-    width: 232px;
-    min-width: 232px;
-    max-width: 232px;
-    margin: 16px auto;
+
+  .uiw-color-wheel {
+    width: 168px !important;
+    height: 168px !important;
   }
 `;
 
 const ColorInfo = styled(Box)`
   display: flex;
-  gap: 12px;
   align-items: center;
-  margin-top: 16px;
-  background: #f5f5f5;
-`;
-
-const ColorValues = styled(Box)`
-  position: relative;
-  margin-top: 12px;
-  padding-bottom: 34px;
-  font-family: 'Inter', monospace;
-  font-size: 8px;
-  background: #f5f5f5;
-`;
-
-const ValueGroup = styled(Box)`
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  margin: 0;
-  
-  &.rgb {
-    left: 0;
-  }
-  
-  &.hsl {
-    left: 108px;
-  }
-`;
-
-const ValueLabel = styled(Typography)`
-  color: #666;
-  font-size: 8px;
-  margin-bottom: 2px;
-  padding: 0;
-  line-height: 1;
-  background-color: #f5f5f5;
-`;
-
-const ValueDisplay = styled(Typography)`
-  font-family: 'Inter', monospace;
-  font-size: 8px;
-  white-space: nowrap;
-  padding: 0;
-  line-height: 1;
-  background-color: #f5f5f5;
-`;
-
-const ValueText = styled(Typography)`
-  font-family: 'Inter', monospace;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const PanelTitle = styled(Typography)`
-  font-family: 'Inter', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  padding-left: 16px;
-  margin: 16px 0 8px;
-  text-transform: uppercase;
-`;
-
-const LeftPanelContent = styled(Box)`
-  padding: 0;
+  gap: 8px;
 `;
 
 const HexLabel = styled(Typography)`
   font-family: 'Inter', sans-serif;
   font-size: 14px;
+  font-weight: 500;
   color: #666;
+  margin-left: 4px;
+`;
+
+const ColorValues = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+`;
+
+const ValueGroup = styled(Box)`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+`;
+
+const ValueLabel = styled(Box)`
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  padding: 4px 8px;
+  border-radius: 4px;
+  width: 36px;
+  text-align: center;
+`;
+
+const ValueDisplay = styled(Box)`
+  font-family: 'Inter', monospace;
+  font-size: 12px;
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+  flex: 1;
+`;
+
+const RightPanel = styled(Box)`
+  flex: 1;
+  min-width: 0;
 `;
 
 const ColorPicker = ({ catalog = [], onColorSelect }) => {
@@ -290,8 +238,8 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
               <Wheel 
                 color={localColor}
                 onChange={handleColorChange}
-                width={200}
-                height={200}
+                width={168}
+                height={168}
               />
             </div>
             
@@ -313,16 +261,16 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
             </ColorInfo>
             
             <ColorValues>
-              <ValueGroup className="rgb">
+              <ValueGroup>
                 <ValueLabel sx={{ backgroundColor: '#f5f5f5' }}>RGB</ValueLabel>
                 <ValueDisplay sx={{ backgroundColor: '#f5f5f5' }}>
-                  {rgbValues.r},{rgbValues.g},{rgbValues.b}
+                  {rgbValues.r}, {rgbValues.g}, {rgbValues.b}
                 </ValueDisplay>
               </ValueGroup>
-              <ValueGroup className="hsl">
+              <ValueGroup>
                 <ValueLabel sx={{ backgroundColor: '#f5f5f5' }}>HSL</ValueLabel>
                 <ValueDisplay sx={{ backgroundColor: '#f5f5f5' }}>
-                  {hslValues.h}°,{hslValues.s}%,{hslValues.l}%
+                  {hslValues.h}°, {hslValues.s}%, {hslValues.l}%
                 </ValueDisplay>
               </ValueGroup>
             </ColorValues>
@@ -333,7 +281,7 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
       </LeftPanel>
       
       <RightPanel>
-        <CatalogGrid colors={catalog} showHex={false} onColorSelect={updateColor} />
+        <CatalogGrid colors={catalog} showHex={false} />
       </RightPanel>
     </Container>
   );
