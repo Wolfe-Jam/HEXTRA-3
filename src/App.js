@@ -1108,7 +1108,7 @@ function App() {
           gap: 2,
           width: '100%',
           mt: 16,
-          mb: 2
+          mb: 1
         }}>
           <GlowTextButton
             component="label"
@@ -1133,7 +1133,7 @@ function App() {
           alignItems: 'center',
           width: '100%',
           maxWidth: '800px',
-          mb: 4
+          mb: 3
         }}>
           <IconTextField
             placeholder="Paste image URL here..."
@@ -1177,7 +1177,7 @@ function App() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 3,
-            mb: 2
+            mb: 1
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
@@ -1298,7 +1298,7 @@ function App() {
             gap: 2,
             width: '800px',
             pr: 1,
-            mb: 4
+            mb: 3
           }}>
             <Typography 
               variant="caption" 
@@ -1332,398 +1332,387 @@ function App() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 3,
-          mb: 4
+          gap: 2,
+          mb: 3
         }}>
-          {/* Title */}
-          <Typography 
-            variant="subtitle1" 
-            component="h2" 
-            sx={{
-              textAlign: 'center',
-              fontWeight: 500,
-              fontFamily: "'League Spartan', sans-serif",
-              fontSize: '0.875rem',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: theme === 'dark' ? '#E8E8E8' : '#1A1A1A',
-              mt: 4,
-              mb: 2
-            }}
-          >
-            COLORIZE | VISUALIZE | MESMERIZE
-          </Typography>
-
           {/* Color Wheel */}
-          <Wheel
-            ref={wheelRef}
-            color={selectedColor}
-            onChange={handleColorChange}
-            onClick={handleWheelClick}
-            onDoubleClick={() => applyColor()}
-            width={240}
-            height={240}
-          />
-
-          {/* RGB and HEX Controls */}
-          <Box sx={{ 
+          <Box sx={{
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3,
-            width: '100%',
-            maxWidth: '600px'
+            gap: 2,
+            width: '100%'
           }}>
-            <Typography sx={{ 
-              fontFamily: "'Inter', sans-serif",
-              color: 'var(--text-primary)',
-              fontSize: '0.875rem',
-              whiteSpace: 'nowrap',
-              minWidth: '140px'
-            }}>
-              RGB: {rgbColor.r}, {rgbColor.g}, {rgbColor.b}
-            </Typography>
-
-            <Box
-              sx={{
-                width: '48px',
-                height: '48px',
-                backgroundColor: selectedColor,
-                borderRadius: '50%',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                flexShrink: 0
-              }}
+            <Wheel
+              ref={wheelRef}
+              color={selectedColor}
+              onChange={handleColorChange}
+              onClick={handleWheelClick}
+              onDoubleClick={() => applyColor()}
+              width={240}
+              height={240}
             />
 
-            <SwatchDropdownField
-              value={hexInput}
-              onChange={(e) => setHexInput(e.target.value)}
-              onKeyDown={handleHexKeyPress}
-              placeholder="#FED141"
-              startIcon={<TagIcon />}
-              hasReset
-              onReset={resetColor}
-              options={[
-                '#FED141',
-                '#D50032',
-                '#00805E',
-                '#224D8F',
-                '#FF4400',
-                '#CABFAD'
-              ]}
-              onSelectionChange={handleDropdownSelection}
-              sx={{ 
-                width: '180px',
-                '& .MuiOutlinedInput-root': {
-                  paddingLeft: '8px'
-                }
-              }}
-            />
-          </Box>
-
-          {/* Grayscale Controls */}
-          <Box sx={{ 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3,
-            width: '100%',
-            maxWidth: '600px'
-          }}>
-            <Typography sx={{ 
-              fontFamily: "'Inter', sans-serif",
-              color: 'var(--text-primary)',
-              fontSize: '0.875rem',
-              whiteSpace: 'nowrap',
-              minWidth: '120px'
-            }}>
-              GRAY: {Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}
-            </Typography>
-
-            <Box
-              onClick={handleGraySwatchClick}
-              sx={{
-                width: '36px',
-                height: '36px',
-                flexShrink: 0,
-                backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
-                borderRadius: '50%',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                cursor: 'pointer',
-                transition: 'box-shadow 0.2s',
-                '&:hover': {
-                  boxShadow: '0 0 0 2px var(--glow-color)',
-                }
-              }}
-            />
-
-            <Box sx={{
-              position: 'relative',
-              width: '200px',
-              height: '24px',
-              backgroundColor: 'transparent',
-              borderRadius: '12px',
-              border: '1px solid var(--border-color)',
-              background: 'linear-gradient(to right, #000000, #FFFFFF)',
-              overflow: 'hidden',
+            {/* RGB and HEX Controls */}
+            <Box sx={{ 
               display: 'flex',
               alignItems: 'center',
-              px: 1
+              justifyContent: 'center',
+              gap: 3,
+              width: '100%',
+              maxWidth: '600px'
             }}>
-              <Slider
-                value={grayscaleValue}
-                onChange={handleGrayscaleChange}
-                min={0}
-                max={255}
+              <Typography sx={{ 
+                fontFamily: "'Inter', sans-serif",
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                whiteSpace: 'nowrap',
+                minWidth: '140px'
+              }}>
+                RGB: {rgbColor.r}, {rgbColor.g}, {rgbColor.b}
+              </Typography>
+
+              <Box
                 sx={{
-                  width: '100%',
-                  '& .MuiSlider-thumb': {
-                    width: 20,
-                    height: 20,
-                    backgroundColor: 'transparent',
-                    border: '2px solid var(--glow-color)',
-                    outline: '1px solid rgba(0, 0, 0, 0.3)',
-                    boxShadow: 'inset 0 0 4px var(--glow-color), 0 0 4px var(--glow-color)',
-                    '&:before': {
-                      content: '""',
-                      position: 'absolute',
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      backgroundColor: 'transparent',
-                    },
-                    '&:hover, &.Mui-focusVisible': {
-                      outline: '1px solid rgba(0, 0, 0, 0.4)',
-                      boxShadow: 'inset 0 0 6px var(--glow-color), 0 0 8px var(--glow-color)',
-                    }
-                  },
-                  '& .MuiSlider-track': {
-                    display: 'none'
-                  },
-                  '& .MuiSlider-rail': {
-                    opacity: 0
+                  width: '48px',
+                  height: '48px',
+                  backgroundColor: selectedColor,
+                  borderRadius: '50%',
+                  border: '1px solid var(--border-color)',
+                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
+                  flexShrink: 0
+                }}
+              />
+
+              <SwatchDropdownField
+                value={hexInput}
+                onChange={(e) => setHexInput(e.target.value)}
+                onKeyDown={handleHexKeyPress}
+                placeholder="#FED141"
+                startIcon={<TagIcon />}
+                hasReset
+                onReset={resetColor}
+                options={[
+                  '#FED141',
+                  '#D50032',
+                  '#00805E',
+                  '#224D8F',
+                  '#FF4400',
+                  '#CABFAD'
+                ]}
+                onSelectionChange={handleDropdownSelection}
+                sx={{ 
+                  width: '180px',
+                  '& .MuiOutlinedInput-root': {
+                    paddingLeft: '8px'
                   }
                 }}
               />
             </Box>
-          </Box>
 
-          {/* Apply Button */}
-          <GlowTextButton
-            variant="contained"
-            onClick={applyColor}
-            disabled={!imageLoaded || isProcessing}
-            sx={{
-              width: '110px',
-              color: 'var(--text-primary)',
-              backgroundColor: 'var(--button-bg)',
-              '&:hover': {
-                backgroundColor: 'var(--button-hover)'
-              }
-            }}
-          >
-            APPLY
-          </GlowTextButton>
-        </Box>
-
-        {/* Divider */}
-        <Box sx={{ 
-          width: '100%', 
-          height: '1px', 
-          bgcolor: 'var(--border-subtle)',
-          mb: 4 
-        }} />
-
-        {/* Batch Processing */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          width: '100%',
-          maxWidth: '800px'
-        }}>
-          {/* Catalog selector */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center',
-            gap: 2,
-            width: '100%',
-            mb: 2
-          }}>
-            <GlowTextButton
-              variant="contained"
-              onClick={() => {
-                setActiveCatalog('GILDAN_64000');
-                setCatalogColors(GILDAN_64000);
-              }}
-              sx={{ 
-                width: '180px',
-                backgroundColor: activeCatalog === 'GILDAN_64000' ? 'var(--primary-main)' : 'transparent'
-              }}
-            >
-              GILDAN 64000
-            </GlowTextButton>
-            <GlowTextButton
-              variant="contained"
-              onClick={() => {
-                setActiveCatalog('GILDAN_3000');
-                setCatalogColors(GILDAN_3000);
-              }}
-              sx={{ 
-                width: '180px',
-                backgroundColor: activeCatalog === 'GILDAN_3000' ? 'var(--primary-main)' : 'transparent'
-              }}
-            >
-              GILDAN 3000
-            </GlowTextButton>
-          </Box>
-
-          {/* Batch Processing Box */}
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-            alignItems: 'center',
-            p: 3,
-            borderRadius: '8px',
-            bgcolor: 'var(--bg-secondary)',
-            border: '1px solid var(--border-subtle)',
-            width: '100%'
-          }}>
-            <Typography variant="h6" sx={{ 
-              fontFamily: "'Inter', sans-serif",
-              fontWeight: 500,
-              color: 'var(--text-primary)'
-            }}>
-              Batch Processing
-            </Typography>
-
-            {/* Main Action Buttons */}
+            {/* Grayscale Controls */}
             <Box sx={{ 
-              display: 'flex', 
-              gap: 2,
-              mb: 2
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              width: '100%',
+              maxWidth: '600px'
             }}>
-              <GlowTextButton
-                variant="contained"
-                onClick={handleGenerateAll}
-                disabled={isProcessing || !imageLoaded}
-                sx={{ width: '140px' }}
-              >
-                GENERATE ALL
-              </GlowTextButton>
-              <GlowTextButton
-                variant="contained"
-                onClick={handleGenerateSelected}
-                disabled={isProcessing || !imageLoaded || !selectedColors.length}
-                sx={{ width: '140px' }}
-              >
-                SELECTED
-              </GlowTextButton>
-            </Box>
+              <Typography sx={{ 
+                fontFamily: "'Inter', sans-serif",
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                whiteSpace: 'nowrap',
+                minWidth: '120px'
+              }}>
+                GRAY: {Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}
+              </Typography>
 
-            {/* CSV Upload Button */}
-            <GlowTextButton
-              component="label"
-              variant="contained"
-              disabled={isProcessing || batchStatus === 'processing'}
-              sx={{ width: '140px' }}
-            >
-              UPLOAD CSV
-              <input
-                type="file"
-                hidden
-                accept=".csv"
-                onChange={handleCSVUpload}
+              <Box
+                onClick={handleGraySwatchClick}
+                sx={{
+                  width: '36px',
+                  height: '36px',
+                  flexShrink: 0,
+                  backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
+                  borderRadius: '50%',
+                  border: '1px solid var(--border-color)',
+                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
+                  cursor: 'pointer',
+                  transition: 'box-shadow 0.2s',
+                  '&:hover': {
+                    boxShadow: '0 0 0 2px var(--glow-color)',
+                  }
+                }}
               />
-            </GlowTextButton>
 
-            {/* Progress Indicator */}
-            {batchStatus === 'processing' && (
-              <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
-                <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
-                  Processing: {batchProgress}% ({processedCount} of {totalCount})
-                </Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={batchProgress} 
+              <Box sx={{
+                position: 'relative',
+                width: '200px',
+                height: '24px',
+                backgroundColor: 'transparent',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                background: 'linear-gradient(to right, #000000, #FFFFFF)',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                px: 1
+              }}>
+                <Slider
+                  value={grayscaleValue}
+                  onChange={handleGrayscaleChange}
+                  min={0}
+                  max={255}
                   sx={{
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: 'var(--border-subtle)',
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: 'var(--glow-color)',
-                      borderRadius: 4
+                    width: '100%',
+                    '& .MuiSlider-thumb': {
+                      width: 20,
+                      height: 20,
+                      backgroundColor: 'transparent',
+                      border: '2px solid var(--glow-color)',
+                      outline: '1px solid rgba(0, 0, 0, 0.3)',
+                      boxShadow: 'inset 0 0 4px var(--glow-color), 0 0 4px var(--glow-color)',
+                      '&:before': {
+                        content: '""',
+                        position: 'absolute',
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: 'transparent',
+                      },
+                      '&:hover, &.Mui-focusVisible': {
+                        outline: '1px solid rgba(0, 0, 0, 0.4)',
+                        boxShadow: 'inset 0 0 6px var(--glow-color), 0 0 8px var(--glow-color)',
+                      }
+                    },
+                    '& .MuiSlider-track': {
+                      display: 'none'
+                    },
+                    '& .MuiSlider-rail': {
+                      opacity: 0
                     }
                   }}
                 />
               </Box>
-            )}
+            </Box>
 
-            {/* Color Results */}
-            {batchResults && batchResults.length > 0 && (
-              <Box sx={{ 
-                width: '100%',
-                maxWidth: '800px',
-                mt: 3
-              }}>
-                <Typography variant="subtitle2" sx={{ 
-                  mb: 2, 
-                  textAlign: 'center',
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.1em'
-                }}>
-                  Available Colors
-                </Typography>
-                <Box sx={{ 
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 1.5,
-                  justifyContent: 'center',
-                  maxWidth: '100%',
-                  p: 2
-                }}>
-                  {batchResults.map((color, index) => (
-                    <Tooltip 
-                      key={index} 
-                      title={color.name || color.hex}
-                      arrow
-                      placement="top"
-                    >
-                      <Box
-                        sx={{
-                          width: 36,
-                          height: 36,
-                          aspectRatio: '1/1',
-                          backgroundColor: color.hex,
-                          borderRadius: '50%',
-                          cursor: 'pointer',
-                          border: '1px solid var(--border-color)',
-                          boxShadow: theme => `0 0 0 ${selectedColors.includes(color.hex) ? '2px var(--glow-color)' : '1px rgba(0, 0, 0, 0.1)'}`,
-                          transition: 'transform 0.2s, box-shadow 0.2s',
-                          '&:hover': {
-                            transform: 'scale(1.1)',
-                            boxShadow: '0 0 0 2px var(--glow-color)',
-                          }
-                        }}
-                        onClick={() => handleColorSelect(color.hex)}
-                      />
-                    </Tooltip>
-                  ))}
-                </Box>
-              </Box>
-            )}
+            {/* Apply Button */}
+            <GlowTextButton
+              variant="contained"
+              onClick={applyColor}
+              disabled={!imageLoaded || isProcessing}
+              sx={{
+                width: '110px',
+                color: 'var(--text-primary)',
+                backgroundColor: 'var(--button-bg)',
+                '&:hover': {
+                  backgroundColor: 'var(--button-hover)'
+                }
+              }}
+            >
+              APPLY
+            </GlowTextButton>
           </Box>
-        </Box>
 
-        {/* HEXTRA Color System */}
-        <HCS catalog={catalogColors} />
+          {/* Divider */}
+          <Box sx={{ 
+            width: '100%', 
+            height: '1px', 
+            bgcolor: 'var(--border-subtle)',
+            mb: 2 
+          }} />
+
+          {/* Batch Processing */}
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2,
+            width: '100%',
+            maxWidth: '800px'
+          }}>
+            {/* Catalog selector */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center',
+              gap: 2,
+              width: '100%',
+              mb: 1
+            }}>
+              <GlowTextButton
+                variant="contained"
+                onClick={() => {
+                  setActiveCatalog('GILDAN_64000');
+                  setCatalogColors(GILDAN_64000);
+                }}
+                sx={{ 
+                  width: '180px',
+                  backgroundColor: activeCatalog === 'GILDAN_64000' ? 'var(--primary-main)' : 'transparent'
+                }}
+              >
+                GILDAN 64000
+              </GlowTextButton>
+              <GlowTextButton
+                variant="contained"
+                onClick={() => {
+                  setActiveCatalog('GILDAN_3000');
+                  setCatalogColors(GILDAN_3000);
+                }}
+                sx={{ 
+                  width: '180px',
+                  backgroundColor: activeCatalog === 'GILDAN_3000' ? 'var(--primary-main)' : 'transparent'
+                }}
+              >
+                GILDAN 3000
+              </GlowTextButton>
+            </Box>
+
+            {/* Batch Processing Box */}
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              alignItems: 'center',
+              p: 3,
+              borderRadius: '8px',
+              bgcolor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-subtle)',
+              width: '100%'
+            }}>
+              <Typography variant="h6" sx={{ 
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: 500,
+                color: 'var(--text-primary)'
+              }}>
+                Batch Processing
+              </Typography>
+
+              {/* Main Action Buttons */}
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 2,
+                mb: 1
+              }}>
+                <GlowTextButton
+                  variant="contained"
+                  onClick={handleGenerateAll}
+                  disabled={isProcessing || !imageLoaded}
+                  sx={{ width: '140px' }}
+                >
+                  GENERATE ALL
+                </GlowTextButton>
+                <GlowTextButton
+                  variant="contained"
+                  onClick={handleGenerateSelected}
+                  disabled={isProcessing || !imageLoaded || !selectedColors.length}
+                  sx={{ width: '140px' }}
+                >
+                  SELECTED
+                </GlowTextButton>
+              </Box>
+
+              {/* CSV Upload Button */}
+              <GlowTextButton
+                component="label"
+                variant="contained"
+                disabled={isProcessing || batchStatus === 'processing'}
+                sx={{ width: '140px' }}
+              >
+                UPLOAD CSV
+                <input
+                  type="file"
+                  hidden
+                  accept=".csv"
+                  onChange={handleCSVUpload}
+                />
+              </GlowTextButton>
+
+              {/* Progress Indicator */}
+              {batchStatus === 'processing' && (
+                <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
+                  <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
+                    Processing: {batchProgress}% ({processedCount} of {totalCount})
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={batchProgress} 
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: 'var(--border-subtle)',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: 'var(--glow-color)',
+                        borderRadius: 4
+                      }
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* Color Results */}
+              {batchResults && batchResults.length > 0 && (
+                <Box sx={{ 
+                  width: '100%',
+                  maxWidth: '800px',
+                  mt: 2
+                }}>
+                  <Typography variant="subtitle2" sx={{ 
+                    mb: 1, 
+                    textAlign: 'center',
+                    color: 'var(--text-secondary)',
+                    letterSpacing: '0.1em'
+                  }}>
+                    Available Colors
+                  </Typography>
+                  <Box sx={{ 
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 1.5,
+                    justifyContent: 'center',
+                    maxWidth: '100%',
+                    p: 2
+                  }}>
+                    {batchResults.map((color, index) => (
+                      <Tooltip 
+                        key={index} 
+                        title={color.name || color.hex}
+                        arrow
+                        placement="top"
+                      >
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            aspectRatio: '1/1',
+                            backgroundColor: color.hex,
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            border: '1px solid var(--border-color)',
+                            boxShadow: theme => `0 0 0 ${selectedColors.includes(color.hex) ? '2px var(--glow-color)' : '1px rgba(0, 0, 0, 0.1)'}`,
+                            transition: 'transform 0.2s, box-shadow 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              boxShadow: '0 0 0 2px var(--glow-color)',
+                            }
+                          }}
+                          onClick={() => handleColorSelect(color.hex)}
+                        />
+                      </Tooltip>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          </Box>
+
+          {/* HEXTRA Color System */}
+          <HCS catalog={catalogColors} />
+        </Box>
       </Box>
     </Box>
   );
