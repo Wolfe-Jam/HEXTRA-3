@@ -851,9 +851,9 @@ function App() {
             
             if (alpha > 0) {
               const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-              this.bitmap.data[idx + 0] = Math.round(luminance * rgb.r);
-              this.bitmap.data[idx + 1] = Math.round(luminance * rgb.g);
-              this.bitmap.data[idx + 2] = Math.round(luminance * rgb.b);
+              this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
+              this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
+              this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
             }
           });
           
@@ -1072,155 +1072,148 @@ function App() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: 'var(--background)',
-        color: 'var(--text-primary)',
-        transition: 'background-color 0.2s, color 0.2s'
-      }}
-    >
-      {/* 1. Banner */}
+    <Box sx={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: 'var(--background)',
+      transition: 'background-color 0.2s'
+    }}>
       <Banner 
         version="2.0.4"
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
-      
-      <Box sx={{ 
+
+      {/* Main Content Container */}
+      <Box sx={{
+        flex: 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        flex: 1,
-        paddingTop: '45px', 
-        backgroundColor: 'var(--background)',
-        transition: 'background-color 0.2s',
-        position: 'relative',
-        zIndex: 1
+        width: '100%',
+        maxWidth: '800px',
+        mx: 'auto',
+        px: 3,
+        '@media (max-width: 832px)': {
+          px: 2
+        }
       }}>
-        <Typography 
-          variant="h1" 
-          sx={{ 
-            mb: 2,
-            textAlign: 'center',
-            fontWeight: 500,
-            fontFamily: "'League Spartan', sans-serif",
-            fontSize: '0.65rem',  
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: 'var(--text-secondary)',
-            '@media (max-width: 532px)': {
-              fontSize: '0.6rem'
-            }
-          }}
-        >
+        {/* Color Controls Section */}
+        <Box sx={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 3,
+          mb: 4
+        }}>
+          {/* Title */}
           <Typography 
             variant="subtitle1" 
             component="h2" 
-            sx={sectionHeaderStyle}
+            sx={{
+              textAlign: 'center',
+              fontWeight: 500,
+              fontFamily: "'League Spartan', sans-serif",
+              fontSize: '0.875rem',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: theme === 'dark' ? '#E8E8E8' : '#1A1A1A',
+              mt: 4,
+              mb: 2
+            }}
           >
-            <Box component="span" sx={{ 
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              textShadow: `
-                0 0 10px rgba(255, 153, 0, 0.2),
-                0 0 20px rgba(255, 153, 0, 0.1),
-                0 0 30px rgba(255, 153, 0, 0.05)
-              `
-            }}>COLORIZE</Box> | <Box component="span" sx={{ 
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              textShadow: `
-                0 0 10px rgba(255, 153, 0, 0.2),
-                0 0 20px rgba(255, 153, 0, 0.1),
-                0 0 30px rgba(255, 153, 0, 0.05)
-              `
-            }}>VISUALIZE</Box> | <Box component="span" sx={{ 
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              textShadow: `
-                0 0 10px rgba(255, 153, 0, 0.2),
-                0 0 20px rgba(255, 153, 0, 0.1),
-                0 0 30px rgba(255, 153, 0, 0.05)
-              `
-            }}>MESMERIZE</Box>
+            COLORIZE | VISUALIZE | MESMERIZE
           </Typography>
-        </Typography>
 
-        {/* Main content in vertical layout */}
-        <Box sx={{ 
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 3,
-          width: '100%',
-          maxWidth: '800px',  // Maximum before image quality suffers
-          mx: 'auto',
-          p: 3,
-          alignItems: 'center',
-          '@media (max-width: 832px)': { // 800px + 2 * 16px padding
-            maxWidth: 'calc(100% - 32px)', // Maintain right border padding
-            p: 2
-          }
-        }}>
-          {/* 2. RGB Color Disc */}
-          <Box sx={{ 
-            display: 'flex',
-            justifyContent: 'center',
-            mb: 3
-          }}>
-            <Wheel
-              ref={wheelRef}
-              color={selectedColor}
-              onChange={handleColorChange}
-              onClick={handleWheelClick}
-              onDoubleClick={() => applyColor()}
-              width={240}
-              height={240}
-            />
-          </Box>
+          {/* Color Wheel */}
+          <Wheel
+            ref={wheelRef}
+            color={selectedColor}
+            onChange={handleColorChange}
+            onClick={handleWheelClick}
+            onDoubleClick={() => applyColor()}
+            width={240}
+            height={240}
+          />
 
-          <Box sx={{ my: 3 }}>
-            <Box
-              sx={{
-                width: '100%',
-                height: '4px',
-                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-              }}
-            />
-          </Box>
-
-          {/* 3. Grayscale Tool Bar */}
+          {/* RGB and HEX Controls */}
           <Box sx={{ 
             display: 'flex',
             alignItems: 'center',
-            gap: 2,
+            justifyContent: 'center',
+            gap: 3,
             width: '100%',
-            mb: 3,
-            pl: '40px'  // Match the HEX input bar padding
+            maxWidth: '600px'
           }}>
-            {/* GRAY Value Display */}
             <Typography sx={{ 
               fontFamily: "'Inter', sans-serif",
               color: 'var(--text-primary)',
               fontSize: '0.875rem',
               whiteSpace: 'nowrap',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              width: '120px'
+              minWidth: '140px'
             }}>
-              <Box component="span" sx={{ flexShrink: 0 }}>GRAY Value:</Box>
-              <Box component="span" sx={{ 
-                fontFamily: 'monospace',
-                textAlign: 'left'
-              }}>
-                {`${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}`.padStart(3, ' ')}
-              </Box>
+              RGB: {rgbColor.r}, {rgbColor.g}, {rgbColor.b}
             </Typography>
 
-            {/* Gray Swatch */}
+            <Box
+              sx={{
+                width: '48px',
+                height: '48px',
+                backgroundColor: selectedColor,
+                borderRadius: '50%',
+                border: '1px solid var(--border-color)',
+                boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
+                flexShrink: 0
+              }}
+            />
+
+            <SwatchDropdownField
+              value={hexInput}
+              onChange={(e) => setHexInput(e.target.value)}
+              onKeyDown={handleHexKeyPress}
+              placeholder="#FED141"
+              startIcon={<TagIcon />}
+              hasReset
+              onReset={resetColor}
+              options={[
+                '#FED141',
+                '#D50032',
+                '#00805E',
+                '#224D8F',
+                '#FF4400',
+                '#CABFAD'
+              ]}
+              onSelectionChange={handleDropdownSelection}
+              sx={{ 
+                width: '180px',
+                '& .MuiOutlinedInput-root': {
+                  paddingLeft: '8px'
+                }
+              }}
+            />
+          </Box>
+
+          {/* Grayscale Controls */}
+          <Box sx={{ 
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+            width: '100%',
+            maxWidth: '600px'
+          }}>
+            <Typography sx={{ 
+              fontFamily: "'Inter', sans-serif",
+              color: 'var(--text-primary)',
+              fontSize: '0.875rem',
+              whiteSpace: 'nowrap',
+              minWidth: '120px'
+            }}>
+              GRAY: {Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}
+            </Typography>
+
             <Box
               onClick={handleGraySwatchClick}
               sx={{
@@ -1239,7 +1232,6 @@ function App() {
               }}
             />
 
-            {/* Slider */}
             <Box sx={{
               position: 'relative',
               width: '200px',
@@ -1294,621 +1286,453 @@ function App() {
             </Box>
           </Box>
 
-          {/* 4. HEX Input Bar */}
-          <Box sx={{ 
-            display: 'flex',
-            flexWrap: 'wrap',  // Allow wrapping
-            gap: 2,
-            alignItems: 'center',
-            width: '100%',
-            pl: '40px',  // Consistent left padding
-            '@media (max-width: 532px)': {
-              justifyContent: 'center',
-              pl: 2,  // Reduce padding on mobile
-              '& #apply-button': {
-                width: '100%',  // Full width apply button on mobile
-                maxWidth: '200px',
-                marginTop: '8px'
-              }
-            }
-          }}>
-            {/* RGB Display */}
-            <Typography sx={{ 
-              fontFamily: "'Inter', sans-serif",
+          {/* Apply Button */}
+          <GlowTextButton
+            variant="contained"
+            onClick={applyColor}
+            disabled={!imageLoaded || isProcessing}
+            sx={{
+              width: '110px',
               color: 'var(--text-primary)',
-              fontSize: '0.875rem',
-              whiteSpace: 'nowrap',
-              width: '140px',  // Fixed width
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}>
-              <Box component="span" sx={{ flexShrink: 0 }}>RGB:</Box>
-              <Box component="span" sx={{ 
-                fontFamily: 'monospace',
-                width: '85px',  // Fixed width for numbers
-                textAlign: 'left'
-              }}>
-                {rgbColor.r},{rgbColor.g},{rgbColor.b}
-              </Box>
-            </Typography>
+              backgroundColor: 'var(--button-bg)',
+              '&:hover': {
+                backgroundColor: 'var(--button-hover)'
+              }
+            }}
+          >
+            APPLY
+          </GlowTextButton>
+        </Box>
 
-            {/* Color Swatch */}
-            <Box
+        {/* Divider */}
+        <Box sx={{ 
+          width: '100%', 
+          height: '1px', 
+          bgcolor: 'var(--border-subtle)',
+          mb: 4 
+        }} />
+
+        {/* Main Image Window with Controls */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2,
+          width: '100%'
+        }}>
+          {/* Background toggles */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+            mb: 2
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                Show Background
+              </Typography>
+              <GlowSwitch
+                checked={showCheckerboard}
+                onChange={(e) => setShowCheckerboard(e.target.checked)}
+                size="small"
+              />
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                Use Chroma
+              </Typography>
+              <GlowSwitch
+                checked={useChroma}
+                onChange={(e) => setUseChroma(e.target.checked)}
+                size="small"
+              />
+            </Box>
+          </Box>
+
+          {/* Image Display */}
+          <Box sx={{
+            position: 'relative',
+            width: '800px',
+            height: '800px',
+            backgroundColor: showCheckerboard ? (useChroma ? '#00FF00' : 'transparent') : 'transparent',
+            backgroundImage: showCheckerboard && !useChroma ? 'var(--checkerboard-pattern)' : 'none',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: 'var(--shadow-small)',
+            border: '1px solid var(--border-subtle)',
+            transition: 'border-color 0.2s'
+          }}>
+            {/* Checkerboard background */}
+            {showCheckerboard && !useChroma && (
+              <Box sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 1,
+                backgroundImage: `
+                  linear-gradient(45deg, #808080 25%, transparent 25%),
+                  linear-gradient(-45deg, #808080 25%, transparent 25%),
+                  linear-gradient(45deg, transparent 75%, #808080 75%),
+                  linear-gradient(-45deg, transparent 75%, #808080 75%)
+                `,
+                backgroundSize: '20px 20px',
+                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                opacity: 0.1
+              }} />
+            )}
+
+            {/* Image */}
+            <Box sx={{ position: 'relative', zIndex: 2 }}>
+              {isProcessing ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  width: '800px',
+                  height: '800px'
+                }}>
+                  <CircularProgress size={48} />
+                </Box>
+              ) : (
+                <img
+                  src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
+                  alt="Working"
+                  style={{
+                    maxWidth: '800px',
+                    maxHeight: '800px',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    display: 'block'
+                  }}
+                />
+              )}
+            </Box>
+
+            {/* Download button */}
+            <GlowButton
+              onClick={handleDownload}
+              disabled={!canDownload}
               sx={{
+                position: 'absolute',
+                right: '12px',
+                bottom: '12px',
+                minWidth: 'auto',
                 width: '48px',
                 height: '48px',
-                backgroundColor: selectedColor,
                 borderRadius: '50%',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                flexShrink: 0
-              }}
-            />
-
-            {/* HEX Input with Reset Icon */}
-            <SwatchDropdownField
-              value={hexInput}
-              onChange={(e) => setHexInput(e.target.value)}
-              onKeyDown={handleHexKeyPress}
-              placeholder="#FED141"
-              startIcon={<TagIcon />}
-              hasReset
-              onReset={resetColor}
-              options={[
-                '#FED141',
-                '#D50032',
-                '#00805E',
-                '#224D8F',
-                '#FF4400',
-                '#CABFAD'
-              ]}
-              onSelectionChange={handleDropdownSelection}
-              sx={{ 
-                width: '180px',  
-                '& .MuiOutlinedInput-root': {
-                  paddingLeft: '8px'  
-                }
-              }}
-            />
-            {/* Apply Button */}
-            <GlowTextButton
-              id="apply-button"
-              variant="contained"
-              onClick={applyColor}
-              disabled={isProcessing || !imageLoaded}
-              sx={{
-                width: '110px',
-                '@media (max-width: 532px)': {
-                  width: '110px',
-                  marginTop: '8px'
-                }
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 3
               }}
             >
-              APPLY
+              <FileDownloadIcon />
+            </GlowButton>
+          </Box>
+
+          {/* Format toggle */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 2,
+            width: '800px',
+            pr: 1,
+            mt: 1,
+            mb: 3
+          }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                fontWeight: !useWebP ? 600 : 400
+              }}
+            >
+              PNG
+            </Typography>
+            <GlowSwitch
+              checked={useWebP}
+              onChange={handleWebPToggle}
+              size="small"
+            />
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                fontWeight: useWebP ? 600 : 400
+              }}
+            >
+              WebP
+            </Typography>
+          </Box>
+
+          {/* Upload Controls */}
+          <Box sx={{ 
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 2,
+            width: '100%',
+            mb: 2
+          }}>
+            <GlowTextButton
+              component="label"
+              variant="contained"
+              disabled={isProcessing}
+              sx={{ width: '110px' }}
+            >
+              UPLOAD
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e.target.files[0])}
+              />
             </GlowTextButton>
           </Box>
 
-          <Box
-            sx={{
-              width: '100%',
-              height: '4px',
-              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-            }}
-          />
+          {/* URL Input and Button */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 2,
+            alignItems: 'center',
+            width: '100%',
+            maxWidth: '800px',
+            mb: 2,
+            px: 2
+          }}>
+            <IconTextField
+              placeholder="Paste image URL here..."
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={handleUrlKeyPress}
+              startIcon={<LinkIcon />}
+              hasReset
+              onReset={() => setUrlInput('')}
+              sx={{ 
+                flex: 1,
+                minWidth: '500px',
+                '& .MuiInputBase-root': {
+                  width: '100%'
+                }
+              }}
+            />
+            <GlowTextButton
+              variant="contained"
+              onClick={handleLoadUrl}
+              sx={{ 
+                width: '110px',
+                flexShrink: 0
+              }}
+            >
+              USE URL
+            </GlowTextButton>
+          </Box>
 
-          {/* 5. Main Image Window with Controls */}
+          {/* Image Controls */}
+          <Box sx={{ 
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            width: '100%',
+            maxWidth: '600px'
+          }}>
+          </Box>
+        </Box>
+
+        {/* Batch Processing */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2,
+          width: '100%',
+          maxWidth: '800px'
+        }}>
+          {/* Catalog selector */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center',
+            gap: 2,
+            width: '100%',
+            mb: 2
+          }}>
+            <GlowTextButton
+              variant="contained"
+              onClick={() => {
+                setActiveCatalog('GILDAN_64000');
+                setCatalogColors(GILDAN_64000);
+              }}
+              sx={{ 
+                width: '180px',
+                backgroundColor: activeCatalog === 'GILDAN_64000' ? 'var(--primary-main)' : 'transparent'
+              }}
+            >
+              GILDAN 64000
+            </GlowTextButton>
+            <GlowTextButton
+              variant="contained"
+              onClick={() => {
+                setActiveCatalog('GILDAN_3000');
+                setCatalogColors(GILDAN_3000);
+              }}
+              sx={{ 
+                width: '180px',
+                backgroundColor: activeCatalog === 'GILDAN_3000' ? 'var(--primary-main)' : 'transparent'
+              }}
+            >
+              GILDAN 3000
+            </GlowTextButton>
+          </Box>
+
+          {/* Batch Processing Box */}
           <Box sx={{
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
             gap: 2,
+            alignItems: 'center',
+            p: 3,
+            borderRadius: '8px',
+            bgcolor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-subtle)',
             width: '100%'
           }}>
-            {/* Image Display */}
-            <Box sx={{
-              position: 'relative',
-              width: '800px',
-              height: '800px',
-              backgroundColor: showCheckerboard ? (useChroma ? '#00FF00' : 'transparent') : 'transparent',
-              backgroundImage: showCheckerboard && !useChroma ? 'var(--checkerboard-pattern)' : 'none',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: 'var(--shadow-small)',
+            <Typography variant="h6" sx={{ 
+              fontFamily: "'Inter', sans-serif",
+              fontWeight: 500,
+              color: 'var(--text-primary)'
             }}>
-              {/* Checkerboard background */}
-              {showCheckerboard && !useChroma && (
-                <Box sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 1,
-                  backgroundImage: `
-                    linear-gradient(45deg, #808080 25%, transparent 25%),
-                    linear-gradient(-45deg, #808080 25%, transparent 25%),
-                    linear-gradient(45deg, transparent 75%, #808080 75%),
-                    linear-gradient(-45deg, transparent 75%, #808080 75%)
-                  `,
-                  backgroundSize: '20px 20px',
-                  backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                  opacity: 0.1
-                }} />
-              )}
+              Batch Processing
+            </Typography>
 
-              {/* Image */}
-              <Box sx={{ position: 'relative', zIndex: 2 }}>
-                {isProcessing ? (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    width: '800px',
-                    height: '800px'
-                  }}>
-                    <CircularProgress size={48} />
-                  </Box>
-                ) : (
-                  <img
-                    src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
-                    alt="Working"
-                    style={{
-                      maxWidth: '800px',
-                      maxHeight: '800px',
-                      width: 'auto',
-                      height: 'auto',
-                      objectFit: 'contain',
-                      display: 'block'
-                    }}
-                  />
-                )}
-              </Box>
-
-              {/* Download button */}
-              <GlowButton
-                onClick={handleDownload}
-                disabled={!canDownload}
-                sx={{
-                  position: 'absolute',
-                  right: '12px',
-                  bottom: '12px',
-                  minWidth: 'auto',
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '50%',
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 3
-                }}
-              >
-                <FileDownloadIcon />
-              </GlowButton>
-            </Box>
-
-            {/* Upload Controls */}
-            <Box sx={{ 
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 2,
-              width: '100%',
-              mb: 2
-            }}>
-              <GlowTextButton
-                component="label"
-                variant="contained"
-                disabled={isProcessing}
-                sx={{ width: '110px' }}
-              >
-                UPLOAD
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e.target.files[0])}
-                />
-              </GlowTextButton>
-
-              <GlowTextButton
-                variant="contained"
-                onClick={handleLoadUrl}
-                sx={{ width: '110px' }}
-              >
-                USE URL
-              </GlowTextButton>
-            </Box>
-
-            {/* URL Input */}
+            {/* Main Action Buttons */}
             <Box sx={{ 
               display: 'flex', 
               gap: 2,
-              alignItems: 'center',
-              width: '100%',
-              maxWidth: '600px',
-              mb: 2
-            }}>
-              <IconTextField
-                placeholder="Paste image URL here..."
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                onKeyDown={handleUrlKeyPress}
-                startIcon={<LinkIcon />}
-                hasReset
-                onReset={() => setUrlInput('')}
-                sx={{ width: '100%' }}
-              />
-            </Box>
-
-            {/* Image Controls */}
-            <Box sx={{ 
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              width: '100%',
-              maxWidth: '600px'
-            }}>
-              {/* Background toggles */}
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 3
-              }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-                    Show Background
-                  </Typography>
-                  <GlowSwitch
-                    checked={showCheckerboard}
-                    onChange={(e) => setShowCheckerboard(e.target.checked)}
-                    size="small"
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-                    Use Chroma
-                  </Typography>
-                  <GlowSwitch
-                    checked={useChroma}
-                    onChange={(e) => setUseChroma(e.target.checked)}
-                    size="small"
-                  />
-                </Box>
-              </Box>
-
-              {/* Format toggle */}
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                gap: 2
-              }}>
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                    fontWeight: !useWebP ? 600 : 400
-                  }}
-                >
-                  PNG
-                </Typography>
-                <GlowSwitch
-                  checked={useWebP}
-                  onChange={handleWebPToggle}
-                  size="small"
-                />
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                    fontWeight: useWebP ? 600 : 400
-                  }}
-                >
-                  WebP
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              width: '100%',
-              height: '4px',
-              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-            }}
-          />
-
-          {/* 6. Batch Processing */}
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 2,
-            width: '100%',
-            maxWidth: '800px'
-          }}>
-            {/* Catalog selector - Row 1 */}
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center',
-              gap: 2,
-              width: '100%',
               mb: 2
             }}>
               <GlowTextButton
                 variant="contained"
-                onClick={() => {
-                  setActiveCatalog('GILDAN_64000');
-                  setCatalogColors(GILDAN_64000);
-                }}
-                sx={{ 
-                  width: '180px',
-                  backgroundColor: activeCatalog === 'GILDAN_64000' ? 'var(--primary-main)' : 'transparent'
-                }}
-              >
-                GILDAN 64000
-              </GlowTextButton>
-              <GlowTextButton
-                variant="contained"
-                onClick={() => {
-                  setActiveCatalog('GILDAN_3000');
-                  setCatalogColors(GILDAN_3000);
-                }}
-                sx={{ 
-                  width: '180px',
-                  backgroundColor: activeCatalog === 'GILDAN_3000' ? 'var(--primary-main)' : 'transparent'
-                }}
-              >
-                GILDAN 3000
-              </GlowTextButton>
-            </Box>
-
-            {/* Batch Processing Box */}
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              alignItems: 'center',
-              p: 3,
-              borderRadius: '8px',
-              bgcolor: 'var(--bg-secondary)',
-              border: '1px solid var(--border-subtle)'
-            }}>
-              <Typography variant="h6" sx={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: 500,
-                color: 'var(--text-primary)'
-              }}>
-                Batch Processing
-              </Typography>
-
-              {/* Main Action Buttons */}
-              <Box sx={{ 
-                display: 'flex', 
-                gap: 2,
-                mb: 2
-              }}>
-                <GlowTextButton
-                  variant="contained"
-                  onClick={handleGenerateAll}
-                  disabled={isProcessing || !imageLoaded}
-                  sx={{ width: '140px' }}
-                >
-                  GENERATE ALL
-                </GlowTextButton>
-                <GlowTextButton
-                  variant="contained"
-                  onClick={handleGenerateSelected}
-                  disabled={isProcessing || !imageLoaded || !selectedColors.length}
-                  sx={{ width: '140px' }}
-                >
-                  SELECTED
-                </GlowTextButton>
-              </Box>
-
-              {/* CSV Upload Button */}
-              <GlowTextButton
-                component="label"
-                variant="contained"
-                disabled={isProcessing || batchStatus === 'processing'}
+                onClick={handleGenerateAll}
+                disabled={isProcessing || !imageLoaded}
                 sx={{ width: '140px' }}
               >
-                UPLOAD CSV
-                <input
-                  type="file"
-                  hidden
-                  accept=".csv"
-                  onChange={handleCSVUpload}
-                />
+                GENERATE ALL
               </GlowTextButton>
-
-              {/* Progress Indicator */}
-              {batchStatus === 'processing' && (
-                <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
-                  <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
-                    Processing: {batchProgress}% ({processedCount} of {totalCount})
-                  </Typography>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={batchProgress} 
-                    sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: 'var(--border-subtle)',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: 'var(--glow-color)',
-                        borderRadius: 4
-                      }
-                    }}
-                  />
-                </Box>
-              )}
-
-              {/* Color Results */}
-              {batchResults && batchResults.length > 0 && (
-                <Box sx={{ 
-                  width: '100%',
-                  maxWidth: '800px',
-                  mt: 3
-                }}>
-                  <Typography variant="subtitle2" sx={{ 
-                    mb: 2, 
-                    textAlign: 'center',
-                    color: 'var(--text-secondary)',
-                    letterSpacing: '0.1em'
-                  }}>
-                    Available Colors
-                  </Typography>
-                  <Box sx={{ 
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 1.5,
-                    justifyContent: 'center',
-                    maxWidth: '100%',
-                    p: 2
-                  }}>
-                    {batchResults.map((color, index) => (
-                      <Tooltip 
-                        key={index} 
-                        title={color.name || color.hex}
-                        arrow
-                        placement="top"
-                      >
-                        <Box
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            aspectRatio: '1/1',
-                            backgroundColor: color.hex,
-                            borderRadius: '50%',
-                            cursor: 'pointer',
-                            border: '1px solid var(--border-color)',
-                            boxShadow: theme => `0 0 0 ${selectedColors.includes(color.hex) ? '2px var(--glow-color)' : '1px rgba(0, 0, 0, 0.1)'}`,
-                            transition: 'transform 0.2s, box-shadow 0.2s',
-                            '&:hover': {
-                              transform: 'scale(1.1)',
-                              boxShadow: '0 0 0 2px var(--glow-color)',
-                            }
-                          }}
-                          onClick={() => handleColorSelect(color.hex)}
-                        />
-                      </Tooltip>
-                    ))}
-                  </Box>
-                </Box>
-              )}
+              <GlowTextButton
+                variant="contained"
+                onClick={handleGenerateSelected}
+                disabled={isProcessing || !imageLoaded || !selectedColors.length}
+                sx={{ width: '140px' }}
+              >
+                SELECTED
+              </GlowTextButton>
             </Box>
-          </Box>
 
-          <Box sx={{ my: 3 }}>
-            <Box
-              sx={{
-                width: '100%',
-                height: '4px',
-                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-              }}
-            />
-          </Box>
-
-          {/* 7. HEXTRA Color System */}
-          <HCS catalog={catalogColors} />
-
-          <Box sx={{ my: 3 }}>
-            <Box
-              sx={{
-                width: '100%',
-                height: '4px',
-                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-              }}
-            />
-          </Box>
-
-        </Box>
-      </Box>
-
-      {/* 9. Footer */}
-      <Box
-        component="footer"
-        sx={{
-          width: '100%',
-          margin: 0,
-          padding: 0,
-          overflow: 'visible'
-        }}
-      >
-        <Box
-          sx={{
-            background: theme === 'dark'
-              ? 'linear-gradient(45deg, #f5f5f5 30%, #ffffff 90%)'
-              : 'linear-gradient(45deg, #1a1a1a 30%, #2d2d2d 90%)',
-            borderTop: theme === 'dark'
-              ? '1px solid rgba(0, 0, 0, 0.12)'
-              : '1px solid rgba(255, 255, 255, 0.12)',
-            width: '100%',
-            margin: 0,
-            py: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              color: theme === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-              fontSize: '0.875rem',
-              fontFamily: "'Inter', sans-serif"
-            }}
-          >
-            2025 HEXTRA.io Color System by Wolfe James LLC All Rights Reserved
-          </Typography>
-        </Box>
-      </Box>
-
-      {isProcessing && (
-        <Box
-          position="fixed"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bgcolor="rgba(0, 0, 0, 0.7)"
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          zIndex={9999}
-        >
-          <CircularProgress size={60} thickness={4} />
-          <Typography variant="h6" color="white" mt={2}>
-            {batchStatus === 'processing' ? 'Processing Images...' : 'Preparing Download...'}
-          </Typography>
-          {batchProgress > 0 && (
-            <Box sx={{ width: '200px', mt: 2 }}>
-              <Typography variant="body2" color="white" align="center" mt={1}>
-                Processing: {batchProgress}%
-              </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={batchProgress} 
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 4,
-                  }
-                }}
+            {/* CSV Upload Button */}
+            <GlowTextButton
+              component="label"
+              variant="contained"
+              disabled={isProcessing || batchStatus === 'processing'}
+              sx={{ width: '140px' }}
+            >
+              UPLOAD CSV
+              <input
+                type="file"
+                hidden
+                accept=".csv"
+                onChange={handleCSVUpload}
               />
-            </Box>
-          )}
+            </GlowTextButton>
+
+            {/* Progress Indicator */}
+            {batchStatus === 'processing' && (
+              <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
+                <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
+                  Processing: {batchProgress}% ({processedCount} of {totalCount})
+                </Typography>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={batchProgress} 
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: 'var(--border-subtle)',
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: 'var(--glow-color)',
+                      borderRadius: 4
+                    }
+                  }}
+                />
+              </Box>
+            )}
+
+            {/* Color Results */}
+            {batchResults && batchResults.length > 0 && (
+              <Box sx={{ 
+                width: '100%',
+                maxWidth: '800px',
+                mt: 3
+              }}>
+                <Typography variant="subtitle2" sx={{ 
+                  mb: 2, 
+                  textAlign: 'center',
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '0.1em'
+                }}>
+                  Available Colors
+                </Typography>
+                <Box sx={{ 
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 1.5,
+                  justifyContent: 'center',
+                  maxWidth: '100%',
+                  p: 2
+                }}>
+                  {batchResults.map((color, index) => (
+                    <Tooltip 
+                      key={index} 
+                      title={color.name || color.hex}
+                      arrow
+                      placement="top"
+                    >
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          aspectRatio: '1/1',
+                          backgroundColor: color.hex,
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          border: '1px solid var(--border-color)',
+                          boxShadow: theme => `0 0 0 ${selectedColors.includes(color.hex) ? '2px var(--glow-color)' : '1px rgba(0, 0, 0, 0.1)'}`,
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                            boxShadow: '0 0 0 2px var(--glow-color)',
+                          }
+                        }}
+                        onClick={() => handleColorSelect(color.hex)}
+                      />
+                    </Tooltip>
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </Box>
         </Box>
-      )}
+
+        {/* HEXTRA Color System */}
+        <HCS catalog={catalogColors} />
+      </Box>
     </Box>
   );
 }
