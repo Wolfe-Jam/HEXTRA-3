@@ -1099,6 +1099,231 @@ function App() {
           px: 2
         }
       }}>
+        {/* Upload Controls */}
+        <Box sx={{ 
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 2,
+          width: '100%',
+          mt: 16,
+          mb: 2
+        }}>
+          <GlowTextButton
+            component="label"
+            variant="contained"
+            disabled={isProcessing}
+            sx={{ width: '110px' }}
+          >
+            UPLOAD
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={(e) => handleImageUpload(e.target.files[0])}
+            />
+          </GlowTextButton>
+        </Box>
+
+        {/* URL Input and Button */}
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2,
+          alignItems: 'center',
+          width: '100%',
+          maxWidth: '800px',
+          mb: 4
+        }}>
+          <IconTextField
+            placeholder="Paste image URL here..."
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyDown={handleUrlKeyPress}
+            startIcon={<LinkIcon />}
+            hasReset
+            onReset={() => setUrlInput('')}
+            sx={{ 
+              flex: 1,
+              minWidth: '500px',
+              '& .MuiInputBase-root': {
+                width: '100%'
+              }
+            }}
+          />
+          <GlowTextButton
+            variant="contained"
+            onClick={handleLoadUrl}
+            sx={{ 
+              width: '110px',
+              flexShrink: 0
+            }}
+          >
+            USE URL
+          </GlowTextButton>
+        </Box>
+
+        {/* Main Image Window with Controls */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2,
+          width: '100%'
+        }}>
+          {/* Background toggles */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+            mb: 2
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                Show Background
+              </Typography>
+              <GlowSwitch
+                checked={showCheckerboard}
+                onChange={(e) => setShowCheckerboard(e.target.checked)}
+                size="small"
+              />
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+                Use Chroma
+              </Typography>
+              <GlowSwitch
+                checked={useChroma}
+                onChange={(e) => setUseChroma(e.target.checked)}
+                size="small"
+              />
+            </Box>
+          </Box>
+
+          {/* Image Display */}
+          <Box sx={{
+            position: 'relative',
+            width: '800px',
+            height: '800px',
+            backgroundColor: showCheckerboard ? (useChroma ? '#00FF00' : 'transparent') : 'transparent',
+            backgroundImage: showCheckerboard && !useChroma ? 'var(--checkerboard-pattern)' : 'none',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: 'var(--shadow-small)',
+            border: '1px solid var(--border-subtle)',
+            transition: 'border-color 0.2s',
+            mb: 1
+          }}>
+            {/* Checkerboard background */}
+            {showCheckerboard && !useChroma && (
+              <Box sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 0,
+                backgroundImage: `
+                  linear-gradient(45deg, #808080 25%, transparent 25%),
+                  linear-gradient(-45deg, #808080 25%, transparent 25%),
+                  linear-gradient(45deg, transparent 75%, #808080 75%),
+                  linear-gradient(-45deg, transparent 75%, #808080 75%)
+                `,
+                backgroundSize: '20px 20px',
+                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                opacity: 0.1
+              }} />
+            )}
+
+            {/* Image content */}
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              {isProcessing ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  width: '800px',
+                  height: '800px'
+                }}>
+                  <CircularProgress size={48} />
+                </Box>
+              ) : (
+                <img
+                  src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
+                  alt="Working"
+                  style={{
+                    maxWidth: '800px',
+                    maxHeight: '800px',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    display: 'block'
+                  }}
+                />
+              )}
+            </Box>
+
+            {/* Download button */}
+            <GlowButton
+              onClick={handleDownload}
+              disabled={!canDownload}
+              sx={{
+                position: 'absolute',
+                right: '12px',
+                bottom: '12px',
+                minWidth: 'auto',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 3
+              }}
+            >
+              <FileDownloadIcon />
+            </GlowButton>
+          </Box>
+
+          {/* Format toggle */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 2,
+            width: '800px',
+            pr: 1,
+            mb: 4
+          }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                fontWeight: !useWebP ? 600 : 400
+              }}
+            >
+              PNG
+            </Typography>
+            <GlowSwitch
+              checked={useWebP}
+              onChange={handleWebPToggle}
+              size="small"
+            />
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
+                fontWeight: useWebP ? 600 : 400
+              }}
+            >
+              WebP
+            </Typography>
+          </Box>
+        </Box>
+
         {/* Color Controls Section */}
         <Box sx={{
           width: '100%',
@@ -1311,241 +1536,6 @@ function App() {
           bgcolor: 'var(--border-subtle)',
           mb: 4 
         }} />
-
-        {/* Main Image Window with Controls */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          width: '100%'
-        }}>
-          {/* Background toggles */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3,
-            mb: 2
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-                Show Background
-              </Typography>
-              <GlowSwitch
-                checked={showCheckerboard}
-                onChange={(e) => setShowCheckerboard(e.target.checked)}
-                size="small"
-              />
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-                Use Chroma
-              </Typography>
-              <GlowSwitch
-                checked={useChroma}
-                onChange={(e) => setUseChroma(e.target.checked)}
-                size="small"
-              />
-            </Box>
-          </Box>
-
-          {/* Image Display */}
-          <Box sx={{
-            position: 'relative',
-            width: '800px',
-            height: '800px',
-            backgroundColor: showCheckerboard ? (useChroma ? '#00FF00' : 'transparent') : 'transparent',
-            backgroundImage: showCheckerboard && !useChroma ? 'var(--checkerboard-pattern)' : 'none',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: 'var(--shadow-small)',
-            border: '1px solid var(--border-subtle)',
-            transition: 'border-color 0.2s'
-          }}>
-            {/* Checkerboard background */}
-            {showCheckerboard && !useChroma && (
-              <Box sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 1,
-                backgroundImage: `
-                  linear-gradient(45deg, #808080 25%, transparent 25%),
-                  linear-gradient(-45deg, #808080 25%, transparent 25%),
-                  linear-gradient(45deg, transparent 75%, #808080 75%),
-                  linear-gradient(-45deg, transparent 75%, #808080 75%)
-                `,
-                backgroundSize: '20px 20px',
-                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                opacity: 0.1
-              }} />
-            )}
-
-            {/* Image */}
-            <Box sx={{ position: 'relative', zIndex: 2 }}>
-              {isProcessing ? (
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  width: '800px',
-                  height: '800px'
-                }}>
-                  <CircularProgress size={48} />
-                </Box>
-              ) : (
-                <img
-                  src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
-                  alt="Working"
-                  style={{
-                    maxWidth: '800px',
-                    maxHeight: '800px',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    display: 'block'
-                  }}
-                />
-              )}
-            </Box>
-
-            {/* Download button */}
-            <GlowButton
-              onClick={handleDownload}
-              disabled={!canDownload}
-              sx={{
-                position: 'absolute',
-                right: '12px',
-                bottom: '12px',
-                minWidth: 'auto',
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 3
-              }}
-            >
-              <FileDownloadIcon />
-            </GlowButton>
-          </Box>
-
-          {/* Format toggle */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 2,
-            width: '800px',
-            pr: 1,
-            mt: 1,
-            mb: 3
-          }}>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                fontWeight: !useWebP ? 600 : 400
-              }}
-            >
-              PNG
-            </Typography>
-            <GlowSwitch
-              checked={useWebP}
-              onChange={handleWebPToggle}
-              size="small"
-            />
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                fontWeight: useWebP ? 600 : 400
-              }}
-            >
-              WebP
-            </Typography>
-          </Box>
-
-          {/* Upload Controls */}
-          <Box sx={{ 
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 2,
-            width: '100%',
-            mb: 2
-          }}>
-            <GlowTextButton
-              component="label"
-              variant="contained"
-              disabled={isProcessing}
-              sx={{ width: '110px' }}
-            >
-              UPLOAD
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e.target.files[0])}
-              />
-            </GlowTextButton>
-          </Box>
-
-          {/* URL Input and Button */}
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 2,
-            alignItems: 'center',
-            width: '100%',
-            maxWidth: '800px',
-            mb: 2,
-            px: 2
-          }}>
-            <IconTextField
-              placeholder="Paste image URL here..."
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              onKeyDown={handleUrlKeyPress}
-              startIcon={<LinkIcon />}
-              hasReset
-              onReset={() => setUrlInput('')}
-              sx={{ 
-                flex: 1,
-                minWidth: '500px',
-                '& .MuiInputBase-root': {
-                  width: '100%'
-                }
-              }}
-            />
-            <GlowTextButton
-              variant="contained"
-              onClick={handleLoadUrl}
-              sx={{ 
-                width: '110px',
-                flexShrink: 0
-              }}
-            >
-              USE URL
-            </GlowTextButton>
-          </Box>
-
-          {/* Image Controls */}
-          <Box sx={{ 
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-            width: '100%',
-            maxWidth: '600px'
-          }}>
-          </Box>
-        </Box>
 
         {/* Batch Processing */}
         <Box sx={{
