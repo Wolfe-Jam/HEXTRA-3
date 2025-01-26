@@ -31,7 +31,7 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
-const VERSION = '2.0.4'; // Starting new features after THE IMAGE FACTORY
+const VERSION = '2.1.1'; // Starting new features after THE IMAGE FACTORY
 
 function hexToRgb(hex) {
   // Remove the hash if present
@@ -1080,7 +1080,9 @@ function App() {
       transition: 'background-color 0.2s'
     }}>
       <Banner 
-        version="2.0.4"
+        title="HEXTRA"
+        version="2.1.1"
+        subtitle="Color Management for T-Shirt Design"
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />

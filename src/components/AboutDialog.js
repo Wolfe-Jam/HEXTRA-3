@@ -57,6 +57,12 @@ const AboutDialog = ({ open, onClose, version }) => {
           }}
         />
       </DialogTitle>
+      <DialogTitle>
+        About HEXTRA
+        <Typography variant="subtitle1" sx={{ mt: 1, color: 'var(--text-secondary)' }}>
+          Version 2.1.1
+        </Typography>
+      </DialogTitle>
       <DialogContent sx={{ mt: 4 }}>
         <Box sx={{ height: '24px' }} />
         <Typography 
