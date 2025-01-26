@@ -1338,118 +1338,98 @@ function App() {
           {/* Color Wheel */}
           <Box sx={{
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 2,
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            gap: 4,
             width: '100%'
           }}>
-            <Wheel
-              ref={wheelRef}
-              color={selectedColor}
-              onChange={handleColorChange}
-              onClick={handleWheelClick}
-              onDoubleClick={() => applyColor()}
-              width={240}
-              height={240}
-            />
-
-            {/* RGB and HEX Controls */}
-            <Box sx={{ 
+            {/* Left side - Color Wheel */}
+            <Box sx={{
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: 3,
-              width: '100%',
-              maxWidth: '600px'
+              gap: 2
             }}>
+              <Wheel
+                ref={wheelRef}
+                color={selectedColor}
+                onChange={handleColorChange}
+                onClick={handleWheelClick}
+                onDoubleClick={() => applyColor()}
+                width={240}
+                height={240}
+              />
               <Typography sx={{ 
                 fontFamily: "'Inter', sans-serif",
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
-                whiteSpace: 'nowrap',
-                minWidth: '140px'
+                textAlign: 'center',
+                mt: 1
               }}>
                 RGB: {rgbColor.r}, {rgbColor.g}, {rgbColor.b}
               </Typography>
-
-              <Box
-                sx={{
-                  width: '48px',
-                  height: '48px',
-                  backgroundColor: selectedColor,
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-color)',
-                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                  flexShrink: 0
-                }}
-              />
-
-              <SwatchDropdownField
-                value={hexInput}
-                onChange={(e) => setHexInput(e.target.value)}
-                onKeyDown={handleHexKeyPress}
-                placeholder="#FED141"
-                startIcon={<TagIcon />}
-                hasReset
-                onReset={resetColor}
-                options={[
-                  '#FED141',
-                  '#D50032',
-                  '#00805E',
-                  '#224D8F',
-                  '#FF4400',
-                  '#CABFAD'
-                ]}
-                onSelectionChange={handleDropdownSelection}
-                sx={{ 
-                  width: '180px',
-                  '& .MuiOutlinedInput-root': {
-                    paddingLeft: '8px'
-                  }
-                }}
-              />
             </Box>
 
-            {/* Grayscale Controls */}
-            <Box sx={{ 
+            {/* Right side - Controls */}
+            <Box sx={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              flexDirection: 'column',
               gap: 3,
-              width: '100%',
-              maxWidth: '600px'
+              flex: 1,
+              maxWidth: '400px',
+              pt: 1
             }}>
-              <Typography sx={{ 
-                fontFamily: "'Inter', sans-serif",
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                whiteSpace: 'nowrap',
-                minWidth: '120px'
+              {/* Color Swatch and HEX Input on same line */}
+              <Box sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                ml: -1 // Adjust to align with wheel
               }}>
-                GRAY: {Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}
-              </Typography>
+                <Box
+                  sx={{
+                    width: '48px',
+                    height: '48px',
+                    backgroundColor: selectedColor,
+                    borderRadius: '50%',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
+                    flexShrink: 0
+                  }}
+                />
 
-              <Box
-                onClick={handleGraySwatchClick}
-                sx={{
-                  width: '36px',
-                  height: '36px',
-                  flexShrink: 0,
-                  backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-color)',
-                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                  cursor: 'pointer',
-                  transition: 'box-shadow 0.2s',
-                  '&:hover': {
-                    boxShadow: '0 0 0 2px var(--glow-color)',
-                  }
-                }}
-              />
+                <SwatchDropdownField
+                  value={hexInput}
+                  onChange={(e) => setHexInput(e.target.value)}
+                  onKeyDown={handleHexKeyPress}
+                  placeholder="#FED141"
+                  startIcon={<TagIcon />}
+                  hasReset
+                  onReset={resetColor}
+                  options={[
+                    '#FED141',
+                    '#D50032',
+                    '#00805E',
+                    '#224D8F',
+                    '#FF4400',
+                    '#CABFAD'
+                  ]}
+                  onSelectionChange={handleDropdownSelection}
+                  sx={{ 
+                    flex: 1,
+                    minWidth: '280px',
+                    '& .MuiOutlinedInput-root': {
+                      paddingLeft: '8px'
+                    }
+                  }}
+                />
+              </Box>
 
+              {/* Grayscale Controls */}
               <Box sx={{
                 position: 'relative',
-                width: '200px',
+                width: '100%',
                 height: '24px',
                 backgroundColor: 'transparent',
                 borderRadius: '12px',
@@ -1499,24 +1479,65 @@ function App() {
                   }}
                 />
               </Box>
-            </Box>
 
-            {/* Apply Button */}
-            <GlowTextButton
-              variant="contained"
-              onClick={applyColor}
-              disabled={!imageLoaded || isProcessing}
-              sx={{
-                width: '110px',
-                color: 'var(--text-primary)',
-                backgroundColor: 'var(--button-bg)',
-                '&:hover': {
-                  backgroundColor: 'var(--button-hover)'
-                }
-              }}
-            >
-              APPLY
-            </GlowTextButton>
+              <Box sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2
+              }}>
+                <Typography sx={{ 
+                  fontFamily: "'Inter', sans-serif",
+                  color: 'var(--text-primary)',
+                  fontSize: '0.875rem',
+                  whiteSpace: 'nowrap',
+                  minWidth: '120px'
+                }}>
+                  GRAY: {Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}
+                </Typography>
+
+                <Box
+                  onClick={handleGraySwatchClick}
+                  sx={{
+                    width: '36px',
+                    height: '36px',
+                    flexShrink: 0,
+                    backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
+                    borderRadius: '50%',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
+                    cursor: 'pointer',
+                    transition: 'box-shadow 0.2s',
+                    '&:hover': {
+                      boxShadow: '0 0 0 2px var(--glow-color)',
+                    }
+                  }}
+                />
+              </Box>
+
+              {/* Apply Button */}
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                width: '100%',
+                mt: 1
+              }}>
+                <GlowTextButton
+                  variant="contained"
+                  onClick={applyColor}
+                  disabled={!imageLoaded || isProcessing}
+                  sx={{
+                    width: '110px',
+                    color: 'var(--text-primary)',
+                    backgroundColor: 'var(--button-bg)',
+                    '&:hover': {
+                      backgroundColor: 'var(--button-hover)'
+                    }
+                  }}
+                >
+                  APPLY
+                </GlowTextButton>
+              </Box>
+            </Box>
           </Box>
 
           {/* Divider */}
