@@ -250,10 +250,14 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
                 value={localColor}
                 size="small"
                 sx={{ 
-                  width: 100,
+                  width: 120,
                   '& input': {
                     fontFamily: 'Inter, monospace',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    padding: '4px 8px'
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    padding: 0
                   }
                 }}
                 onChange={handleHexInput}
