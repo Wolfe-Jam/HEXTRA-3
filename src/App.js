@@ -1499,6 +1499,16 @@ function App() {
               maxWidth: '400px',
               pt: 1
             }}>
+              {/* Title */}
+              <Typography sx={{
+                fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+                fontSize: '1rem',
+                color: 'var(--text-primary)',
+                ml: -1  // Align with color swatch
+              }}>
+                SINGLE COLOR
+              </Typography>
+
               {/* Color Swatch and HEX Input on same line */}
               <Box sx={{ 
                 display: 'flex',
@@ -1636,13 +1646,21 @@ function App() {
                 />
               </Box>
 
-              {/* Apply Button */}
+              {/* Apply Button Row */}
               <Box sx={{ 
                 display: 'flex', 
-                justifyContent: 'flex-end', 
+                justifyContent: 'space-between',  // Space between title and button
+                alignItems: 'center',
                 width: '100%',
                 mt: 1
               }}>
+                <Typography sx={{
+                  fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+                  fontSize: '1rem',
+                  color: 'var(--text-primary)',
+                }}>
+                  SINGLE COLOR
+                </Typography>
                 <GlowTextButton
                   variant="contained"
                   onClick={applyColor}
