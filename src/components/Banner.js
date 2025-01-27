@@ -125,7 +125,12 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
       <AboutDialog
         open={aboutOpen}
         onClose={() => setAboutOpen(false)}
-        version={`v${version}`}
+      />
+    </Box>
+  );
+};
+
+export default Banner;
       >
         <Typography variant="body2" sx={{ mb: 1, color: 'var(--text-secondary)' }}>
           Version {version}

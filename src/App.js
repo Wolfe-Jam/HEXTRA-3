@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress, TextField, InputAdornment, IconButton, ToggleButton } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import Jimp from 'jimp';
 import JSZip from 'jszip';
@@ -11,17 +11,15 @@ import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import HCS from './components/HCS';
-import { ToggleButton } from '@mui/material';
 import GILDAN_64 from './data/catalogs/gildan64000';
 import GILDAN_3000 from './data/catalogs/gildan3000';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
-import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
 import { ColorTheory } from './utils/colorTheory';
 
-const DEFAULT_COLOR = '#FED141';
+const DEFAULT_COLOR = GILDAN_64[0].hex;  // White
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
 const TEST_IMAGE_URL = '/images/Test-Gradient-600-400.webp';
 const DEFAULT_COLORS = [
@@ -85,20 +83,27 @@ function rgbToHsv(r, g, b) {
 }
 
 function App() {
+  // State for color selection
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
+  
+  // Image states
   const [workingImage, setWorkingImage] = useState(null);
-  const [workingImageUrl, setWorkingImageUrl] = useState(null);
-  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
+  const [workingImageUrl, setWorkingImageUrl] = useState(DEFAULT_IMAGE_URL);
+  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(DEFAULT_IMAGE_URL);
+  const [workingImageSize, setWorkingImageSize] = useState({ width: 0, height: 0 });
+  const [imageMode, setImageMode] = useState('single');
   const [testImage, setTestImage] = useState(null);
   const [testImageUrl, setTestImageUrl] = useState(null);
   const [testProcessedUrl, setTestProcessedUrl] = useState(null);
   const [originalImage, setOriginalImage] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);
+  
+  // UI states
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
-  const [hexInput, setHexInput] = useState(DEFAULT_COLOR);
+  const [hexInput, setHexInput] = useState(DEFAULT_COLOR.replace('#', ''));
   const [urlInput, setUrlInput] = useState('');
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('hextraTheme');
@@ -107,18 +112,14 @@ function App() {
   const [isDropdownSelection, setIsDropdownSelection] = useState(false);
   const [lastClickColor, setLastClickColor] = useState(null);
   const [lastClickTime, setLastClickTime] = useState(0);
+  const [hasFirstClick, setHasFirstClick] = useState(false);
   const [enhanceEffect, setEnhanceEffect] = useState(true);  // Default to enhanced
   const [showTooltips, setShowTooltips] = useState(true);  // Default tooltips on
   const [useTestImage, setUseTestImage] = useState(false);
   const [lastWorkingImage, setLastWorkingImage] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
-  const [useWebP, setUseWebP] = useState(true); // Default to WebP
-  const [showCheckerboard, setShowCheckerboard] = useState(true);
-  const [useChroma, setUseChroma] = useState(false);
-  const [rgbDisplay, setRgbDisplay] = useState('');
-
-  // MEZMERIZE States
+  const [grayscaleValue, setGrayscaleValue] = useState(128);
+  const [useWebP, setUseWebP] = useState(true);
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [batchResults, setBatchResults] = useState([]);
   const [batchProgress, setBatchProgress] = useState(0);
@@ -126,6 +127,8 @@ function App() {
   const [selectedColors, setSelectedColors] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
+  const [showCheckerboard, setShowCheckerboard] = useState(true);
+  const [useChroma, setUseChroma] = useState(false);
 
   // Add state for catalog colors
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
@@ -238,28 +241,29 @@ function App() {
       if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
         setSelectedColor(value);
         setHexInput(value);
-        setRgbColor(hexToRgb(value));
+        const newRgb = hexToRgb(value);
+        setRgbColor(newRgb);
+        // Update gray value
+        const grayValue = Math.round((newRgb.r + newRgb.g + newRgb.b) / 3);
+        setGrayscaleValue(grayValue);
         applyColor();
       }
     }
   };
 
   const resetColor = () => {
-    const defaultRgb = hexToRgb(DEFAULT_COLOR);
-    setSelectedColor(DEFAULT_COLOR);
-    setHexInput(DEFAULT_COLOR);
-    setRgbColor(defaultRgb);
-    // Force update the color wheel
-    if (wheelRef.current) {
-      wheelRef.current.setHex(DEFAULT_COLOR);
-    }
+    const defaultColor = GILDAN_64[0].hex; // White
+    setSelectedColor(defaultColor);
+    setHexInput(defaultColor.replace('#', ''));
+    setRgbColor(ColorTheory.hexToRgb(defaultColor));
+    updateSingleColor(defaultColor);
   };
 
   const handleColorChange = (color) => {
-    const hexValue = color.hex.toUpperCase();
-    setSelectedColor(hexValue);
-    setHexInput(hexValue);
-    const newRgb = hexToRgb(hexValue);
+    const hex = color.hex.toUpperCase();
+    setSelectedColor(hex);
+    setHexInput(hex.replace('#', ''));
+    const newRgb = hexToRgb(hex);
     setRgbColor(newRgb);
     // Update grayscale value based on RGB average
     setGrayscaleValue(Math.round((newRgb.r + newRgb.g + newRgb.b) / 3));
@@ -282,18 +286,9 @@ function App() {
         
         if (alpha > 0) {
           const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-          
-          // Always apply color to working image, keep test image grayscale
-          if (useTestImage) {
-            const value = Math.round(luminance * 255);
-            this.bitmap.data[idx + 0] = value;
-            this.bitmap.data[idx + 1] = value;
-            this.bitmap.data[idx + 2] = value;
-          } else {
-            this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
-            this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
-            this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
-          }
+          this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
+          this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
+          this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
         }
       });
 
@@ -357,39 +352,26 @@ function App() {
   const handleImageUpload = async (file) => {
     if (!file) return;
     
+    // Check file type
+    const validTypes = ['image/png', 'image/webp', 'image/jpeg', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      setError('Please upload a PNG, WebP, or JPEG file');
+      return;
+    }
+    
     setIsProcessing(true);
     setError('');
     
-    const url = URL.createObjectURL(file);
-    
     try {
       const image = await Jimp.read(await file.arrayBuffer());
-      const isTransparentFormat = file.type === 'image/png' || file.type === 'image/webp';
-      
-      if (useTestImage) {
-        setTestImage(file);
-        setTestImageUrl(url);
-        setTestProcessedUrl(url);
-      } else {
-        setWorkingImage(file);
-        setWorkingImageUrl(url);
-        setWorkingProcessedUrl(url);
-      }
-      
       setOriginalImage(image);
       setImageLoaded(true);
-      setError('');
-      
-      // Set background based on format
-      setShowCheckerboard(isTransparentFormat);
-      
-      if (rgbColor) {
-        setTimeout(() => applyColor(), 0);
-      }
+      setWorkingImage(file);
+      setWorkingImageUrl(DEFAULT_IMAGE_URL);
+      setWorkingProcessedUrl(DEFAULT_IMAGE_URL);
     } catch (err) {
       console.error('Error loading image:', err);
       setError('Error loading image. Please try a different file.');
-      URL.revokeObjectURL(url);
     } finally {
       setIsProcessing(false);
     }
@@ -424,60 +406,168 @@ function App() {
   // Add refs
   const wheelRef = useRef(null);
   const grayValueRef = useRef(null);
+  const hexInputRef = useRef(null);
 
-  const handleGraySwatchClick = () => {
-    const grayValue = Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3);
-    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
-    setHexInput(grayHex);
+  // Convert RGB to HSL
+  const rgbToHsl = (r, g, b) => {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return { h: h * 360, s: s * 100, l: l * 100 };
+  };
+
+  // Convert HSL to RGB
+  const hslToRgb = (h, s, l) => {
+    h /= 360;
+    s /= 100;
+    l /= 100;
+    let r, g, b;
+
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+
+    return {
+      r: Math.round(r * 255),
+      g: Math.round(g * 255),
+      b: Math.round(b * 255)
+    };
+  };
+
+  const handleGraySwatchClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Ignore double clicks
+    if (e.detail > 1) return;
+    
+    // Get lightness from current color using HSL
+    const { l } = rgbToHsl(rgbColor.r, rgbColor.g, rgbColor.b);
+    // Create true gray using HSL (h=0, s=0)
+    const grayRgb = hslToRgb(0, 0, l);
+    const grayHex = '#' + [grayRgb.r, grayRgb.g, grayRgb.b]
+      .map(x => x.toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
+    
+    setHexInput(grayHex.replace('#', ''));
     setSelectedColor(grayHex);
-    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
+    setRgbColor(grayRgb);
+    setGrayscaleValue(Math.round(l * 255 / 100));
+    // Focus the HEX input after setting gray value
+    if (hexInputRef.current) {
+      hexInputRef.current.focus();
+    }
   };
 
   const handleGrayscaleChange = (event, newValue) => {
-    const grayValue = newValue;
-    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
-    setGrayscaleValue(grayValue);
-    setHexInput(grayHex);
+    // Convert slider value (0-255) directly to lightness (0-100)
+    const lightness = (newValue / 255) * 100;
+    // Create true gray using HSL (h=0, s=0)
+    const grayRgb = hslToRgb(0, 0, lightness);
+    const grayHex = '#' + [grayRgb.r, grayRgb.g, grayRgb.b]
+      .map(x => x.toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
+    
+    setGrayscaleValue(newValue);
+    setHexInput(grayHex.replace('#', ''));
     setSelectedColor(grayHex);
-    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
+    setRgbColor(grayRgb);
+    // Focus the HEX input after setting gray value
+    if (hexInputRef.current) {
+      hexInputRef.current.focus();
+    }
   };
 
   const handleGradientClick = (e) => {
+    e.preventDefault(); // Prevent any default handling
+    e.stopPropagation(); // Stop event bubbling
+    
+    // Ignore double clicks
+    if (e.detail > 1) return;
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const percentage = Math.min(Math.max(x / rect.width, 0), 1);
-    const grayValue = Math.round(percentage * 255);
-    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
-    setHexInput(grayHex);
+    // Get lightness directly from position (0-100)
+    const lightness = Math.min(Math.max(x / rect.width, 0), 1) * 100;
+    // Create true gray using HSL (h=0, s=0)
+    const grayRgb = hslToRgb(0, 0, lightness);
+    const grayHex = '#' + [grayRgb.r, grayRgb.g, grayRgb.b]
+      .map(x => x.toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
+    
+    setGrayscaleValue(Math.round(lightness * 255 / 100));
+    setHexInput(grayHex.replace('#', ''));
     setSelectedColor(grayHex);
-    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
+    setRgbColor(grayRgb);
+    // Ensure focus goes to HEX input
+    if (hexInputRef.current) {
+      hexInputRef.current.focus();
+    }
   };
 
-  const handleWheelClick = (e) => {
+  const handleWheelClick = (color) => {
     const now = Date.now();
-    const timeDiff = now - lastClickTime;
     
-    if (lastClickColor && timeDiff < 500) {  // 500ms window for double-click
-      // Average the colors for quick double-click
-      const last = hexToRgb(lastClickColor);
-      const current = hexToRgb(selectedColor);
-      const avgColor = {
-        r: Math.round((last.r + current.r) / 2),
-        g: Math.round((last.g + current.g) / 2),
-        b: Math.round((last.b + current.b) / 2)
-      };
-      const avgHex = `#${avgColor.r.toString(16).padStart(2, '0')}${avgColor.g.toString(16).padStart(2, '0')}${avgColor.b.toString(16).padStart(2, '0')}`.toUpperCase();
-      setSelectedColor(avgHex);
-      setHexInput(avgHex);
-      setRgbColor(avgColor);
-      applyColor();
-      // Reset after applying
-      setLastClickColor(null);
-      setLastClickTime(0);
-    } else {
-      // Store first click info
-      setLastClickColor(selectedColor);
+    if (!hasFirstClick) {
+      // First click - just select color
+      setHasFirstClick(true);
       setLastClickTime(now);
+      return;
+    }
+
+    // Check if this is a double-click after first click
+    if (now - lastClickTime < 500) {  // 500ms double-click threshold
+      // Apply color!
+      if (hexInputRef.current) {
+        hexInputRef.current.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter'}));
+      }
+      // Reset state
+      setHasFirstClick(false);
+    } else {
+      // Too slow, treat as new first click
+      setLastClickTime(now);
+    }
+  };
+
+  const handleWheelContext = (e) => {
+    e.preventDefault(); // Prevent context menu
+    // Apply current color
+    if (hexInputRef.current) {
+      hexInputRef.current.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter'}));
     }
   };
 
@@ -506,7 +596,7 @@ function App() {
       const r = rgb.r.toString().padStart(3);
       const g = rgb.g.toString().padStart(3);
       const b = rgb.b.toString().padStart(3);
-      setRgbDisplay(`${r},${g},${b}`);
+      // Removed setRgbDisplay
     }
   };
 
@@ -538,11 +628,44 @@ function App() {
     };
   };
 
+  const handleGlobalDoubleClick = useCallback((e) => {
+    // Get element color
+    const element = document.elementFromPoint(e.clientX, e.clientY);
+    if (!element) return;
+    
+    const bgColor = window.getComputedStyle(element).backgroundColor;
+    if (!bgColor || bgColor === 'transparent') return;
+    
+    // Parse RGB
+    const match = bgColor.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+    if (!match) return;
+    
+    // Convert to HEX
+    const hex = '#' + [match[1], match[2], match[3]]
+      .map(x => parseInt(x).toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
+    
+    // Set HEX input (this triggers our normal color flow)
+    setHexInput(hex.replace('#', ''));
+    
+    // Focus and simulate Enter key
+    if (hexInputRef.current) {
+      hexInputRef.current.focus();
+      hexInputRef.current.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('dblclick', handleGlobalDoubleClick);
+    return () => window.removeEventListener('dblclick', handleGlobalDoubleClick);
+  }, [handleGlobalDoubleClick]);
+
   // Load default image on mount
   useEffect(() => {
     // Set initial color states
     setSelectedColor(DEFAULT_COLOR);
-    setHexInput(DEFAULT_COLOR);
+    setHexInput(DEFAULT_COLOR.replace('#', ''));
     setRgbColor(hexToRgb(DEFAULT_COLOR));
     
     // Load default image
@@ -565,9 +688,17 @@ function App() {
       });
   }, []);
 
+  useEffect(() => {
+    document.body.style.cursor = '';
+    window.removeEventListener('click', handlePickerClick);
+  }, []);
+
   // Theme effect
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
     document.documentElement.style.setProperty('--text-primary', theme === 'light' ? '#141414' : '#F8F8F8');
     document.documentElement.style.setProperty('--text-secondary', theme === 'light' ? '#666666' : '#A0A0A0');
     document.documentElement.style.setProperty('--text-disabled', theme === 'light' ? 'rgba(20, 20, 20, 0.26)' : 'rgba(248, 248, 248, 0.3)');
@@ -745,22 +876,18 @@ function App() {
       return hex;
     }
     
-    // Handle RGB format like "rgb(255, 0, 0)" or "rgb(255 0 0)"
-    if (input.toLowerCase().includes('rgb')) {
-      // Extract numbers from rgb format, handling both comma and space separation
-      const numbers = input.match(/\d+/g);
-      if (numbers && numbers.length >= 3) {
-        const rgb = numbers.slice(0, 3).map(n => parseInt(n.trim()));
-        console.log('RGB values from rgb():', rgb);
-        if (rgb.every(n => !isNaN(n) && n >= 0 && n <= 255)) {
-          const hex = '#' + rgb.map(n => 
-            Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')
-          ).join('');
-          console.log('Converted RGB to hex:', hex);
-          return hex.toUpperCase();
-        }
+    // Check for rgb() format
+    if (input.startsWith('rgb(') && input.endsWith(')')) {
+      const numbers = input.substring(4, input.length - 1).split(',');
+      const rgb = numbers.slice(0, 3).map(n => parseInt(n.trim()));
+      console.log('RGB values from rgb():', rgb);
+      if (rgb.every(n => !isNaN(n) && n >= 0 && n <= 255)) {
+        const hex = '#' + rgb.map(x => 
+          Math.max(0, Math.min(255, x)).toString(16).padStart(2, '0')
+        ).join('');
+        console.log('Converted RGB to hex:', hex);
+        return hex;
       }
-      return null; // Invalid RGB format
     }
     
     // Handle comma or space separated RGB values like "255,0,0" or "255 0 0"
@@ -773,7 +900,7 @@ function App() {
           Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')
         ).join('');
         console.log('Converted space/comma RGB to hex:', hex);
-        return hex.toUpperCase();
+        return hex;
       }
     }
     
@@ -840,23 +967,15 @@ function App() {
       let colorColumn = 0;  // Default to first column
       let nameColumn = 1;   // Default to second column
       
-      // Common column names for colors
-      const colorKeywords = ['hex', 'color', 'code', 'rgb', 'value'];
-      const nameKeywords = ['name', 'description', 'label', 'title'];
-      
       console.log('Header columns:', header);
       
       // Only override defaults if we find matching columns
       header.forEach((col, index) => {
-        if (colorKeywords.some(keyword => col.includes(keyword))) {
-          if (col.includes('name')) {
-            // Skip if it's "color name" instead of just "color"
-            return;
-          }
+        if (col.includes('hex') || col.includes('color') || col.includes('code')) {
           colorColumn = index;
           console.log('Found color column:', index, col);
         }
-        if (nameKeywords.some(keyword => col.includes(keyword))) {
+        if (col.includes('name') || col.includes('description') || col.includes('label') || col.includes('title')) {
           nameColumn = index;
           console.log('Found name column:', index, col);
         }
@@ -1178,13 +1297,102 @@ function App() {
     }
   };
 
+  // Add function for simple color naming
+  const getSimpleColorName = (r, g, b) => {
+    // Convert to HSL for better color naming
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const l = (max + min) / 510; // Lightness 0-1
+    
+    if (max === min) {
+      if (l < 0.1) return 'BLACK';
+      if (l > 0.9) return 'WHITE';
+      return `GRAY ${Math.round(l * 100)}%`;
+    }
+
+    const d = max - min;
+    const s = d / (1 - Math.abs(2 * l - 1)) / 255;
+    
+    // Just return PALE if saturation is low
+    if (s < 0.3) return 'PALE';
+    
+    // Otherwise return empty string (no label needed)
+    return '';
+  };
+
+  const handleDoubleClick = useCallback((e) => {
+    const element = document.elementFromPoint(e.clientX, e.clientY);
+    if (!element) return;
+    
+    const bgColor = window.getComputedStyle(element).backgroundColor;
+    if (!bgColor || bgColor === 'transparent') return;
+    
+    const match = bgColor.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+    if (!match) return;
+    
+    const hex = '#' + [match[1], match[2], match[3]]
+      .map(x => parseInt(x).toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
+    
+    updateSingleColor(hex);
+  }, [updateSingleColor]);
+
+  const handlePickerClick = useCallback((e) => {
+    // Removed isPickerMode check
+    const element = document.elementFromPoint(e.clientX, e.clientY);
+    if (!element) return;
+    
+    const color = window.getComputedStyle(element).backgroundColor;
+    if (!color || color === 'transparent') return;
+
+    // Parse rgb(r, g, b)
+    const rgb = color.match(/\d+/g);
+    if (!rgb) return;
+    
+    // Convert to hex
+    const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toUpperCase();
+    
+    // Put in hex input and apply
+    setHexInput(hex.replace('#', ''));
+    if (hexInputRef.current) {
+      hexInputRef.current.focus();
+      hexInputRef.current.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter'}));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Removed isPickerMode check
+    document.body.style.cursor = '';
+    window.removeEventListener('click', handlePickerClick);
+  }, []);
+
+  const handleShowCheckerboardChange = (e) => {
+    setShowCheckerboard(e.target.checked);
+    if (!e.target.checked) {
+      setUseChroma(false);
+    }
+  };
+
+  const handleImageLoad = (e) => {
+    const img = e.target;
+    if (img.naturalWidth > 6000 || img.naturalHeight > 6000) {
+      setError({
+        message: 'Image dimensions exceed 6000x6000 pixels. For larger images, please contact team@HEXTRA.io',
+        severity: 'warning'
+      });
+    }
+    setImageLoaded(true);
+  };
+
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: 'var(--background)',
-      transition: 'background-color 0.2s'
+    <Box sx={{ 
+      width: '100vw',
+      height: '100vh',
+      bgcolor: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+      transition: 'all 0.2s',
+      overflow: 'auto'
     }}>
       <Banner 
         title="HEXTRA"
@@ -1270,6 +1478,37 @@ function App() {
           </GlowTextButton>
         </Box>
 
+        {/* Background toggles */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          mb: 1
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+              Show Background
+            </Typography>
+            <GlowSwitch
+              checked={showCheckerboard}
+              onChange={handleShowCheckerboardChange}
+              size="small"
+            />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
+              Use Chroma
+            </Typography>
+            <GlowSwitch
+              checked={useChroma}
+              onChange={(e) => setUseChroma(e.target.checked)}
+              disabled={!showCheckerboard}
+              size="small"
+            />
+          </Box>
+        </Box>
+
         {/* Main Image Window with Controls */}
         <Box sx={{
           display: 'flex',
@@ -1278,50 +1517,20 @@ function App() {
           gap: 2,
           width: '100%'
         }}>
-          {/* Background toggles */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3,
-            mb: 1
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-                Show Background
-              </Typography>
-              <GlowSwitch
-                checked={showCheckerboard}
-                onChange={(e) => setShowCheckerboard(e.target.checked)}
-                size="small"
-              />
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-                Use Chroma
-              </Typography>
-              <GlowSwitch
-                checked={useChroma}
-                onChange={(e) => setUseChroma(e.target.checked)}
-                size="small"
-              />
-            </Box>
-          </Box>
-
           {/* Image Display */}
           <Box sx={{
             position: 'relative',
-            width: '800px',
-            height: '800px',
+            width: '100%',
+            maxWidth: '6000px',
+            minHeight: '400px',
+            maxHeight: '6000px',
             backgroundColor: showCheckerboard ? (useChroma ? '#00FF00' : 'transparent') : 'transparent',
             backgroundImage: showCheckerboard && !useChroma ? 'var(--checkerboard-pattern)' : 'none',
             borderRadius: '8px',
             overflow: 'hidden',
             display: 'flex',
-            alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'var(--shadow-small)',
-            border: '1px solid var(--border-subtle)',
+            alignItems: 'center',
             transition: 'border-color 0.2s',
             mb: 1
           }}>
@@ -1345,32 +1554,55 @@ function App() {
                 opacity: 0.1
               }} />
             )}
-
             {/* Image content */}
-            <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box sx={{ 
+              position: 'relative', 
+              zIndex: 1, 
+              width: '100%',
+              height: '100%',
+              maxWidth: '6000px',
+              maxHeight: '6000px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
               {isProcessing ? (
                 <Box sx={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
-                  width: '800px',
-                  height: '800px'
+                  width: '100%',
+                  height: '100%',
+                  minHeight: '400px'
                 }}>
                   <CircularProgress size={48} />
                 </Box>
-              ) : (
+              ) : workingImageUrl ? (
                 <img
                   src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
                   alt="Working"
+                  onLoad={handleImageLoad}
                   style={{
-                    maxWidth: '800px',
-                    maxHeight: '800px',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
                     width: 'auto',
                     height: 'auto',
                     objectFit: 'contain',
                     display: 'block'
                   }}
                 />
+              ) : (
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  width: '100%',
+                  height: '100%',
+                  minHeight: '400px',
+                  color: 'var(--text-secondary)'
+                }}>
+                  Upload an image to begin
+                </Box>
               )}
             </Box>
 
@@ -1401,9 +1633,9 @@ function App() {
           <Box sx={{ 
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'flex-end',  
             gap: 2,
-            width: '800px',
+            width: '100%',
             pr: 1,
             mb: 3
           }}>
@@ -1459,34 +1691,46 @@ function App() {
               gap: 1,
               mb: 2
             }}>
-              <Wheel
-                ref={wheelRef}
-                color={selectedColor}
-                onChange={handleColorChange}
-                onPointerMove={handleWheelPointer}
-                onPointerLeave={() => setRgbDisplay('')}
-                width={240}
-                height={240}
-                style={{
+              <div 
+                style={{ 
+                  position: 'relative',
                   width: '240px',
                   height: '240px',
-                  cursor: 'crosshair',
-                  touchAction: 'none'
+                  cursor: 'crosshair'
                 }}
-              />
+              >
+                <Wheel
+                  color={selectedColor}
+                  onChange={(color) => {
+                    const hex = color.hex.toUpperCase();
+                    setSelectedColor(hex);
+                    setHexInput(hex.replace('#', ''));
+                    const newRgb = ColorTheory.hexToRgb(hex);
+                    setRgbColor(newRgb);
+                    // Update gray value (L from HSL)
+                    const { l } = rgbToHsl(newRgb.r, newRgb.g, newRgb.b);
+                    setGrayscaleValue(Math.round(l * 255 / 100));
+                    // Focus the HEX input
+                    if (hexInputRef.current) {
+                      hexInputRef.current.focus();
+                    }
+                  }}
+                  style={{
+                    width: '240px',
+                    height: '240px',
+                    touchAction: 'none'
+                  }}
+                />
+              </div>
               <Typography sx={{ 
                 fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-                fontSize: '0.875rem',
                 color: 'var(--text-primary)',
-                minHeight: '20px',
-                width: '240px',  // Match wheel width
-                userSelect: 'none',
-                display: 'flex',
-                justifyContent: 'center',  // Center the content
-                alignItems: 'center',
-                mt: 0.5  // Small margin top for spacing from wheel
+                fontSize: '0.875rem',
+                whiteSpace: 'nowrap',
+                minWidth: '240px',
+                mr: -0.5  
               }}>
-                RGB: {rgbDisplay || ` ${rgbColor.r.toString().padStart(3)},${rgbColor.g.toString().padStart(3)},${rgbColor.b.toString().padStart(3)}`}
+                RGB: {rgbColor.r.toString().padStart(3)}, {rgbColor.g.toString().padStart(3)}, {rgbColor.b.toString().padStart(3)}
               </Typography>
             </Box>
 
@@ -1506,7 +1750,7 @@ function App() {
                 color: 'var(--text-primary)',
                 ml: -1  // Align with color swatch
               }}>
-                SINGLE COLOR
+                SINGLE COLOR APPLICATION
               </Typography>
 
               {/* Color Swatch and HEX Input on same line */}
@@ -1530,20 +1774,42 @@ function App() {
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <SwatchDropdownField
+                    ref={hexInputRef}
                     value={hexInput}
-                    onChange={(e) => setHexInput(e.target.value.toUpperCase())}
-                    onKeyDown={handleHexKeyPress}
-                    placeholder="FED141"
+                    onChange={(e) => {
+                      const newHex = e.target.value.toUpperCase();
+                      setHexInput(newHex);
+                      // Only update preview if it's a valid HEX
+                      if (/^[0-9A-F]{6}$/.test(newHex)) {
+                        const hex = '#' + newHex;
+                        setSelectedColor(hex);
+                        setRgbColor(ColorTheory.hexToRgb(hex));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const hex = '#' + hexInput;
+                        setSelectedColor(hex);
+                        const newRgb = hexToRgb(hex);
+                        setRgbColor(newRgb);
+                        // Update gray value
+                        const grayValue = Math.round((newRgb.r + newRgb.g + newRgb.b) / 3);
+                        setGrayscaleValue(grayValue);
+                        applyColor();
+                      }
+                    }}
+                    placeholder={GILDAN_64[0].hex.replace('#', '')}
                     startIcon={<TagIcon />}
                     hasReset
                     onReset={resetColor}
-                    options={colorCatalog}
+                    options={GILDAN_64}
                     onSelectionChange={(selected) => {
-                      const hex = selected.hex || selected;
+                      // Only for catalog colors
+                      const hex = selected.hex;
                       setHexInput(hex.replace('#', ''));
-                      setSelectedColor('#' + hex.replace('#', ''));
-                      setRgbColor(ColorTheory.hexToRgb('#' + hex.replace('#', '')));
-                      updateSingleColor('#' + hex.replace('#', ''));
+                      setSelectedColor(hex);
+                      setRgbColor(ColorTheory.hexToRgb(hex));
+                      updateSingleColor(hex);
                     }}
                     sx={{ 
                       minWidth: '160px',
@@ -1553,15 +1819,13 @@ function App() {
                       }
                     }}
                   />
-                  <Typography sx={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '0.875rem',
-                    color: 'var(--text-secondary)',  
-                    opacity: 0.9,  
+                  <Typography sx={{ 
+                    fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+                    fontSize: '0.75rem',
+                    color: 'var(--text-secondary)',
                     mt: 1,
                     ml: 1,
-                    letterSpacing: '0.05em',
-                    fontWeight: 500
+                    letterSpacing: '0.05em'
                   }}>
                     {colorCatalog.find(c => c.hex.replace('#', '') === hexInput)?.name?.toUpperCase() || '\u00A0'}
                   </Typography>
@@ -1573,6 +1837,7 @@ function App() {
                 position: 'relative',
                 width: '100%',
                 height: '24px',
+                mt: 3,  // Add margin top
                 backgroundColor: 'transparent',
                 borderRadius: '12px',
                 border: '1px solid var(--border-color)',
@@ -1642,8 +1907,8 @@ function App() {
                 <Box
                   onClick={handleGraySwatchClick}
                   sx={{
-                    width: '40px',
-                    height: '40px',
+                    width: 40,
+                    height: 40,
                     flexShrink: 0,
                     backgroundColor: `rgb(${grayscaleValue}, ${grayscaleValue}, ${grayscaleValue})`,
                     borderRadius: '50%',
@@ -1659,30 +1924,6 @@ function App() {
                 />
               </Box>
 
-              {/* Apply Button Row */}
-              <Box sx={{ 
-                display: 'flex',
-                justifyContent: 'flex-end',  
-                alignItems: 'center',
-                width: '100%',
-                mt: 1
-              }}>
-                <GlowTextButton
-                  variant="contained"
-                  onClick={applyColor}
-                  disabled={!imageLoaded || isProcessing}
-                  sx={{
-                    width: '110px',
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--button-bg)',
-                    '&:hover': {
-                      backgroundColor: 'var(--button-hover)'
-                    }
-                  }}
-                >
-                  APPLY
-                </GlowTextButton>
-              </Box>
             </Box>
           </Box>
 
@@ -1878,7 +2119,10 @@ function App() {
           </Box>
 
           {/* HEXTRA Color System */}
-          <HCS catalog={catalogColors} />
+          <HCS 
+            catalog={catalogColors}
+            onColorApply={updateSingleColor}
+          />
         </Box>
       </Box>
     </Box>
