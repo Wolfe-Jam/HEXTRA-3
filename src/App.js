@@ -1399,7 +1399,7 @@ function App() {
 
           {/* Format toggle */}
           <Box sx={{ 
-            display: 'flex', 
+            display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
             gap: 2,
@@ -1456,7 +1456,8 @@ function App() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 2
+              gap: 1,
+              mb: 2
             }}>
               <Wheel
                 ref={wheelRef}
@@ -1481,12 +1482,11 @@ function App() {
                 width: '240px',  // Match wheel width
                 userSelect: 'none',
                 display: 'flex',
+                justifyContent: 'center',  // Center the content
                 alignItems: 'center',
-                gap: 0,
-                pl: 1  // Left padding for alignment
+                mt: 0.5  // Small margin top for spacing from wheel
               }}>
-                <span style={{ width: '45px' }}>RGB:</span>
-                <span>{rgbDisplay || ` ${rgbColor.r.toString().padStart(3)},${rgbColor.g.toString().padStart(3)},${rgbColor.b.toString().padStart(3)}`}</span>
+                RGB: {rgbDisplay || ` ${rgbColor.r.toString().padStart(3)},${rgbColor.g.toString().padStart(3)},${rgbColor.b.toString().padStart(3)}`}
               </Typography>
             </Box>
 
@@ -1533,7 +1533,7 @@ function App() {
                     setHexInput(hex);
                     setSelectedColor(hex);
                     setRgbColor(ColorTheory.hexToRgb(hex));
-                    updateSingleColor(hex); // Use fast update instead of handleGenerateAll
+                    updateSingleColor(hex);
                   }}
                   sx={{ 
                     flex: 1,
@@ -1599,33 +1599,36 @@ function App() {
                 />
               </Box>
 
+              {/* Gray value display */}
               <Box sx={{ 
                 display: 'flex',
                 alignItems: 'center',
-                gap: 2
+                gap: 0,  // No gap
+                mt: 1
               }}>
                 <Typography sx={{ 
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "'JetBrains Mono', 'Courier New', monospace",
                   color: 'var(--text-primary)',
                   fontSize: '0.875rem',
                   whiteSpace: 'nowrap',
-                  minWidth: '120px'
+                  minWidth: '120px',
+                  mr: -0.5  // Pull the swatch even closer
                 }}>
-                  GRAY: {Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}
+                  GRAY Value: {grayscaleValue}
                 </Typography>
-
                 <Box
                   onClick={handleGraySwatchClick}
                   sx={{
-                    width: '36px',
-                    height: '36px',
+                    width: '48px',
+                    height: '48px',
                     flexShrink: 0,
-                    backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
+                    backgroundColor: `rgb(${grayscaleValue}, ${grayscaleValue}, ${grayscaleValue})`,
                     borderRadius: '50%',
                     border: '1px solid var(--border-color)',
                     boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
                     cursor: 'pointer',
                     transition: 'box-shadow 0.2s',
+                    ml: 2,  // Increase margin to move swatch more right
                     '&:hover': {
                       boxShadow: '0 0 0 2px var(--glow-color)',
                     }
