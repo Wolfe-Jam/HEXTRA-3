@@ -116,6 +116,7 @@ function App() {
   const [useWebP, setUseWebP] = useState(true); // Default to WebP
   const [showCheckerboard, setShowCheckerboard] = useState(true);
   const [useChroma, setUseChroma] = useState(false);
+  const [rgbDisplay, setRgbDisplay] = useState('');
 
   // MEZMERIZE States
   const [isBatchMode, setIsBatchMode] = useState(false);
@@ -478,6 +479,63 @@ function App() {
       setLastClickColor(selectedColor);
       setLastClickTime(now);
     }
+  };
+
+  const handleWheelPointer = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Only update display if within wheel bounds
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const radius = Math.min(centerX, centerY);
+    const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+    
+    if (distance <= radius) {
+      // Get color at pointer position
+      const hsv = {
+        h: Math.atan2(y - centerY, x - centerX) * (180 / Math.PI) + 180,
+        s: Math.min(distance / radius, 1) * 100,
+        v: 100
+      };
+      
+      // Convert HSV to RGB
+      const rgb = hsvToRgb(hsv.h, hsv.s, hsv.v);
+      // Pad numbers to 3 digits
+      const r = rgb.r.toString().padStart(3);
+      const g = rgb.g.toString().padStart(3);
+      const b = rgb.b.toString().padStart(3);
+      setRgbDisplay(`${r},${g},${b}`);
+    }
+  };
+
+  // Convert HSV to RGB
+  const hsvToRgb = (h, s, v) => {
+    s = s / 100;
+    v = v / 100;
+    
+    const i = Math.floor(h / 60);
+    const f = h / 60 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
+    
+    let r, g, b;
+    switch (i % 6) {
+      case 0: r = v; g = t; b = p; break;
+      case 1: r = q; g = v; b = p; break;
+      case 2: r = p; g = v; b = t; break;
+      case 3: r = p; g = q; b = v; break;
+      case 4: r = t; g = p; b = v; break;
+      case 5: r = v; g = p; b = q; break;
+    }
+    
+    return {
+      r: Math.round(r * 255),
+      g: Math.round(g * 255),
+      b: Math.round(b * 255)
+    };
   };
 
   // Load default image on mount
@@ -1404,19 +1462,31 @@ function App() {
                 ref={wheelRef}
                 color={selectedColor}
                 onChange={handleColorChange}
-                onClick={handleWheelClick}
-                onDoubleClick={() => applyColor()}
+                onPointerMove={handleWheelPointer}
+                onPointerLeave={() => setRgbDisplay('')}
                 width={240}
                 height={240}
+                style={{
+                  width: '240px',
+                  height: '240px',
+                  cursor: 'crosshair',
+                  touchAction: 'none'
+                }}
               />
               <Typography sx={{ 
-                fontFamily: "'Inter', sans-serif",
-                color: 'var(--text-primary)',
+                fontFamily: "'JetBrains Mono', 'Courier New', monospace",
                 fontSize: '0.875rem',
-                textAlign: 'center',
-                mt: 1
+                color: 'var(--text-primary)',
+                minHeight: '20px',
+                width: '240px',  // Match wheel width
+                userSelect: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0,
+                pl: 1  // Left padding for alignment
               }}>
-                RGB: {rgbColor.r}, {rgbColor.g}, {rgbColor.b}
+                <span style={{ width: '45px' }}>RGB:</span>
+                <span>{rgbDisplay || ` ${rgbColor.r.toString().padStart(3)},${rgbColor.g.toString().padStart(3)},${rgbColor.b.toString().padStart(3)}`}</span>
               </Typography>
             </Box>
 
