@@ -1518,8 +1518,8 @@ function App() {
               }}>
                 <Box
                   sx={{
-                    width: '48px',
-                    height: '48px',
+                    width: '54px',
+                    height: '54px',
                     backgroundColor: selectedColor,
                     borderRadius: '50%',
                     border: '1px solid var(--border-color)',
@@ -1528,31 +1528,44 @@ function App() {
                   }}
                 />
 
-                <SwatchDropdownField
-                  value={hexInput}
-                  onChange={(e) => setHexInput(e.target.value)}
-                  onKeyDown={handleHexKeyPress}
-                  placeholder="#FED141"
-                  startIcon={<TagIcon />}
-                  hasReset
-                  onReset={resetColor}
-                  options={colorCatalog}
-                  onSearch={handleColorSearch}
-                  onSelectionChange={(selected) => {
-                    const hex = selected.hex || selected;
-                    setHexInput(hex);
-                    setSelectedColor(hex);
-                    setRgbColor(ColorTheory.hexToRgb(hex));
-                    updateSingleColor(hex);
-                  }}
-                  sx={{ 
-                    flex: 1,
-                    minWidth: '280px',
-                    '& .MuiOutlinedInput-root': {
-                      paddingLeft: '8px'
-                    }
-                  }}
-                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <SwatchDropdownField
+                    value={hexInput}
+                    onChange={(e) => setHexInput(e.target.value.toUpperCase())}
+                    onKeyDown={handleHexKeyPress}
+                    placeholder="FED141"
+                    startIcon={<TagIcon />}
+                    hasReset
+                    onReset={resetColor}
+                    options={colorCatalog}
+                    onSelectionChange={(selected) => {
+                      const hex = selected.hex || selected;
+                      setHexInput(hex.replace('#', ''));
+                      setSelectedColor('#' + hex.replace('#', ''));
+                      setRgbColor(ColorTheory.hexToRgb('#' + hex.replace('#', '')));
+                      updateSingleColor('#' + hex.replace('#', ''));
+                    }}
+                    sx={{ 
+                      minWidth: '160px',
+                      maxWidth: '200px',
+                      '& .MuiOutlinedInput-root': {
+                        paddingLeft: '8px'
+                      }
+                    }}
+                  />
+                  <Typography sx={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '0.875rem',
+                    color: 'var(--text-secondary)',  
+                    opacity: 0.9,  
+                    mt: 1,
+                    ml: 1,
+                    letterSpacing: '0.05em',
+                    fontWeight: 500
+                  }}>
+                    {colorCatalog.find(c => c.hex.replace('#', '') === hexInput)?.name?.toUpperCase() || '\u00A0'}
+                  </Typography>
+                </Box>
               </Box>
 
               {/* Grayscale Controls */}
@@ -1613,7 +1626,7 @@ function App() {
               <Box sx={{ 
                 display: 'flex',
                 alignItems: 'center',
-                gap: 0,  // No gap
+                gap: 0,  
                 mt: 1
               }}>
                 <Typography sx={{ 
@@ -1622,7 +1635,7 @@ function App() {
                   fontSize: '0.875rem',
                   whiteSpace: 'nowrap',
                   minWidth: '120px',
-                  mr: -0.5  // Pull the swatch even closer
+                  mr: -0.5  
                 }}>
                   GRAY Value: {grayscaleValue}
                 </Typography>
@@ -1638,7 +1651,7 @@ function App() {
                     boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
                     cursor: 'pointer',
                     transition: 'box-shadow 0.2s',
-                    ml: 2,  // Increase margin to move swatch more right
+                    ml: 2,  
                     '&:hover': {
                       boxShadow: '0 0 0 2px var(--glow-color)',
                     }
@@ -1648,19 +1661,12 @@ function App() {
 
               {/* Apply Button Row */}
               <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',  // Space between title and button
+                display: 'flex',
+                justifyContent: 'flex-end',  
                 alignItems: 'center',
                 width: '100%',
                 mt: 1
               }}>
-                <Typography sx={{
-                  fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-                  fontSize: '1rem',
-                  color: 'var(--text-primary)',
-                }}>
-                  SINGLE COLOR
-                </Typography>
                 <GlowTextButton
                   variant="contained"
                   onClick={applyColor}
@@ -1682,8 +1688,8 @@ function App() {
 
           {/* Divider */}
           <Box sx={{ 
-            width: '100%', 
-            height: '1px', 
+            width: '100%',  
+            height: '1px',  
             bgcolor: 'var(--border-subtle)',
             mb: 2 
           }} />
@@ -1699,7 +1705,7 @@ function App() {
           }}>
             {/* Catalog selector */}
             <Box sx={{ 
-              display: 'flex', 
+              display: 'flex',  
               justifyContent: 'center',
               gap: 2,
               width: '100%',
@@ -1755,7 +1761,7 @@ function App() {
 
               {/* Main Action Buttons */}
               <Box sx={{ 
-                display: 'flex', 
+                display: 'flex',  
                 gap: 2,
                 mb: 1
               }}>
@@ -1823,7 +1829,7 @@ function App() {
                   mt: 2
                 }}>
                   <Typography variant="subtitle2" sx={{ 
-                    mb: 1, 
+                    mb: 1,  
                     textAlign: 'center',
                     color: 'var(--text-secondary)',
                     letterSpacing: '0.1em'
