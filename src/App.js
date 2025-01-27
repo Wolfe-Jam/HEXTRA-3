@@ -1629,8 +1629,8 @@ function App() {
                 <Box
                   onClick={handleGraySwatchClick}
                   sx={{
-                    width: '48px',
-                    height: '48px',
+                    width: '40px',
+                    height: '40px',
                     flexShrink: 0,
                     backgroundColor: `rgb(${grayscaleValue}, ${grayscaleValue}, ${grayscaleValue})`,
                     borderRadius: '50%',
