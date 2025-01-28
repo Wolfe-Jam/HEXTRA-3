@@ -11,7 +11,8 @@
   ],
   "env": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
-    "NODE_VERSION": "18.x"
+    "NODE_VERSION": "18.x",
+    "BUILD_TIME": "2025-01-28T14:57"
   },
   "rewrites": [
     {
@@ -20,4 +21,3 @@
     }
   ]
 }
-# Trigger new deployment
