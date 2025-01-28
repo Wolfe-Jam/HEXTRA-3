@@ -64,7 +64,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "CI=false DISABLE_ESLINT_PLUGIN=true next build",
+    "build": "next build",
     "start": "next start",
     "generate-icons": "node scripts/generate-icons.js"
   },
