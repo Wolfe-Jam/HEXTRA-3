@@ -18,6 +18,7 @@
     "assert": "2.0.0",
     "browserify-zlib": "0.2.0",
     "buffer": "6.0.3",
+    "core-js": "3.35.1",
     "crypto-browserify": "3.12.0",
     "fs-extra": "11.2.0",
     "https-browserify": "1.0.0",
@@ -28,6 +29,7 @@
     "process": "0.11.10",
     "querystring-es3": "0.2.1",
     "react": "18.2.0",
+    "react-app-polyfill": "3.0.0",
     "react-dom": "18.2.0",
     "react-scripts": "5.0.1",
     "stream-browserify": "3.0.0",
@@ -38,9 +40,16 @@
     "vercel": "33.4.1",
     "zustand": "4.5.0"
   },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false,
+    "crypto": false
+  },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "vercel-build": "npm run build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "generate-icons": "node scripts/generate-icons.js"
@@ -54,6 +63,7 @@
     "production": [
       ">0.2%",
       "not dead",
+      "not ie 11",
       "not op_mini all"
     ],
     "development": [

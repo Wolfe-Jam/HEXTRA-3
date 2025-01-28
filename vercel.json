@@ -2,5 +2,17 @@
   "version": 2,
   "buildCommand": "CI=false npm run build",
   "outputDirectory": "build",
-  "framework": "create-react-app"
+  "framework": "create-react-app",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": {
+        "nodeVersion": "18.x"
+      }
+    }
+  ],
+  "env": {
+    "NODE_OPTIONS": "--max_old_space_size=4096"
+  }
 }

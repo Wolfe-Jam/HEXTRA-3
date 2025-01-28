@@ -1,12 +1,6 @@
-import { Buffer } from 'buffer';
-import process from 'process';
-
-window.Buffer = Buffer;
-window.process = process;
-
+import './polyfills';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './setupPolyfills';
 import App from './App';
 import themeManager from './theme';
 import KindeAuth from './components/KindeAuth';
