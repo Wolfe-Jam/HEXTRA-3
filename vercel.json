@@ -5,5 +5,14 @@
   "outputDirectory": "build",
   "env": {
     "NODE_OPTIONS": "--max_old_space_size=4096"
-  }
+  },
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": {
+        "nodeVersion": "18.x"
+      }
+    }
+  ]
 }
