@@ -16,8 +16,8 @@ export default function KindeAuth({ children }) {
   const config = {
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID || '0bd4c1c6f92d46f7b72290073d1806c7',
     domain: process.env.REACT_APP_KINDE_DOMAIN || 'https://hextra.kinde.com',
-    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI || 'http://localhost:3000',
-    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI || 'http://localhost:3000'
+    redirectUri: 'https://hextra-3-hc6hozk35-wofejams-projects.vercel.app',
+    logoutUri: 'https://hextra-3-hc6hozk35-wofejams-projects.vercel.app'
   };
 
   return (
