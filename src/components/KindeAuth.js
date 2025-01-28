@@ -5,18 +5,18 @@ export default function KindeAuth({ children }) {
   // Log all environment variables
   console.log('Environment:', {
     nodeEnv: process.env.NODE_ENV,
-    clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
-    domain: process.env.NEXT_PUBLIC_KINDE_DOMAIN,
-    redirectUri: process.env.NEXT_PUBLIC_KINDE_REDIRECT_URI,
-    logoutUri: process.env.NEXT_PUBLIC_KINDE_LOGOUT_URI,
-    baseUrl: process.env.NEXT_PUBLIC_BASE_URL
+    clientId: process.env.KINDE_CLIENT_ID,
+    issuerUrl: process.env.KINDE_ISSUER_URL,
+    siteUrl: process.env.KINDE_SITE_URL,
+    postLoginRedirectUrl: process.env.KINDE_POST_LOGIN_REDIRECT_URL,
+    postLogoutRedirectUrl: process.env.KINDE_POST_LOGOUT_REDIRECT_URL
   });
 
   const config = {
-    clientId: process.env.REACT_APP_KINDE_CLIENT_ID || '0bd4c1c6f92d46f7b72290073d1806c7',
-    domain: process.env.NEXT_PUBLIC_KINDE_DOMAIN || 'https://hextra.kinde.com',
-    redirectUri: process.env.NEXT_PUBLIC_KINDE_REDIRECT_URI,
-    logoutUri: process.env.NEXT_PUBLIC_KINDE_LOGOUT_URI
+    clientId: process.env.KINDE_CLIENT_ID,
+    domain: process.env.KINDE_ISSUER_URL,
+    redirectUri: process.env.KINDE_POST_LOGIN_REDIRECT_URL,
+    logoutUri: process.env.KINDE_POST_LOGOUT_REDIRECT_URL
   };
 
   return (
