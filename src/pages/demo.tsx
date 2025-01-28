@@ -1,11 +1,23 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the App component with SSR disabled
+const HextraApp = dynamic(() => import('../App'), {
+  ssr: false, // Disable server-side rendering for the app
+  loading: () => (
+    <div style={{ 
+      height: '100vh', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      backgroundColor: '#1a1a1a',
+      color: 'white'
+    }}>
+      Loading HEXTRA...
+    </div>
+  )
+});
 
 export default function Demo() {
-  return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h1">HEXTRA Demo</Typography>
-      <Typography>Coming soon...</Typography>
-    </Box>
-  );
+  return <HextraApp />;
 }
