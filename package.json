@@ -51,7 +51,6 @@
     "react-app-rewired": "^2.2.1",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
-    "semver": "^7.5.4",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "styled-components": "^6.1.14",
@@ -86,7 +85,9 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.23.9",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/runtime": "^7.23.9",
     "sharp": "^0.33.5"
   }
 }
