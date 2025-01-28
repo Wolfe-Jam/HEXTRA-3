@@ -1,11 +1,5 @@
 {
   "version": 2,
   "buildCommand": "next build",
-  "outputDirectory": ".next",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ]
+  "outputDirectory": ".next"
 }

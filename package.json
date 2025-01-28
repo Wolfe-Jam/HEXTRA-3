@@ -20,7 +20,7 @@
   },
   "private": true,
   "engines": {
-    "node": "22.12.0"
+    "node": "22"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
