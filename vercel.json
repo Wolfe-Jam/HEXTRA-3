@@ -1,5 +1,4 @@
 {
-  // Vercel configuration for HEXTRA-3 test deployment
   "version": 2,
   "builds": [
     {
@@ -11,13 +10,13 @@
     }
   ],
   "env": {
-    "NODE_OPTIONS": "--max_old_space_size=4096",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
     "NODE_VERSION": "18.x"
   },
   "rewrites": [
-    { 
-      "source": "/(.*)", 
-      "destination": "/index.html" 
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
