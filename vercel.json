@@ -1,4 +1,5 @@
 {
+  // Vercel configuration for HEXTRA-3 test deployment
   "version": 2,
   "builds": [
     {
@@ -14,6 +15,9 @@
     "NODE_VERSION": "18.x"
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { 
+      "source": "/(.*)", 
+      "destination": "/index.html" 
+    }
   ]
 }
