@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, Button } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import AboutDialog from './AboutDialog';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
+import { VERSION } from '../version';
 
 const Banner = ({ version, isDarkMode, onThemeToggle }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
-  
+  const { isAuthenticated, user, login, logout } = useKindeAuth();
+
   const COLORS = {
     textDark: '#E8E8E8',
     textLight: '#F8F8F8'
@@ -92,13 +95,51 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
           />
         </Box>
 
-        {/* Right side - Theme Toggle */}
+        {/* Right side - Theme Toggle and Login/Logout */}
         <Box sx={{ 
-          minWidth: '100px', 
+          minWidth: '200px', 
           display: 'flex', 
           justifyContent: 'flex-end',
           marginRight: '24px'
         }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {isAuthenticated ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography sx={{ color: '#666' }}>
+                  {user?.email}
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  color="primary"
+                  onClick={() => logout()}
+                  sx={{ 
+                    borderColor: '#333',
+                    color: '#666',
+                    '&:hover': {
+                      borderColor: '#444',
+                      backgroundColor: 'rgba(255,255,255,0.05)'
+                    }
+                  }}
+                >
+                  Logout
+                </Button>
+              </Box>
+            ) : (
+              <Button 
+                variant="contained" 
+                color="primary"
+                onClick={() => login()}
+                sx={{ 
+                  backgroundColor: '#2196f3',
+                  '&:hover': {
+                    backgroundColor: '#1976d2'
+                  }
+                }}
+              >
+                Login
+              </Button>
+            )}
+          </Box>
           <IconButton
             onClick={onThemeToggle}
             sx={{
