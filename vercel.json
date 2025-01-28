@@ -19,5 +19,14 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "build": {
+    "env": {
+      "KINDE_CLIENT_ID": "@kinde-client-id",
+      "KINDE_ISSUER_URL": "@kinde-issuer-url",
+      "KINDE_SITE_URL": "@kinde-site-url",
+      "KINDE_POST_LOGIN_REDIRECT_URL": "@kinde-post-login-redirect-url",
+      "KINDE_POST_LOGOUT_REDIRECT_URL": "@kinde-post-logout-redirect-url"
+    }
+  }
 }
