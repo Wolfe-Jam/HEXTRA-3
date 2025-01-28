@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
-import Jimp from 'jimp';
+import dynamic from 'next/dynamic';
 import JSZip from 'jszip';
 import Banner from './components/Banner';
 import GlowButton from './components/GlowButton';
@@ -32,6 +32,9 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
+
+// Dynamically import Jimp
+const Jimp = dynamic(() => import('jimp'), { ssr: false });
 
 function hexToRgb(hex) {
   // Remove the hash if present

@@ -8,14 +8,24 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true
   },
+  transpilePackages: ['@jimp/core', '@jimp/custom', '@jimp/plugin-print', '@jimp/plugin-resize', 'jimp'],
   webpack: (config) => {
     config.resolve.fallback = {
-      ...config.resolve.fallback,
       fs: false,
+      path: false,
+      stream: false,
+      crypto: false,
+      http: false,
+      https: false,
+      zlib: false,
+      buffer: false,
+      util: false,
+      url: false,
       net: false,
       tls: false,
       child_process: false,
       canvas: false,
+      encoding: false,
     };
 
     config.plugins.push(
