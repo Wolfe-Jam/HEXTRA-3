@@ -7,19 +7,7 @@
     "NODE_OPTIONS": "--max_old_space_size=4096",
     "NODE_VERSION": "18.x"
   },
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/node",
-      "config": {
-        "nodeVersion": "18.x"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
