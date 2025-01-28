@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "create-react-app",
-  "buildCommand": "CI=false npm run build",
+  "buildCommand": "CI=false GENERATE_SOURCEMAP=false react-scripts build",
   "outputDirectory": "build",
   "env": {
     "NODE_OPTIONS": "--max_old_space_size=4096",
