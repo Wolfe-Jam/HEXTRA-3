@@ -1,3 +1,5 @@
+const webpack = require('webpack');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
@@ -27,7 +29,7 @@ const nextConfig = {
       config.plugins = [
         ...config.plugins,
         // Add polyfills for process and buffer
-        new config.webpack.ProvidePlugin({
+        new webpack.ProvidePlugin({
           process: 'process/browser',
           Buffer: ['buffer', 'Buffer'],
         }),
