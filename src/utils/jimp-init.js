@@ -1,6 +1,7 @@
 import 'react-app-polyfill/stable';
 import { Buffer } from 'buffer';
 import process from 'process';
+import Jimp from 'jimp';
 
 // Ensure Buffer is available globally
 if (typeof window !== 'undefined') {
@@ -11,8 +12,5 @@ if (typeof window !== 'undefined') {
 if (typeof window !== 'undefined') {
   window.process = window.process || process;
 }
-
-// Import Jimp after polyfills are set up
-import Jimp from 'jimp';
 
 export default Jimp;

@@ -1,8 +1,14 @@
 {
   "version": 2,
-  "framework": "create-react-app",
-  "buildCommand": "CI=false GENERATE_SOURCEMAP=false react-scripts build",
-  "outputDirectory": "build",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
   "env": {
     "NODE_OPTIONS": "--max_old_space_size=4096",
     "NODE_VERSION": "18.x"

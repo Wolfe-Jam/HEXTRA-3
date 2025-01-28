@@ -6,6 +6,16 @@ import 'regenerator-runtime/runtime';
 // Node.js polyfills
 import { Buffer } from 'buffer';
 import process from 'process';
+import 'core-js/features/array/flat';
+import 'core-js/features/array/flat-map';
+import 'core-js/features/object/from-entries';
+import 'core-js/features/promise/finally';
+import 'core-js/features/string/pad-start';
+import 'core-js/features/string/pad-end';
+import 'core-js/features/url';
+import 'core-js/features/url-search-params';
+import 'stream-browserify';
+import 'buffer';
 
 // Ensure polyfills are available globally
 if (typeof window !== 'undefined') {
@@ -17,20 +27,6 @@ if (typeof window !== 'undefined') {
   window.URLSearchParams = window.URLSearchParams || URLSearchParams;
   window.URL = window.URL || URL;
 }
-
-// Additional polyfills for specific features
-import 'core-js/features/array/flat';
-import 'core-js/features/array/flat-map';
-import 'core-js/features/object/from-entries';
-import 'core-js/features/promise/finally';
-import 'core-js/features/string/pad-start';
-import 'core-js/features/string/pad-end';
-import 'core-js/features/url';
-import 'core-js/features/url-search-params';
-
-// Stream polyfills
-import 'stream-browserify';
-import 'buffer';
 
 // Ensure fs is mocked
 if (typeof window !== 'undefined') {
