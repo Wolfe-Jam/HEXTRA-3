@@ -21,7 +21,7 @@ import TagIcon from '@mui/icons-material/Tag';
 import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
 import { hexToRgb, processImage } from './utils/image-processing';
-import { LUMINANCE_METHODS } from './constants/luminance';
+import Jimp from 'jimp/browser';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -102,6 +102,8 @@ function App() {
   const [lastWorkingImage, setLastWorkingImage] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
+  const [matteValue, setMatteValue] = useState(50);
+  const [textureValue, setTextureValue] = useState(50);
 
   // MEZMERIZE States
   const [isBatchMode, setIsBatchMode] = useState(false);
@@ -118,16 +120,6 @@ function App() {
 
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // Image processing methods
-  const [luminanceMethod, setLuminanceMethod] = useState('NATURAL');
-
-  // Update luminance method options
-  const luminanceOptions = Object.entries(LUMINANCE_METHODS).map(([key, method]) => ({
-    value: key,
-    label: method.name,
-    description: method.description
-  }));
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -201,7 +193,7 @@ function App() {
     setGrayscaleValue(Math.round((newRgb.r + newRgb.g + newRgb.b) / 3));
     
     if (workingImageUrl) {
-      processImage(workingImageUrl, color, luminanceMethod)
+      processImage(workingImageUrl, color)
         .then(processedUrl => {
           setWorkingProcessedUrl(processedUrl);
           setCanDownload(true);
@@ -228,7 +220,7 @@ function App() {
         const alpha = this.bitmap.data[idx + 3];
         
         if (alpha > 0) {
-          const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
+          const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
           
           // Always apply color to working image, keep test image grayscale
           if (useTestImage) {
@@ -517,6 +509,7 @@ function App() {
           canvas.width = image.width;
           canvas.height = image.height;
           const ctx = canvas.getContext('2d');
+          const imageData = new ImageData(image.bitmap.data, image.width, image.height);
           ctx.putImageData(imageData, 0, 0);
           canvas.toBlob((blob) => {
             const reader = new FileReader();
@@ -776,7 +769,7 @@ function App() {
             const alpha = colorized.bitmap.data[index + 3];
             
             if (alpha > 0) {
-              const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
+              const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
               return [
                 Math.round(rgb.r * luminance),
                 Math.round(rgb.g * luminance),
@@ -873,7 +866,7 @@ function App() {
           const alpha = colorized.bitmap.data[index + 3];
           
           if (alpha > 0) {
-            const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
+            const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
             
             return [
               Math.round(rgb.r * luminance),
@@ -993,10 +986,7 @@ function App() {
   };
 
   const handleLuminanceMethodChange = (value) => {
-    setLuminanceMethod(value);
-    if (imageLoaded) {
-      setTimeout(() => applyColor(), 0);
-    }
+    // Removed this function
   };
 
   return (
@@ -1465,17 +1455,7 @@ function App() {
             }}>
               {/* Luminance Method Buttons */}
               <Box sx={{ mb: 3 }}>
-                <GlowToggleGroup
-                  options={luminanceOptions}
-                  value={luminanceMethod}
-                  onChange={(value) => {
-                    setLuminanceMethod(value);
-                    if (imageLoaded) {
-                      setTimeout(() => applyColor(), 0);
-                    }
-                  }}
-                  showTooltips={showTooltips}
-                />
+                {/* Removed this component */}
               </Box>
 
               {/* Controls Row */}
