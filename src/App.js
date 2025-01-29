@@ -21,6 +21,7 @@ import TagIcon from '@mui/icons-material/Tag';
 import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
 import { hexToRgb, processImage } from './utils/image-processing';
+import { LUMINANCE_METHODS } from './constants/luminance';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -119,36 +120,14 @@ function App() {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Image processing methods
-  const LUMINANCE_METHODS = {
-    NATURAL: {
-      label: 'Natural',
-      tooltip: 'Uses ITU-R BT.709 standard weights for most accurate color perception',
-      calculate: (r, g, b) => {
-        const base = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-        return enhanceEffect ? Math.pow(base, 0.8) : Math.pow(base, 0.95);  // Subtle enhancement even in normal mode
-      }
-    },
-    VIBRANT: {
-      label: 'Vibrant',
-      tooltip: 'Maximizes color saturation for bold, vivid results',
-      calculate: (r, g, b) => {
-        const base = (r + g + b) / (3 * 255);
-        return enhanceEffect ? Math.pow(base, 0.7) : Math.pow(base, 0.9);  // More contrast in normal mode
-      }
-    },
-    BALANCED: {
-      label: 'Balanced',
-      tooltip: 'Uses NTSC/PAL standard for a middle-ground approach',
-      calculate: (r, g, b) => {
-        const base = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return enhanceEffect ? Math.pow(base, 0.85) : Math.pow(base, 0.98);  // Slight enhancement in normal mode
-      }
-    }
-  };
-
   const [luminanceMethod, setLuminanceMethod] = useState('NATURAL');
-  const [matteValue, setMatteValue] = useState(50);
-  const [textureValue, setTextureValue] = useState(50);
+
+  // Update luminance method options
+  const luminanceOptions = Object.entries(LUMINANCE_METHODS).map(([key, method]) => ({
+    value: key,
+    label: method.name,
+    description: method.description
+  }));
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -799,9 +778,9 @@ function App() {
             if (alpha > 0) {
               const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
               return [
-                Math.round(luminance * rgb.r),
-                Math.round(luminance * rgb.g),
-                Math.round(luminance * rgb.b),
+                Math.round(rgb.r * luminance),
+                Math.round(rgb.g * luminance),
+                Math.round(rgb.b * luminance),
                 alpha
               ];
             }
@@ -1487,11 +1466,7 @@ function App() {
               {/* Luminance Method Buttons */}
               <Box sx={{ mb: 3 }}>
                 <GlowToggleGroup
-                  options={Object.entries(LUMINANCE_METHODS).map(([key, method]) => ({
-                    value: key,
-                    label: method.label,
-                    tooltip: method.tooltip
-                  }))}
+                  options={luminanceOptions}
                   value={luminanceMethod}
                   onChange={(value) => {
                     setLuminanceMethod(value);

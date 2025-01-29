@@ -1,56 +1,49 @@
-import { LUMINANCE_METHODS } from '../constants';
+import { LUMINANCE_METHODS } from '../constants/luminance';
+import Jimp from 'jimp';
 
-// Image processing utilities using Canvas API
-export const processImage = async (imageUrl, color, luminanceMethod = 'average') => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
+// Process image with color
+export const processImage = async (imageUrl, color, luminanceMethod = 'NATURAL') => {
+  if (!imageUrl) return null;
+  
+  try {
+    // Load image data
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    const buffer = await blob.arrayBuffer();
     
-    img.onload = () => {
-      // Create canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
+    // Create Jimp image
+    const jimpImage = await Jimp.read(Buffer.from(buffer));
+    
+    // Process image with color
+    jimpImage.scan(0, 0, jimpImage.bitmap.width, jimpImage.bitmap.height, function(x, y, idx) {
+      const red = this.bitmap.data[idx + 0];
+      const green = this.bitmap.data[idx + 1];
+      const blue = this.bitmap.data[idx + 2];
+      const alpha = this.bitmap.data[idx + 3];
       
-      // Draw original image
-      ctx.drawImage(img, 0, 0);
-      
-      // Get image data
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      
-      // Convert color to RGB
-      const rgb = hexToRgb(color);
-      
-      // Process each pixel
-      for (let i = 0; i < data.length; i += 4) {
-        const red = data[i];
-        const green = data[i + 1];
-        const blue = data[i + 2];
-        const alpha = data[i + 3];
+      if (alpha > 0) {
+        // Calculate single luminance value for all channels
+        const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
+        const rgb = hexToRgb(color);
         
-        if (alpha > 0) {
-          // Calculate single luminance value for all channels
-          const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-          
-          // Apply same luminance to each channel of target color
-          data[i] = Math.round(rgb.r * luminance);
-          data[i + 1] = Math.round(rgb.g * luminance);
-          data[i + 2] = Math.round(rgb.b * luminance);
-        }
+        // Apply same luminance to each channel of target color
+        this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
+        this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
+        this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
       }
-      
-      // Put processed data back
-      ctx.putImageData(imageData, 0, 0);
-      
-      // Get result as PNG data URL
-      resolve(canvas.toDataURL('image/png'));
-    };
-    
-    img.onerror = reject;
-    img.src = imageUrl;
-  });
+    });
+
+    // Get base64 URL
+    return new Promise((resolve, reject) => {
+      jimpImage.getBase64(Jimp.MIME_PNG, (err, base64) => {
+        if (err) reject(err);
+        else resolve(base64);
+      });
+    });
+  } catch (error) {
+    console.error('Error processing image:', error);
+    throw error;
+  }
 };
 
 // Convert hex color to RGB
