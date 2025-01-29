@@ -8,20 +8,9 @@
     "KINDE_CLIENT_ID": "0bd4c1c6f92d46f7b72290073d1806c7",
     "KINDE_ISSUER_URL": "https://hextra.kinde.com",
     "KINDE_REDIRECT_URI": "https://test.hextra.io/api/auth/kinde/callback",
-    "KINDE_POST_LOGOUT_REDIRECT_URI": "https://test.hextra.io"
+    "KINDE_POST_LOGOUT_REDIRECT_URI": "https://test.hextra.io",
+    "CI": "false"
   },
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "buildCommand": "npm run vercel-build",
-        "env": {
-          "CI": "false"
-        }
-      }
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
