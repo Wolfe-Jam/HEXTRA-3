@@ -1,5 +1,5 @@
 // Import browser-compatible Jimp
-import Jimp from 'jimp';
+import { loadJimp } from './jimp-test';
 
 // Process image with color
 export const processImage = async (imageUrl) => {

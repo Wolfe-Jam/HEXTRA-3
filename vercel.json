@@ -10,19 +10,15 @@
     "KINDE_REDIRECT_URI": "https://test.hextra.io/api/auth/kinde/callback",
     "KINDE_POST_LOGOUT_REDIRECT_URI": "https://test.hextra.io"
   },
-  "build": {
-    "env": {
-      "CI": "false",
-      "KINDE_REDIRECT_URI": "https://test.hextra.io/api/auth/kinde/callback",
-      "KINDE_POST_LOGOUT_REDIRECT_URI": "https://test.hextra.io"
-    }
-  },
   "builds": [
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "npm run vercel-build"
+        "buildCommand": "npm run vercel-build",
+        "env": {
+          "CI": "false"
+        }
       }
     }
   ],
