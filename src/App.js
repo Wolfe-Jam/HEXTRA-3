@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
-import { jimpRead, MIME_PNG } from './utils/jimp-init';
+import Jimp from './utils/jimp-init';
 import JSZip from 'jszip';
 import Banner from './components/Banner';
 import GlowButton from './components/GlowButton';
@@ -279,7 +279,7 @@ function App() {
       });
 
       const base64 = await new Promise((resolve, reject) => {
-        colorized.getBase64(MIME_PNG, (err, base64) => {
+        colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
           if (err) reject(err);
           else resolve(base64);
         });
@@ -312,7 +312,7 @@ function App() {
       const buffer = await blob.arrayBuffer();
       
       // Create Jimp image
-      const jimpImage = await jimpRead(buffer);
+      const jimpImage = await Jimp.read(Buffer.from(buffer));
       
       // Process image with color
       jimpImage.scan(0, 0, jimpImage.bitmap.width, jimpImage.bitmap.height, function(x, y, idx) {
@@ -332,7 +332,7 @@ function App() {
 
       // Get base64 URL
       return new Promise((resolve, reject) => {
-        jimpImage.getBase64(MIME_PNG, (err, base64) => {
+        jimpImage.getBase64(Jimp.MIME_PNG, (err, base64) => {
           if (err) reject(err);
           else resolve(base64);
         });
@@ -615,7 +615,7 @@ function App() {
         setOriginalImage(image);
         setImageLoaded(true);
         
-        image.getBase64(MIME_PNG, (err, base64) => {
+        image.getBase64(Jimp.MIME_PNG, (err, base64) => {
           if (err) {
             console.error('Error converting to base64:', err);
             return;
@@ -878,7 +878,7 @@ function App() {
             }
           });
           
-          const buffer = await colorized.getBufferAsync(MIME_PNG);
+          const buffer = await colorized.getBufferAsync(Jimp.MIME_PNG);
           folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, buffer);
         }));
         
@@ -959,7 +959,7 @@ function App() {
         });
         
         const base64 = await new Promise((resolve, reject) => {
-          colorized.getBase64(MIME_PNG, (err, base64) => {
+          colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
             if (err) reject(err);
             else resolve(base64);
           });
