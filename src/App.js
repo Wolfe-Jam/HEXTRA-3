@@ -22,6 +22,7 @@ import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
 import { hexToRgb, processImage } from './utils/image-processing';
 import Jimp from 'jimp/browser';
+import { testJimp, replaceColor } from './utils/jimp-test';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -104,6 +105,7 @@ function App() {
   const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
   const [matteValue, setMatteValue] = useState(50);
   const [textureValue, setTextureValue] = useState(50);
+  const [isTestingJimp, setIsTestingJimp] = useState(false);
 
   // MEZMERIZE States
   const [isBatchMode, setIsBatchMode] = useState(false);
@@ -193,13 +195,16 @@ function App() {
     setGrayscaleValue(Math.round((newRgb.r + newRgb.g + newRgb.b) / 3));
     
     if (workingImageUrl) {
-      processImage(workingImageUrl, color)
+      setIsTestingJimp(true);
+      replaceColor(workingImageUrl, newRgb)
         .then(processedUrl => {
           setWorkingProcessedUrl(processedUrl);
           setCanDownload(true);
+          setIsTestingJimp(false);
         })
         .catch(error => {
           console.error('Error applying color:', error);
+          setIsTestingJimp(false);
         });
     }
   };
@@ -1851,6 +1856,26 @@ function App() {
               />
             </Box>
           )}
+        </Box>
+      )}
+      {isTestingJimp && (
+        <Box
+          position="fixed"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bgcolor="rgba(0, 0, 0, 0.7)"
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          zIndex={9999}
+        >
+          <CircularProgress size={60} thickness={4} />
+          <Typography variant="h6" color="white" mt={2}>
+            Testing Jimp color processing...
+          </Typography>
         </Box>
       )}
     </Box>
