@@ -52,10 +52,13 @@
   "browser": {
     "fs": false,
     "os": false,
-    "path": "path-browserify",
-    "crypto": "crypto-browserify",
     "stream": "stream-browserify",
-    "zlib": "browserify-zlib"
+    "crypto": "crypto-browserify",
+    "path": "path-browserify",
+    "zlib": "browserify-zlib",
+    "http": "stream-http",
+    "https": "https-browserify",
+    "assert": "assert"
   },
   "scripts": {
     "start": "react-scripts start",

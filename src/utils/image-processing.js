@@ -1,5 +1,5 @@
 import { LUMINANCE_METHODS } from '../constants/luminance';
-import Jimp from 'jimp';
+import Jimp from './jimp-init';
 
 // Process image with color
 export const processImage = async (imageUrl, color, luminanceMethod = 'NATURAL') => {
@@ -8,11 +8,10 @@ export const processImage = async (imageUrl, color, luminanceMethod = 'NATURAL')
   try {
     // Load image data
     const response = await fetch(imageUrl);
-    const blob = await response.blob();
-    const buffer = await blob.arrayBuffer();
+    const buffer = await response.arrayBuffer();
     
     // Create Jimp image
-    const jimpImage = await Jimp.read(Buffer.from(buffer));
+    const jimpImage = await Jimp.read(buffer);
     
     // Process image with color
     jimpImage.scan(0, 0, jimpImage.bitmap.width, jimpImage.bitmap.height, function(x, y, idx) {
