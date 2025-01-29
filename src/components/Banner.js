@@ -10,10 +10,10 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
 
-  const handleLogout = async () => {
-    await logout();
-    // Force reload to clear any user state
-    window.location.href = '/';
+  const handleLogout = () => {
+    logout({
+      post_logout_redirect_uri: process.env.REACT_APP_KINDE_LOGOUT_URI
+    });
   };
 
   const COLORS = {
