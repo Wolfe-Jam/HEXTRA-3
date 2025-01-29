@@ -494,10 +494,9 @@ function App() {
     setRgbColor(hexToRgb(DEFAULT_COLOR));
   }, []);
 
-  const handleDefaultImageLoad = (file, dataUrl) => {
-    setWorkingImage(file);
-    setWorkingImageUrl(dataUrl);
-    setWorkingProcessedUrl(dataUrl); // Start with unprocessed image
+  const handleDefaultImageLoad = (imageUrl) => {
+    setWorkingImageUrl(imageUrl);
+    setWorkingProcessedUrl(imageUrl);
     setImageLoaded(true);
     setCanDownload(true);
   };
