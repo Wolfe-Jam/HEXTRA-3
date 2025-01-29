@@ -5,17 +5,29 @@ export default function KindeAuth({ children }) {
   // Log all environment variables
   console.log('Environment:', {
     nodeEnv: process.env.NODE_ENV,
-    clientId: process.env.KINDE_CLIENT_ID,
-    domain: process.env.KINDE_ISSUER_URL,
-    redirectUri: process.env.KINDE_POST_LOGIN_REDIRECT_URL,
-    logoutUri: process.env.KINDE_POST_LOGOUT_REDIRECT_URL
+    // Old variables
+    // clientId: process.env.KINDE_CLIENT_ID,
+    // domain: process.env.KINDE_ISSUER_URL,
+    // redirectUri: process.env.KINDE_POST_LOGIN_REDIRECT_URL,
+    // logoutUri: process.env.KINDE_POST_LOGOUT_REDIRECT_URL
+    // New variables matching vercel.json
+    clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
+    domain: process.env.REACT_APP_KINDE_DOMAIN,
+    redirectUri: process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL,
+    logoutUri: process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URL
   });
 
   const config = {
-    clientId: process.env.KINDE_CLIENT_ID,
-    domain: process.env.KINDE_ISSUER_URL,
-    redirectUri: process.env.KINDE_POST_LOGIN_REDIRECT_URL,
-    logoutUri: process.env.KINDE_POST_LOGOUT_REDIRECT_URL
+    // Old config
+    // clientId: process.env.KINDE_CLIENT_ID,
+    // domain: process.env.KINDE_ISSUER_URL,
+    // redirectUri: process.env.KINDE_POST_LOGIN_REDIRECT_URL,
+    // logoutUri: process.env.KINDE_POST_LOGOUT_REDIRECT_URL
+    // New config matching vercel.json
+    clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
+    domain: process.env.REACT_APP_KINDE_DOMAIN,
+    redirectUri: process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL,
+    logoutUri: process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URL
   };
 
   return (
