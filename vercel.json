@@ -11,6 +11,7 @@
     "KINDE_POST_LOGOUT_REDIRECT_URI": "https://test.hextra.io",
     "CI": "false"
   },
+  "buildCommand": "npm run vercel-build",
   "rewrites": [
     {
       "source": "/(.*)",
