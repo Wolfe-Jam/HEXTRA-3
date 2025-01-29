@@ -11,6 +11,13 @@
     "REACT_APP_KINDE_LOGOUT_URI": "https://test.hextra.io",
     "CI": "false"
   },
+  "build": {
+    "env": {
+      "CI": "false",
+      "REACT_APP_KINDE_REDIRECT_URI": "https://test.hextra.io/api/auth/kinde/callback",
+      "REACT_APP_KINDE_LOGOUT_URI": "https://test.hextra.io"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
