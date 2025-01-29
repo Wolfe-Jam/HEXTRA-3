@@ -12,7 +12,7 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
 
   const handleLogout = () => {
     logout({
-      post_logout_redirect_uri: process.env.REACT_APP_KINDE_LOGOUT_URI
+      post_logout_redirect_uri: process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URI
     });
   };
 
