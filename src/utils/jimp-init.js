@@ -1,7 +1,7 @@
 import 'react-app-polyfill/stable';
 import { Buffer } from 'buffer';
 import process from 'process';
-import Jimp from 'jimp';
+import Jimp from 'jimp/es';
 
 // Ensure Buffer is available globally
 if (typeof window !== 'undefined') {

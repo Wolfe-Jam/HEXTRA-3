@@ -20,9 +20,10 @@ import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
 import { VERSION } from './version';
+import DefaultTshirt from './components/DefaultTshirt';
 
 const DEFAULT_COLOR = '#FED141';
-const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
+const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
 const TEST_IMAGE_URL = '/images/Test-Gradient-600-400.webp';
 const DEFAULT_COLORS = [
   '#D50032',  // Red
@@ -296,17 +297,36 @@ function App() {
     const url = URL.createObjectURL(file);
     
     try {
-      const image = await Jimp.read(await file.arrayBuffer());
+      // Load image as HTMLImageElement first
+      const img = new Image();
+      img.crossOrigin = "anonymous";
       
-      if (useTestImage) {
-        setTestImage(file);
-        setTestImageUrl(url);
-        setTestProcessedUrl(url);
-      } else {
-        setWorkingImage(file);
-        setWorkingImageUrl(url);
-        setWorkingProcessedUrl(url);
-      }
+      await new Promise((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = url;
+      });
+
+      // Create a canvas to get pixel data
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      
+      // Get image data
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      
+      // Create Jimp image from raw data
+      const image = new Jimp({
+        data: imageData.data,
+        width: imageData.width,
+        height: imageData.height
+      });
+      
+      setWorkingImage(file);
+      setWorkingImageUrl(url);
+      setWorkingProcessedUrl(url);
       
       setOriginalImage(image);
       setImageLoaded(true);
@@ -414,41 +434,23 @@ function App() {
     setSelectedColor(DEFAULT_COLOR);
     setHexInput(DEFAULT_COLOR);
     setRgbColor(hexToRgb(DEFAULT_COLOR));
-    
-    // Load default image
-    const loadImage = async () => {
-      try {
-        const imageUrl = process.env.PUBLIC_URL + DEFAULT_IMAGE_URL;
-        console.log('Loading image from:', imageUrl);
-        
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const buffer = await blob.arrayBuffer();
-        
-        const image = await Jimp.read(buffer);
-        console.log('Image loaded successfully');
-        
-        setOriginalImage(image);
-        setImageLoaded(true);
-        
-        // Get initial base64 for display
-        image.getBase64(Jimp.MIME_PNG, (err, base64) => {
-          if (err) {
-            console.error('Error converting to base64:', err);
-            return;
-          }
-          setProcessedImage(image);
-          setWorkingProcessedUrl(base64);
-          setCanDownload(true);
-        });
-      } catch (error) {
-        console.error('Error loading image:', error);
-        setImageLoaded(false);
-      }
-    };
-
-    loadImage();
   }, []);
+
+  const handleDefaultImageLoad = (image) => {
+    setOriginalImage(image);
+    setImageLoaded(true);
+    
+    // Get initial base64 for display
+    image.getBase64(Jimp.MIME_PNG, (err, base64) => {
+      if (err) {
+        console.error('Error converting to base64:', err);
+        return;
+      }
+      setProcessedImage(image);
+      setWorkingProcessedUrl(base64);
+      setCanDownload(true);
+    });
+  };
 
   // Theme effect
   useEffect(() => {
@@ -538,11 +540,33 @@ function App() {
       try {
         console.log('Loading image from:', workingImageUrl);
         
-        const response = await fetch(workingImageUrl);
-        const blob = await response.blob();
-        const buffer = await blob.arrayBuffer();
+        // Load image as HTMLImageElement first
+        const img = new Image();
+        img.crossOrigin = "anonymous";
         
-        const image = await Jimp.read(buffer);
+        await new Promise((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error('Failed to load image'));
+          img.src = workingImageUrl;
+        });
+
+        // Create a canvas to get pixel data
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // Create Jimp image from raw data
+        const image = new Jimp({
+          data: imageData.data,
+          width: imageData.width,
+          height: imageData.height
+        });
+        
         console.log('Image loaded successfully');
         
         setOriginalImage(image);
@@ -1387,6 +1411,7 @@ function App() {
             maxWidth: '800px', // Match container max-width
             overflow: 'hidden'
           }}>
+            <DefaultTshirt onLoad={handleDefaultImageLoad} />
             <img
               src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
               alt="Working"
