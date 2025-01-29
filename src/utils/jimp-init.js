@@ -11,12 +11,6 @@ if (typeof window !== 'undefined') {
 // Ensure process is available globally
 if (typeof window !== 'undefined') {
   window.process = window.process || process;
-  window.global = window;
 }
-
-// Initialize Jimp with required settings
-Jimp.prototype.hasAlpha = function() {
-  return this.bitmap.data.length === this.bitmap.width * this.bitmap.height * 4;
-};
 
 export default Jimp;
