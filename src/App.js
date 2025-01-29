@@ -418,8 +418,14 @@ function App() {
     // Load default image
     const loadImage = async () => {
       try {
-        console.log('Loading image from:', DEFAULT_IMAGE_URL);
-        const image = await Jimp.read(DEFAULT_IMAGE_URL);
+        const imageUrl = process.env.PUBLIC_URL + DEFAULT_IMAGE_URL;
+        console.log('Loading image from:', imageUrl);
+        
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const buffer = await blob.arrayBuffer();
+        
+        const image = await Jimp.read(buffer);
         console.log('Image loaded successfully');
         
         setOriginalImage(image);
@@ -523,23 +529,25 @@ function App() {
   };
 
   useEffect(() => {
-    if (!workingImageUrl || workingImageUrl === DEFAULT_IMAGE_URL) return;
+    if (!workingImageUrl) return;
     
-    // Reset states before loading new image
-    setProcessedImage(null);
-    setWorkingProcessedUrl('');
-    setCanDownload(false);
     setError('');
     setIsProcessing(true);
     
     const loadImage = async () => {
       try {
         console.log('Loading image from:', workingImageUrl);
-        const image = await Jimp.read(workingImageUrl);
+        
+        const response = await fetch(workingImageUrl);
+        const blob = await response.blob();
+        const buffer = await blob.arrayBuffer();
+        
+        const image = await Jimp.read(buffer);
         console.log('Image loaded successfully');
         
         setOriginalImage(image);
         setImageLoaded(true);
+        
         image.getBase64(Jimp.MIME_PNG, (err, base64) => {
           if (err) {
             console.error('Error converting to base64:', err);
