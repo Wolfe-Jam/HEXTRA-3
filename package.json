@@ -28,6 +28,7 @@
     "jimp": "0.22.10",
     "jszip": "3.10.1",
     "lodash": "4.17.21",
+    "path-browserify": "1.0.1",
     "path-to-regexp": "6.2.1",
     "postcss": "8.4.33",
     "process": "0.11.10",
@@ -50,9 +51,11 @@
   },
   "browser": {
     "fs": false,
-    "path": false,
     "os": false,
-    "crypto": false
+    "path": "path-browserify",
+    "crypto": "crypto-browserify",
+    "stream": "stream-browserify",
+    "zlib": "browserify-zlib"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -71,7 +74,6 @@
     "production": [
       ">0.2%",
       "not dead",
-      "not ie 11",
       "not op_mini all"
     ],
     "development": [
