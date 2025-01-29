@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton, Button } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import AboutDialog from './AboutDialog';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { VERSION } from '../version';
+import GlowText from './GlowText';
 
 const Banner = ({ version, isDarkMode, onThemeToggle }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -108,64 +109,52 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
           justifyContent: 'flex-end',
           marginRight: '24px'
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             {isAuthenticated ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography sx={{ color: '#666' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, marginRight: 1 }}>
+                <Typography sx={{ color: isDarkMode ? '#666' : '#999' }}>
                   {user?.email}
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  color="primary"
+                <GlowText 
                   onClick={handleLogout}
-                  sx={{ 
-                    borderColor: '#333',
-                    color: '#666',
-                    '&:hover': {
-                      borderColor: '#444',
-                      backgroundColor: 'rgba(255,255,255,0.05)'
-                    }
-                  }}
+                  isDarkMode={isDarkMode}
+                  variant="outlined"
                 >
                   Logout
-                </Button>
+                </GlowText>
               </Box>
             ) : (
-              <Button 
-                variant="contained" 
-                color="primary"
-                onClick={() => login()}
-                sx={{ 
-                  backgroundColor: '#2196f3',
-                  '&:hover': {
-                    backgroundColor: '#1976d2'
-                  }
-                }}
-              >
-                Login
-              </Button>
+              <Box sx={{ marginRight: 1 }}>
+                <GlowText 
+                  onClick={() => login()}
+                  isDarkMode={isDarkMode}
+                  variant="contained"
+                >
+                  Login
+                </GlowText>
+              </Box>
             )}
+            <IconButton
+              onClick={onThemeToggle}
+              sx={{
+                width: '42px',
+                height: '42px',
+                color: isDarkMode ? '#000000' : COLORS.textDark,
+                padding: '8px',
+                border: '1px solid transparent',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  borderColor: '#FED141',
+                  color: '#FED141',
+                  boxShadow: `0 0 0 3px ${isDarkMode ? 'rgba(254, 209, 65, 0.2)' : 'rgba(254, 209, 65, 0.25)'}`,
+                  transform: 'scale(1.05)'
+                }
+              }}
+            >
+              {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
           </Box>
-          <IconButton
-            onClick={onThemeToggle}
-            sx={{
-              width: '42px',
-              height: '42px',
-              color: isDarkMode ? '#000000' : COLORS.textDark,
-              padding: '8px',
-              border: '1px solid transparent',
-              transition: 'all 0.2s ease-in-out',
-              '&:hover': {
-                backgroundColor: 'transparent',
-                borderColor: '#FED141',
-                color: '#FED141',
-                boxShadow: `0 0 0 3px ${isDarkMode ? 'rgba(254, 209, 65, 0.2)' : 'rgba(254, 209, 65, 0.25)'}`,
-                transform: 'scale(1.05)'
-              }
-            }}
-          >
-            {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
         </Box>
       </Box>
 
