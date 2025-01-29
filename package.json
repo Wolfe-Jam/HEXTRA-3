@@ -66,7 +66,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "generate-icons": "node scripts/generate-icons.js",
-    "vercel-build": "react-scripts build"
+    "vercel-build": "cross-env CI=false REACT_APP_KINDE_REDIRECT_URI=https://test.hextra.io/api/auth/kinde/callback REACT_APP_KINDE_LOGOUT_URI=https://test.hextra.io react-scripts build"
   },
   "eslintConfig": {
     "extends": [
