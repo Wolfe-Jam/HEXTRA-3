@@ -436,20 +436,12 @@ function App() {
     setRgbColor(hexToRgb(DEFAULT_COLOR));
   }, []);
 
-  const handleDefaultImageLoad = (image) => {
-    setOriginalImage(image);
+  const handleDefaultImageLoad = (file, dataUrl) => {
+    setWorkingImage(file);
+    setWorkingImageUrl(dataUrl);
+    setWorkingProcessedUrl(dataUrl);
     setImageLoaded(true);
-    
-    // Get initial base64 for display
-    image.getBase64(Jimp.MIME_PNG, (err, base64) => {
-      if (err) {
-        console.error('Error converting to base64:', err);
-        return;
-      }
-      setProcessedImage(image);
-      setWorkingProcessedUrl(base64);
-      setCanDownload(true);
-    });
+    setCanDownload(true);
   };
 
   // Theme effect
