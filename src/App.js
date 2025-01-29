@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import JSZip from 'jszip';
+import Jimp from 'jimp';
 import Banner from './components/Banner';
 import GlowButton from './components/GlowButton';
 import GlowTextButton from './components/GlowTextButton';
