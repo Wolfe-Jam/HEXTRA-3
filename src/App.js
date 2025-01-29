@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
-import Jimp from './utils/jimp-init';
 import JSZip from 'jszip';
 import Banner from './components/Banner';
 import GlowButton from './components/GlowButton';
@@ -21,7 +20,7 @@ import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
 import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
-import { processImage } from './utils/image-processing';
+import { hexToRgb, processImage } from './utils/image-processing';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -34,18 +33,6 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD'   // Neutral
 ];
-
-function hexToRgb(hex) {
-  // Remove the hash if present
-  hex = hex.replace('#', '');
-  
-  // Parse the hex values
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  
-  return { r, g, b };
-}
 
 function normalizeHex(hex) {
   // Remove #
@@ -235,7 +222,7 @@ function App() {
     setGrayscaleValue(Math.round((newRgb.r + newRgb.g + newRgb.b) / 3));
     
     if (workingImageUrl) {
-      processImage(workingImageUrl, color)
+      processImage(workingImageUrl, color, luminanceMethod)
         .then(processedUrl => {
           setWorkingProcessedUrl(processedUrl);
           setCanDownload(true);
@@ -530,27 +517,39 @@ function App() {
         // Get image data
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         
-        // Create Jimp image from raw data
-        const image = new Jimp({
-          data: imageData.data,
+        // Create image from raw data
+        const image = {
           width: imageData.width,
-          height: imageData.height
-        });
+          height: imageData.height,
+          bitmap: {
+            data: imageData.data,
+            width: imageData.width,
+            height: imageData.height
+          }
+        };
         
         console.log('Image loaded successfully');
         
         setOriginalImage(image);
         setImageLoaded(true);
         
-        image.getBase64(Jimp.MIME_PNG, (err, base64) => {
-          if (err) {
-            console.error('Error converting to base64:', err);
-            return;
-          }
-          setProcessedImage(image);
-          setWorkingProcessedUrl(base64);
-          setCanDownload(true);
+        const base64 = await new Promise((resolve, reject) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          const ctx = canvas.getContext('2d');
+          ctx.putImageData(imageData, 0, 0);
+          canvas.toBlob((blob) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              resolve(reader.result);
+            };
+            reader.readAsDataURL(blob);
+          });
         });
+        setProcessedImage(image);
+        setWorkingProcessedUrl(base64);
+        setCanDownload(true);
       } catch (error) {
         console.error('Error loading image:', error);
         setImageLoaded(false);
@@ -791,22 +790,40 @@ function App() {
           const colorized = originalImage.clone();
           
           // Process image
-          colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-            const red = this.bitmap.data[idx + 0];
-            const green = this.bitmap.data[idx + 1];
-            const blue = this.bitmap.data[idx + 2];
-            const alpha = this.bitmap.data[idx + 3];
+          colorized.bitmap.data = colorized.bitmap.data.map((pixel, index) => {
+            const red = colorized.bitmap.data[index + 0];
+            const green = colorized.bitmap.data[index + 1];
+            const blue = colorized.bitmap.data[index + 2];
+            const alpha = colorized.bitmap.data[index + 3];
             
             if (alpha > 0) {
               const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-              this.bitmap.data[idx + 0] = Math.round(luminance * rgb.r);
-              this.bitmap.data[idx + 1] = Math.round(luminance * rgb.g);
-              this.bitmap.data[idx + 2] = Math.round(luminance * rgb.b);
+              return [
+                Math.round(luminance * rgb.r),
+                Math.round(luminance * rgb.g),
+                Math.round(luminance * rgb.b),
+                alpha
+              ];
             }
-          });
+            return [red, green, blue, alpha];
+          }).flat();
           
-          const buffer = await colorized.getBufferAsync(Jimp.MIME_PNG);
-          folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, buffer);
+          const base64 = await new Promise((resolve, reject) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = colorized.width;
+            canvas.height = colorized.height;
+            const ctx = canvas.getContext('2d');
+            const imageData = new ImageData(colorized.bitmap.data, colorized.width, colorized.height);
+            ctx.putImageData(imageData, 0, 0);
+            canvas.toBlob((blob) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                resolve(reader.result);
+              };
+              reader.readAsDataURL(blob);
+            });
+          });
+          folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, base64);
         }));
         
         // Update progress after each chunk
@@ -870,25 +887,38 @@ function App() {
         
         const colorized = originalImage.clone();
         
-        colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-          const red = this.bitmap.data[idx + 0];
-          const green = this.bitmap.data[idx + 1];
-          const blue = this.bitmap.data[idx + 2];
-          const alpha = this.bitmap.data[idx + 3];
+        colorized.bitmap.data = colorized.bitmap.data.map((pixel, index) => {
+          const red = colorized.bitmap.data[index + 0];
+          const green = colorized.bitmap.data[index + 1];
+          const blue = colorized.bitmap.data[index + 2];
+          const alpha = colorized.bitmap.data[index + 3];
           
           if (alpha > 0) {
             const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
             
-            this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
-            this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
-            this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
+            return [
+              Math.round(rgb.r * luminance),
+              Math.round(rgb.g * luminance),
+              Math.round(rgb.b * luminance),
+              alpha
+            ];
           }
-        });
+          return [red, green, blue, alpha];
+        }).flat();
         
         const base64 = await new Promise((resolve, reject) => {
-          colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
-            if (err) reject(err);
-            else resolve(base64);
+          const canvas = document.createElement('canvas');
+          canvas.width = colorized.width;
+          canvas.height = colorized.height;
+          const ctx = canvas.getContext('2d');
+          const imageData = new ImageData(colorized.bitmap.data, colorized.width, colorized.height);
+          ctx.putImageData(imageData, 0, 0);
+          canvas.toBlob((blob) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              resolve(reader.result);
+            };
+            reader.readAsDataURL(blob);
           });
         });
 

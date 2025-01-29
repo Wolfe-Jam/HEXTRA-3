@@ -1,5 +1,7 @@
+import { LUMINANCE_METHODS } from '../constants';
+
 // Image processing utilities using Canvas API
-export const processImage = async (imageUrl, color) => {
+export const processImage = async (imageUrl, color, luminanceMethod = 'average') => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -29,10 +31,10 @@ export const processImage = async (imageUrl, color) => {
         const alpha = data[i + 3];
         
         if (alpha > 0) {
-          // Calculate luminance (grayscale)
-          const luminance = (red + green + blue) / 3 / 255;
+          // Calculate single luminance value for all channels
+          const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
           
-          // Apply color
+          // Apply same luminance to each channel of target color
           data[i] = Math.round(rgb.r * luminance);
           data[i + 1] = Math.round(rgb.g * luminance);
           data[i + 2] = Math.round(rgb.b * luminance);
@@ -42,7 +44,7 @@ export const processImage = async (imageUrl, color) => {
       // Put processed data back
       ctx.putImageData(imageData, 0, 0);
       
-      // Get result as data URL
+      // Get result as PNG data URL
       resolve(canvas.toDataURL('image/png'));
     };
     
@@ -53,10 +55,13 @@ export const processImage = async (imageUrl, color) => {
 
 // Convert hex color to RGB
 export const hexToRgb = (hex) => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
+  // Remove the hash if present
+  hex = hex.replace('#', '');
+  
+  // Parse the hex values
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  return { r, g, b };
 };
