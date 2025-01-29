@@ -1,7 +1,9 @@
 import 'react-app-polyfill/stable';
 import { Buffer } from 'buffer';
 import process from 'process';
-import Jimp from 'jimp';
+
+// Import specific parts of Jimp
+import { read, MIME_PNG } from 'jimp/es';
 
 // Ensure Buffer is available globally
 if (typeof window !== 'undefined') {
@@ -18,4 +20,4 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export default Jimp;
+export { read as jimpRead, MIME_PNG };
