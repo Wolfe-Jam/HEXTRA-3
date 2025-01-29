@@ -12,7 +12,11 @@
   "env": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "NODE_VERSION": "18.x",
-    "BUILD_TIME": "2025-01-28T14:57"
+    "BUILD_TIME": "2025-01-28T14:57",
+    "REACT_APP_KINDE_CLIENT_ID": "0bd4c1c6f92d46f7b72290073d1806c7",
+    "REACT_APP_KINDE_DOMAIN": "https://hextra.kinde.com",
+    "REACT_APP_KINDE_REDIRECT_URI": "https://hextra-3-c3tys6o1f-wofejams-projects.vercel.app/api/auth/kinde/callback",
+    "REACT_APP_KINDE_LOGOUT_URI": "https://hextra-3-c3tys6o1f-wofejams-projects.vercel.app"
   },
   "rewrites": [
     {
@@ -22,10 +26,10 @@
   ],
   "build": {
     "env": {
-      "REACT_APP_KINDE_CLIENT_ID": "@react-app-kinde-client-id",
-      "REACT_APP_KINDE_DOMAIN": "@react-app-kinde-domain",
-      "REACT_APP_KINDE_REDIRECT_URI": "@react-app-kinde-redirect-uri",
-      "REACT_APP_KINDE_LOGOUT_URI": "@react-app-kinde-logout-uri"
+      "REACT_APP_KINDE_CLIENT_ID": "0bd4c1c6f92d46f7b72290073d1806c7",
+      "REACT_APP_KINDE_DOMAIN": "https://hextra.kinde.com",
+      "REACT_APP_KINDE_REDIRECT_URI": "https://hextra-3-c3tys6o1f-wofejams-projects.vercel.app/api/auth/kinde/callback",
+      "REACT_APP_KINDE_LOGOUT_URI": "https://hextra-3-c3tys6o1f-wofejams-projects.vercel.app"
     }
   }
 }
