@@ -10,6 +10,11 @@
     "KINDE_REDIRECT_URI": "https://test.hextra.io/api/auth/kinde/callback",
     "KINDE_POST_LOGOUT_REDIRECT_URI": "https://test.hextra.io"
   },
+  "build": {
+    "env": {
+      "CI": "false"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
