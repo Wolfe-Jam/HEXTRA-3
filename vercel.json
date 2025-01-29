@@ -9,6 +9,11 @@
     "REACT_APP_KINDE_DOMAIN": "https://hextra.kinde.com",
     "REACT_APP_KINDE_REDIRECT_URI": "https://test.hextra.io/api/auth/kinde/callback",
     "REACT_APP_KINDE_LOGOUT_URI": "https://test.hextra.io",
+    "REACT_APP_VERCEL_ENV": "production",
+    "REACT_APP_VERCEL_URL": "test.hextra.io",
+    "REACT_APP_VERCEL_GIT_PROVIDER": "github",
+    "REACT_APP_VERCEL_GIT_REPO_OWNER": "Wolfe-Jam",
+    "REACT_APP_VERCEL_GIT_REPO_SLUG": "HEXTRA-3",
     "CI": "false"
   },
   "buildCommand": "npm run vercel-build",
