@@ -4,9 +4,10 @@
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "NODE_VERSION": "18.x",
     "BUILD_TIME": "2025-01-28T14:57",
+    "REACT_APP_BASE_URL": "https://hextra.io",
     "REACT_APP_KINDE_CLIENT_ID": "0bd4c1c6f92d46f7b72290073d1806c7",
     "REACT_APP_KINDE_DOMAIN": "https://hextra.kinde.com",
-    "REACT_APP_KINDE_REDIRECT_URI": "https://test.hextra.io/api/auth/kinde/callback",
+    "REACT_APP_KINDE_REDIRECT_URI": "vercel env add",
     "REACT_APP_KINDE_LOGOUT_URI": "https://test.hextra.io"
   },
   "rewrites": [
@@ -14,13 +15,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "build": {
-    "env": {
-      "REACT_APP_KINDE_CLIENT_ID": "0bd4c1c6f92d46f7b72290073d1806c7",
-      "REACT_APP_KINDE_DOMAIN": "https://hextra.kinde.com",
-      "REACT_APP_KINDE_REDIRECT_URI": "https://test.hextra.io/api/auth/kinde/callback",
-      "REACT_APP_KINDE_LOGOUT_URI": "https://test.hextra.io"
-    }
-  }
+  ]
 }
