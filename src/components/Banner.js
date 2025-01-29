@@ -10,6 +10,12 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
 
+  const handleLogout = async () => {
+    await logout();
+    // Force reload to clear any user state
+    window.location.href = '/';
+  };
+
   const COLORS = {
     textDark: '#E8E8E8',
     textLight: '#F8F8F8'
@@ -111,7 +117,7 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
                 <Button 
                   variant="outlined" 
                   color="primary"
-                  onClick={() => logout()}
+                  onClick={handleLogout}
                   sx={{ 
                     borderColor: '#333',
                     color: '#666',
