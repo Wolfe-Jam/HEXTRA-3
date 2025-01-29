@@ -16,8 +16,8 @@
     "REACT_APP_BASE_URL": "https://hextra.io",
     "REACT_APP_KINDE_CLIENT_ID": "0bd4c1c6f92d46f7b72290073d1806c7",
     "REACT_APP_KINDE_DOMAIN": "https://hextra.kinde.com",
-    "REACT_APP_KINDE_REDIRECT_URI": "vercel env add",
-    "REACT_APP_KINDE_LOGOUT_URI": "https://test.hextra.io"
+    "REACT_APP_KINDE_REDIRECT_URI": "https://hextra-3-hc6hozk35-wofejams-projects.vercel.app/api/auth/kinde/callback",
+    "REACT_APP_KINDE_LOGOUT_URI": "https://hextra-3-hc6hozk35-wofejams-projects.vercel.app"
   },
   "rewrites": [
     {
@@ -30,8 +30,8 @@
       "REACT_APP_BASE_URL": "https://hextra.io",
       "REACT_APP_KINDE_CLIENT_ID": "0bd4c1c6f92d46f7b72290073d1806c7",
       "REACT_APP_KINDE_DOMAIN": "https://hextra.kinde.com",
-      "REACT_APP_KINDE_REDIRECT_URI": "vercel env add",
-      "REACT_APP_KINDE_LOGOUT_URI": "https://test.hextra.io"
+      "REACT_APP_KINDE_REDIRECT_URI": "https://hextra-3-hc6hozk35-wofejams-projects.vercel.app/api/auth/kinde/callback",
+      "REACT_APP_KINDE_LOGOUT_URI": "https://hextra-3-hc6hozk35-wofejams-projects.vercel.app"
     }
   }
 }
