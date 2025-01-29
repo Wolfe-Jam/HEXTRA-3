@@ -21,7 +21,6 @@ import TagIcon from '@mui/icons-material/Tag';
 import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
 import { hexToRgb, processImage } from './utils/image-processing';
-import Jimp from 'jimp/browser';
 import { testJimp, replaceColor } from './utils/jimp-test';
 
 const DEFAULT_COLOR = '#FED141';
