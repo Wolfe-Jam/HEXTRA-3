@@ -226,13 +226,24 @@ function App() {
   };
 
   const handleColorChange = (color) => {
-    const hexValue = color.hex.toUpperCase();
-    setSelectedColor(hexValue);
-    setHexInput(hexValue);
-    const newRgb = hexToRgb(hexValue);
+    setSelectedColor(color);
+    setHexInput(color);
+    const newRgb = hexToRgb(color);
     setRgbColor(newRgb);
     // Update grayscale value based on RGB average
     setGrayscaleValue(Math.round((newRgb.r + newRgb.g + newRgb.b) / 3));
+    
+    if (workingImageUrl) {
+      processImage(workingImageUrl, color)
+        .then(processedUrl => {
+          if (processedUrl) {
+            setWorkingProcessedUrl(processedUrl);
+          }
+        })
+        .catch(error => {
+          console.error('Error applying color:', error);
+        });
+    }
   };
 
   const applyColor = async () => {
@@ -288,6 +299,53 @@ function App() {
       setCanDownload(false);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const processImage = async (imageUrl, color) => {
+    if (!imageUrl) return;
+    
+    try {
+      // Load image data
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const buffer = await blob.arrayBuffer();
+      
+      // Create Jimp image
+      const jimpImage = await Jimp.read(buffer);
+      
+      // Process image with color
+      jimpImage.scan(0, 0, jimpImage.bitmap.width, jimpImage.bitmap.height, function(x, y, idx) {
+        const red = this.bitmap.data[idx + 0];
+        const green = this.bitmap.data[idx + 1];
+        const blue = this.bitmap.data[idx + 2];
+        const alpha = this.bitmap.data[idx + 3];
+        
+        if (alpha > 0) {
+          const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
+          const rgb = hexToRgb(color);
+          this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
+          this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
+          this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
+        }
+      });
+
+      // Get base64 URL
+      const base64 = await new Promise((resolve, reject) => {
+        jimpImage.getBase64(Jimp.MIME_PNG, (err, base64) => {
+          if (err) reject(err);
+          else resolve(base64);
+        });
+      });
+      
+      setOriginalImage(jimpImage);
+      setImageLoaded(true);
+      setWorkingProcessedUrl(base64);
+      setCanDownload(true);
+      return base64;
+    } catch (error) {
+      console.error('Error processing image:', error);
+      setImageLoaded(false);
     }
   };
 
@@ -439,7 +497,7 @@ function App() {
   const handleDefaultImageLoad = (file, dataUrl) => {
     setWorkingImage(file);
     setWorkingImageUrl(dataUrl);
-    setWorkingProcessedUrl(dataUrl);
+    setWorkingProcessedUrl(dataUrl); // Start with unprocessed image
     setImageLoaded(true);
     setCanDownload(true);
   };
