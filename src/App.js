@@ -21,6 +21,7 @@ import { TextField, InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
 import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
+import { processImage } from './utils/image-processing';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -236,9 +237,8 @@ function App() {
     if (workingImageUrl) {
       processImage(workingImageUrl, color)
         .then(processedUrl => {
-          if (processedUrl) {
-            setWorkingProcessedUrl(processedUrl);
-          }
+          setWorkingProcessedUrl(processedUrl);
+          setCanDownload(true);
         })
         .catch(error => {
           console.error('Error applying color:', error);
@@ -302,94 +302,21 @@ function App() {
     }
   };
 
-  const processImage = async (imageUrl, color) => {
-    if (!imageUrl) return;
-    
-    try {
-      // Load image data
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const buffer = await blob.arrayBuffer();
-      
-      // Create Jimp image
-      const jimpImage = await Jimp.read(Buffer.from(buffer));
-      
-      // Process image with color
-      jimpImage.scan(0, 0, jimpImage.bitmap.width, jimpImage.bitmap.height, function(x, y, idx) {
-        const red = this.bitmap.data[idx + 0];
-        const green = this.bitmap.data[idx + 1];
-        const blue = this.bitmap.data[idx + 2];
-        const alpha = this.bitmap.data[idx + 3];
-        
-        if (alpha > 0) {
-          const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-          const rgb = hexToRgb(color);
-          this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
-          this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
-          this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
-        }
-      });
-
-      // Get base64 URL
-      return new Promise((resolve, reject) => {
-        jimpImage.getBase64(Jimp.MIME_PNG, (err, base64) => {
-          if (err) reject(err);
-          else resolve(base64);
-        });
-      });
-    } catch (error) {
-      console.error('Error processing image:', error);
-      throw error;
-    }
-  };
-
   const handleImageUpload = async (file) => {
     if (!file) return;
     
-    const url = URL.createObjectURL(file);
-    
     try {
-      // Load image as HTMLImageElement first
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      
-      await new Promise((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = url;
-      });
-
-      // Create a canvas to get pixel data
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      
-      // Get image data
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      
-      // Create Jimp image from raw data
-      const image = new Jimp({
-        data: imageData.data,
-        width: imageData.width,
-        height: imageData.height
-      });
-      
-      setWorkingImage(file);
+      const url = URL.createObjectURL(file);
       setWorkingImageUrl(url);
       setWorkingProcessedUrl(url);
-      
-      setOriginalImage(image);
       setImageLoaded(true);
-      setError('');
       
-      if (rgbColor) {
-        setTimeout(() => applyColor(), 0);
-      }
-    } catch (err) {
-      console.error('Error loading image:', err);
-      setError('Error loading image');
+      // Process with current color
+      const processedUrl = await processImage(url, selectedColor);
+      setWorkingProcessedUrl(processedUrl);
+      setCanDownload(true);
+    } catch (error) {
+      console.error('Error uploading image:', error);
       setImageLoaded(false);
     }
   };
