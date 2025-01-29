@@ -58,7 +58,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "generate-icons": "node scripts/generate-icons.js",
-    "vercel-build": "CI=false GENERATE_SOURCEMAP=false react-scripts build"
+    "vercel-build": "NODE_OPTIONS='--max_old_space_size=4096' react-scripts build"
   },
   "eslintConfig": {
     "extends": [

@@ -7,15 +7,15 @@ export default function KindeAuth({ children }) {
     nodeEnv: process.env.NODE_ENV,
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri: process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL,
-    logoutUri: process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URL
+    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
+    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI
   });
 
   const config = {
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri: process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL,
-    logoutUri: process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URL
+    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
+    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI
   };
 
   return (
