@@ -416,23 +416,32 @@ function App() {
     setRgbColor(hexToRgb(DEFAULT_COLOR));
     
     // Load default image
-    Jimp.read(DEFAULT_IMAGE_URL)
-      .then(image => {
+    const loadImage = async () => {
+      try {
+        console.log('Loading image from:', DEFAULT_IMAGE_URL);
+        const image = await Jimp.read(DEFAULT_IMAGE_URL);
+        console.log('Image loaded successfully');
+        
         setOriginalImage(image);
         setImageLoaded(true);
+        
         // Get initial base64 for display
         image.getBase64(Jimp.MIME_PNG, (err, base64) => {
-          if (!err) {
-            setProcessedImage(image);
-            setWorkingProcessedUrl(base64);
-            setCanDownload(true);
+          if (err) {
+            console.error('Error converting to base64:', err);
+            return;
           }
+          setProcessedImage(image);
+          setWorkingProcessedUrl(base64);
+          setCanDownload(true);
         });
-      })
-      .catch(err => {
-        console.error('Error loading default image:', err);
-        setError('Failed to load default image');
-      });
+      } catch (error) {
+        console.error('Error loading image:', error);
+        setImageLoaded(false);
+      }
+    };
+
+    loadImage();
   }, []);
 
   // Theme effect
@@ -523,26 +532,32 @@ function App() {
     setError('');
     setIsProcessing(true);
     
-    Jimp.read(workingImageUrl)
-      .then(image => {
+    const loadImage = async () => {
+      try {
+        console.log('Loading image from:', workingImageUrl);
+        const image = await Jimp.read(workingImageUrl);
+        console.log('Image loaded successfully');
+        
         setOriginalImage(image);
         setImageLoaded(true);
         image.getBase64(Jimp.MIME_PNG, (err, base64) => {
-          if (!err) {
-            setProcessedImage(image);
-            setWorkingProcessedUrl(base64);
-            setCanDownload(true);
+          if (err) {
+            console.error('Error converting to base64:', err);
+            return;
           }
-          setIsProcessing(false);
+          setProcessedImage(image);
+          setWorkingProcessedUrl(base64);
+          setCanDownload(true);
         });
-      })
-      .catch(err => {
-        console.error('Error loading image:', err);
-        setError('Failed to load image');
+      } catch (error) {
+        console.error('Error loading image:', error);
         setImageLoaded(false);
-        setCanDownload(false);
+      } finally {
         setIsProcessing(false);
-      });
+      }
+    };
+
+    loadImage();
   }, [workingImageUrl]);
 
   const isValidHex = (hex) => {
