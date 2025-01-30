@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, CircularProgress } from '@mui/material';
+import { Box, Typography, CircularProgress } from '@mui/material';
 import GlowText from './GlowText';
 
 const StripeTest = () => {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const testStripeConnection = async () => {
+  const testStripeSetup = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/test-stripe');
+      const response = await fetch('/api/stripe-test');
       const data = await response.json();
       setStatus(data);
     } catch (error) {
       setStatus({
         success: false,
-        message: 'Error connecting to Stripe',
+        message: 'Error checking Stripe setup',
         error: error.message
       });
     }
@@ -30,16 +30,16 @@ const StripeTest = () => {
       textAlign: 'center'
     }}>
       <Typography variant="h4" gutterBottom>
-        Stripe Connection Test
+        Stripe Setup Test
       </Typography>
       
       <Box sx={{ my: 4 }}>
         <GlowText
-          onClick={testStripeConnection}
+          onClick={testStripeSetup}
           variant="contained"
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} /> : 'Test Stripe Connection'}
+          {loading ? <CircularProgress size={24} /> : 'Test Stripe Setup'}
         </GlowText>
       </Box>
 
@@ -55,6 +55,16 @@ const StripeTest = () => {
           <Typography color={status.success ? 'success' : 'error'}>
             {status.message}
           </Typography>
+          {status.hasPublishableKey !== undefined && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Publishable Key: {status.hasPublishableKey ? '✅' : '❌'}
+            </Typography>
+          )}
+          {status.hasSecretKey !== undefined && (
+            <Typography variant="body2">
+              Secret Key: {status.hasSecretKey ? '✅' : '❌'}
+            </Typography>
+          )}
           {status.error && (
             <Typography variant="body2" color="error" sx={{ mt: 1 }}>
               Error: {status.error}
