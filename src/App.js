@@ -94,15 +94,6 @@ function App() {
     }
   }, [selectedColor, imageLoaded, applyColor]);
 
-  // Debounced input handlers
-  const debouncedHandleColorChange = useMemo(
-    () => debounce((color) => {
-      setSelectedColor(color);
-      processImage(workingImageUrl, color);
-    }, 100),
-    [workingImageUrl]
-  );
-
   const handleColorChange = useCallback((color) => {
     setSelectedColor(color);
     // Only process image if we're not dragging

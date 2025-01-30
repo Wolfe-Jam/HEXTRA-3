@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 const Banner = ({ isDarkMode, onThemeToggle }) => {
   const navigate = useNavigate();
   const [aboutOpen, setAboutOpen] = useState(false);
-  const { isAuthenticated, user, login, logout } = useKindeAuth();
+  const { isAuthenticated, login, logout } = useKindeAuth();
 
   const handleLogout = () => {
     logout({
@@ -21,11 +21,6 @@ const Banner = ({ isDarkMode, onThemeToggle }) => {
   const handleStripeTest = (e) => {
     e.preventDefault();
     navigate('/stripe-test');
-  };
-
-  const COLORS = {
-    textDark: '#E8E8E8',
-    textLight: '#F8F8F8'
   };
 
   return (
