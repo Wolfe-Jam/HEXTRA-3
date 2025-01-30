@@ -23,6 +23,7 @@ import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
 import { hexToRgb, processImage } from './utils/image-processing';
 import { testJimp, replaceColor } from './utils/jimp-test';
+import { Routes, Route } from 'react-router-dom';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -1878,6 +1879,11 @@ function App() {
           </Typography>
         </Box>
       )}
+      <Routes>
+        <Route path="/" element={<div>Home Page</div>} />
+        <Route path="/stripe-test" element={<div>Stripe Test Page</div>} />
+        <Route path="/pricing" element={<div>Pricing Page</div>} />
+      </Routes>
     </Box>
   );
 }

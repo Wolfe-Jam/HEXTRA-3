@@ -1,11 +1,10 @@
 import './polyfills';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import App from './App';
 import themeManager from './theme';
-import KindeAuth from './components/KindeAuth';
-import Router from './Router';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -19,11 +18,9 @@ root.render(
       redirectUri={process.env.REACT_APP_KINDE_REDIRECT_URI}
       logoutUri={process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URI}
     >
-      <KindeAuth>
-        <Router>
-          <App />
-        </Router>
-      </KindeAuth>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </KindeProvider>
   </React.StrictMode>
 );
