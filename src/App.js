@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Box, IconButton, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
+import { Box, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
 import { hexToRgb } from './utils/image-processing';
 import { processImage } from './utils/image-processing';
 import TagIcon from '@mui/icons-material/Tag';
@@ -27,7 +27,6 @@ function App() {
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
   const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
-  const [originalImage, setOriginalImage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
   const [urlInput, setUrlInput] = useState('');
@@ -43,7 +42,6 @@ function App() {
   const [grayscaleValue, setGrayscaleValue] = useState(128);
   const [matteValue, setMatteValue] = useState(50);
   const [textureValue, setTextureValue] = useState(50);
-  const [error, setError] = useState('');
   const [batchResults, setBatchResults] = useState([]);
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchStatus, setBatchStatus] = useState('idle');
@@ -159,32 +157,8 @@ function App() {
       return;
     }
 
-    // Add # if missing
-    const hexValue = value.startsWith('#') ? value : '#' + value;
-    
-    // Allow default color to pass through
-    if (hexValue === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(hexValue)) {
-      setSelectedColor(hexValue.toUpperCase());
-      setRgbColor(hexToRgb(hexValue));
-    }
-  };
-
-  const handleHexKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent default behavior
-      e.stopPropagation(); // Stop event from bubbling up
-      
-      let value = e.target.value;
-      // If no value, use the current selectedColor
-      if (!value && selectedColor) {
-        value = selectedColor;
-      }
-      // Add # if missing
-      if (!value.startsWith('#')) {
-        value = '#' + value;
-      }
-      value = value.toUpperCase();
-      
+    // If we have a value, validate and update
+    if (value) {
       // Allow the default color to pass through
       if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
         setSelectedColor(value);
@@ -200,7 +174,7 @@ function App() {
     setRgbColor(defaultRgb);
     // Force update the color wheel
     if (wheelRef.current) {
-      wheelRef.current.setHex(DEFAULT_COLOR);
+      wheelRef.current.setColor(DEFAULT_COLOR);
     }
   };
 
@@ -210,316 +184,6 @@ function App() {
     setGrayscaleValue(grayValue);
     setSelectedColor(grayHex);
     setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
-  };
-
-  const handleDownload = async () => {
-    if (!workingProcessedUrl) {
-      console.error('No processed image to download');
-      return;
-    }
-
-    try {
-      const response = await fetch(workingProcessedUrl);
-      const blob = await response.blob();
-      const downloadUrl = URL.createObjectURL(blob);
-      const filename = `processed-image.png`;
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(downloadUrl);
-    } catch (err) {
-      console.error('Failed to download image:', err);
-    }
-  };
-
-  const handleBatchProcess = async () => {
-    if (!workingImageUrl || selectedColors.length === 0) {
-      console.error('Please select an image and colors first');
-      return;
-    }
-
-    setBatchStatus('processing');
-    setBatchProgress(0);
-    setTotalCount(selectedColors.length);
-    setProcessedCount(0);
-
-    const results = [];
-    const zip = new JSZip();
-
-    try {
-      for (let i = 0; i < selectedColors.length; i++) {
-        const color = selectedColors[i];
-        const processedUrl = await processImage(workingImageUrl, color);
-        
-        // Add to zip
-        const response = await fetch(processedUrl);
-        const blob = await response.blob();
-        zip.file(`${color.name}.png`, blob);
-
-        results.push({
-          color: color,
-          url: processedUrl
-        });
-
-        setProcessedCount(i + 1);
-        setBatchProgress(((i + 1) / selectedColors.length) * 100);
-      }
-
-      // Generate zip file
-      const content = await zip.generateAsync({ type: 'blob' });
-      const downloadUrl = window.URL.createObjectURL(content);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `HEXTRA-${activeCatalog}-${new Date().toISOString().split('T')[0]}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(downloadUrl);
-
-      setBatchResults(results);
-      setBatchStatus('complete');
-    } catch (err) {
-      console.error('Failed to process batch:', err);
-      setBatchStatus('error');
-    }
-  };
-
-  const handleGenerateAll = async () => {
-    if (!imageLoaded || !originalImage) {
-      console.log('No image loaded');
-      return;
-    }
-    
-    setIsProcessing(true);
-    setBatchStatus('processing');
-    setError('');
-    
-    try {
-      const colors = GILDAN_64000; // Use current catalog
-      console.log(`Processing ${colors.length} colors from ${activeCatalog}`);
-      
-      const zip = new JSZip();
-      const folder = zip.folder("hextra-colors");
-      
-      // Process in chunks to prevent UI freeze
-      const CHUNK_SIZE = 5;
-      const chunks = [];
-      for (let i = 0; i < colors.length; i += CHUNK_SIZE) {
-        chunks.push(colors.slice(i, i + CHUNK_SIZE));
-      }
-      
-      for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-        const chunk = chunks[chunkIndex];
-        
-        // Process chunk
-        await Promise.all(chunk.map(async (color) => {
-          console.log(`Processing color: ${color.name} (${color.hex})`);
-          
-          const rgb = hexToRgb(color.hex);
-          if (!rgb) {
-            console.error(`Invalid hex color: ${color.hex}`);
-            return;
-          }
-          
-          const colorized = originalImage.clone();
-          
-          // Process image
-          colorized.bitmap.data = colorized.bitmap.data.map((pixel, index) => {
-            const red = colorized.bitmap.data[index + 0];
-            const green = colorized.bitmap.data[index + 1];
-            const blue = colorized.bitmap.data[index + 2];
-            const alpha = colorized.bitmap.data[index + 3];
-            
-            if (alpha > 0) {
-              const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-              return [
-                Math.round(rgb.r * luminance),
-                Math.round(rgb.g * luminance),
-                Math.round(rgb.b * luminance),
-                alpha
-              ];
-            }
-            return [red, green, blue, alpha];
-          }).flat();
-          
-          const base64 = await new Promise((resolve, reject) => {
-            const canvas = document.createElement('canvas');
-            canvas.width = colorized.width;
-            canvas.height = colorized.height;
-            const ctx = canvas.getContext('2d');
-            const imageData = new ImageData(colorized.bitmap.data, colorized.width, colorized.height);
-            ctx.putImageData(imageData, 0, 0);
-            canvas.toBlob((blob) => {
-              const reader = new FileReader();
-              reader.onload = () => {
-                resolve(reader.result);
-              };
-              reader.readAsDataURL(blob);
-            });
-          });
-          folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, base64);
-        }));
-        
-        // Update progress after each chunk
-        const progress = Math.round(((chunkIndex + 1) * CHUNK_SIZE / colors.length) * 100);
-        setBatchProgress(Math.min(progress, 100));
-        
-        // Let UI update
-        await new Promise(resolve => setTimeout(resolve, 0));
-      }
-      
-      console.log('Generating ZIP file...');
-      setBatchStatus('saving');
-      
-      const content = await zip.generateAsync({
-        type: "blob",
-        compression: "DEFLATE",
-        compressionOptions: {
-          level: 5
-        }
-      }, (metadata) => {
-        setBatchProgress(Math.round(metadata.percent));
-      });
-      
-      // Create download link
-      const url = window.URL.createObjectURL(content);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `HEXTRA-${activeCatalog}-${new Date().toISOString().split('T')[0]}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      setBatchStatus('complete');
-      console.log('Batch processing complete');
-      
-    } catch (err) {
-      console.error('Error in batch processing:', err);
-      setError('Error processing batch: ' + err.message);
-      setBatchStatus('error');
-    } finally {
-      setIsProcessing(false);
-      setBatchProgress(0);
-    }
-  };
-
-  const handleGenerateSelected = async () => {
-    if (!imageLoaded || !originalImage) return;
-    
-    setIsProcessing(true);
-    setBatchStatus('processing');
-    setError('');
-    
-    try {
-      const colors = selectedColors;
-      const zip = new JSZip();
-      
-      for (let i = 0; i < colors.length; i++) {
-        const color = colors[i];
-        const rgb = hexToRgb(color);
-        
-        const colorized = originalImage.clone();
-        
-        colorized.bitmap.data = colorized.bitmap.data.map((pixel, index) => {
-          const red = colorized.bitmap.data[index + 0];
-          const green = colorized.bitmap.data[index + 1];
-          const blue = colorized.bitmap.data[index + 2];
-          const alpha = colorized.bitmap.data[index + 3];
-          
-          if (alpha > 0) {
-            const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-            
-            return [
-              Math.round(rgb.r * luminance),
-              Math.round(rgb.g * luminance),
-              Math.round(rgb.b * luminance),
-              alpha
-            ];
-          }
-          return [red, green, blue, alpha];
-        }).flat();
-        
-        const base64 = await new Promise((resolve, reject) => {
-          const canvas = document.createElement('canvas');
-          canvas.width = colorized.width;
-          canvas.height = colorized.height;
-          const ctx = canvas.getContext('2d');
-          const imageData = new ImageData(colorized.bitmap.data, colorized.width, colorized.height);
-          ctx.putImageData(imageData, 0, 0);
-          canvas.toBlob((blob) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              resolve(reader.result);
-            };
-            reader.readAsDataURL(blob);
-          });
-        });
-
-        // Add to zip with color code in filename
-        const colorCode = color.replace('#', '');
-        const filename = `color_${colorCode}.png`;
-        
-        // Convert base64 to binary
-        const imageData = base64.replace(/^data:image\/\w+;base64,/, "");
-        zip.file(filename, imageData, {base64: true});
-        
-        setProcessedCount(i + 1);
-        setTotalCount(colors.length);
-        setBatchProgress(Math.round(((i + 1) / colors.length) * 100));
-      }
-      
-      // Generate and download zip
-      const content = await zip.generateAsync({type: "blob"});
-      const url = window.URL.createObjectURL(content);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'hextra-selected-colors.zip';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      setBatchStatus('complete');
-      
-    } catch (err) {
-      console.error('Error generating selected:', err);
-      setError('Error generating selected');
-      setBatchStatus('error');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleColorSelect = (color) => {
-    if (selectedColors.includes(color)) {
-      setSelectedColors(selectedColors.filter(c => c !== color));
-    } else {
-      setSelectedColors([...selectedColors, color]);
-    }
-  };
-
-  const handleCatalogSwitch = (catalogName) => {
-    switch(catalogName) {
-      case 'GILDAN_64000':
-        setActiveCatalog('GILDAN_64000');
-        break;
-      case 'GILDAN_3000':
-        setActiveCatalog('GILDAN_3000');
-        break;
-      default:
-        setActiveCatalog('GILDAN_64000');
-    }
-  };
-
-  const handleEnhanceChange = (e) => {
-    setEnhanceEffect(e.target.checked);
-    if (imageLoaded) {
-      applyColor();
-    }
   };
 
   const handleQuickDownload = () => {
@@ -585,6 +249,19 @@ function App() {
       setWorkingProcessedUrl(e.target.src);
       setImageLoaded(true);
       setCanDownload(true);
+    }
+  };
+
+  const handleCatalogSwitch = (catalogName) => {
+    switch(catalogName) {
+      case 'GILDAN_64000':
+        setActiveCatalog('GILDAN_64000');
+        break;
+      case 'GILDAN_3000':
+        setActiveCatalog('GILDAN_3000');
+        break;
+      default:
+        setActiveCatalog('GILDAN_64000');
     }
   };
 
@@ -813,7 +490,30 @@ function App() {
               <SwatchDropdownField
                 value={selectedColor}
                 onChange={handleHexInputChange}
-                onKeyDown={handleHexKeyPress}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent default behavior
+                    e.stopPropagation(); // Stop event from bubbling up
+                    
+                    let value = e.target.value;
+                    // If no value, use the current selectedColor
+                    if (!value && selectedColor) {
+                      value = selectedColor;
+                    }
+                    // Add # if missing
+                    if (!value.startsWith('#')) {
+                      value = '#' + value;
+                    }
+                    value = value.toUpperCase();
+                    
+                    // Allow the default color to pass through
+                    if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
+                      setSelectedColor(value);
+                      setRgbColor(hexToRgb(value));
+                      applyColor();
+                    }
+                  }
+                }}
                 placeholder="#FED141"
                 startIcon={<TagIcon />}
                 hasReset
@@ -1234,7 +934,86 @@ function App() {
               }}>
                 <GlowTextButton
                   variant="contained"
-                  onClick={handleGenerateAll}
+                  onClick={async () => {
+                    setIsProcessing(true);
+                    setBatchStatus('processing');
+                    
+                    try {
+                      const colors = GILDAN_64000; // Use current catalog
+                      console.log(`Processing ${colors.length} colors from ${activeCatalog}`);
+                      
+                      const zip = new JSZip();
+                      const folder = zip.folder("hextra-colors");
+                      
+                      // Process in chunks to prevent UI freeze
+                      const CHUNK_SIZE = 5;
+                      const chunks = [];
+                      for (let i = 0; i < colors.length; i += CHUNK_SIZE) {
+                        chunks.push(colors.slice(i, i + CHUNK_SIZE));
+                      }
+                      
+                      for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+                        const chunk = chunks[chunkIndex];
+                        
+                        // Process chunk
+                        await Promise.all(chunk.map(async (color) => {
+                          console.log(`Processing color: ${color.name} (${color.hex})`);
+                          
+                          const rgb = hexToRgb(color.hex);
+                          if (!rgb) {
+                            console.error(`Invalid hex color: ${color.hex}`);
+                            return;
+                          }
+                          
+                          const processedUrl = await processImage(workingImageUrl, color.hex);
+                          const response = await fetch(processedUrl);
+                          const blob = await response.blob();
+                          
+                          folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, blob);
+                        }));
+                        
+                        // Update progress after each chunk
+                        const progress = Math.round(((chunkIndex + 1) * CHUNK_SIZE / colors.length) * 100);
+                        setBatchProgress(Math.min(progress, 100));
+                        
+                        // Let UI update
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                      }
+                      
+                      console.log('Generating ZIP file...');
+                      setBatchStatus('saving');
+                      
+                      const content = await zip.generateAsync({
+                        type: "blob",
+                        compression: "DEFLATE",
+                        compressionOptions: {
+                          level: 5
+                        }
+                      }, (metadata) => {
+                        setBatchProgress(Math.round(metadata.percent));
+                      });
+                      
+                      // Create download link
+                      const url = window.URL.createObjectURL(content);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `HEXTRA-${activeCatalog}-${new Date().toISOString().split('T')[0]}.zip`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(url);
+                      
+                      setBatchStatus('complete');
+                      console.log('Batch processing complete');
+                      
+                    } catch (err) {
+                      console.error('Error in batch processing:', err);
+                      setBatchStatus('error');
+                    } finally {
+                      setIsProcessing(false);
+                      setBatchProgress(0);
+                    }
+                  }}
                   disabled={isProcessing || !imageLoaded}
                   sx={{ width: '140px' }}
                 >
@@ -1242,7 +1021,50 @@ function App() {
                 </GlowTextButton>
                 <GlowTextButton
                   variant="contained"
-                  onClick={handleGenerateSelected}
+                  onClick={async () => {
+                    setIsProcessing(true);
+                    setBatchStatus('processing');
+                    
+                    try {
+                      const colors = selectedColors;
+                      const zip = new JSZip();
+                      
+                      for (let i = 0; i < colors.length; i++) {
+                        const color = colors[i];
+                        const processedUrl = await processImage(workingImageUrl, color);
+                        const response = await fetch(processedUrl);
+                        const blob = await response.blob();
+
+                        // Add to zip with color code in filename
+                        const colorCode = color.replace('#', '');
+                        const filename = `color_${colorCode}.png`;
+                        zip.file(filename, blob);
+                        
+                        setProcessedCount(i + 1);
+                        setTotalCount(colors.length);
+                        setBatchProgress(Math.round(((i + 1) / colors.length) * 100));
+                      }
+                      
+                      // Generate and download zip
+                      const content = await zip.generateAsync({type: "blob"});
+                      const url = window.URL.createObjectURL(content);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = 'hextra-selected-colors.zip';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                      
+                      setBatchStatus('complete');
+                      
+                    } catch (err) {
+                      console.error('Error generating selected:', err);
+                      setBatchStatus('error');
+                    } finally {
+                      setIsProcessing(false);
+                    }
+                  }}
                   disabled={isProcessing || !imageLoaded || !selectedColors.length}
                   sx={{ width: '140px' }}
                 >
@@ -1334,7 +1156,13 @@ function App() {
                               boxShadow: '0 0 0 2px var(--glow-color)',
                             }
                           }}
-                          onClick={() => handleColorSelect(color.hex)}
+                          onClick={() => {
+                            if (selectedColors.includes(color.hex)) {
+                              setSelectedColors(selectedColors.filter(c => c !== color.hex));
+                            } else {
+                              setSelectedColors([...selectedColors, color.hex]);
+                            }
+                          }}
                         />
                       </Tooltip>
                     ))}
