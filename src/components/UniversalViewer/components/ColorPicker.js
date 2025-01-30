@@ -223,15 +223,28 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
     }
   }, [updateColorState, onColorSelect]);
 
+  // Optimize color conversion with memoization
+  const memoizedHexToRgb = useMemo(() => {
+    const cache = new Map();
+    return (hex) => {
+      if (cache.has(hex)) {
+        return cache.get(hex);
+      }
+      const result = hexToRgb(hex);
+      cache.set(hex, result);
+      return result;
+    };
+  }, []);
+
   const colorState = useMemo(() => {
-    const rgb = hexToRgb(localColor);
+    const rgb = memoizedHexToRgb(localColor);
     if (!rgb) return null;
 
     return {
       rgbValues: rgb,
       hslValues: rgbToHsl(rgb)
     };
-  }, [localColor]);
+  }, [localColor, memoizedHexToRgb]);
 
   const handleColorUpdate = useCallback((color) => {
     const hex = typeof color === 'string' ? color : color.hex;
@@ -262,6 +275,15 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
       updateColorState(hex);
     }
   }, [debouncedUpdateState, onColorSelect, updateColorState]);
+
+  // Optimize TextField updates
+  const handleHexInputChange = useCallback((e) => {
+    const value = e.target.value.toUpperCase();
+    setHexInput(value);
+    if (/^#[0-9A-F]{6}$/i.test(value)) {
+      handleColorUpdate(value);
+    }
+  }, [handleColorUpdate]);
 
   useEffect(() => {
     const currentDebouncedUpdateState = debouncedUpdateStateRef.current;
@@ -308,13 +330,7 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
                     fontSize: '14px'
                   }
                 }}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setHexInput(value);
-                  if (/^#[0-9A-F]{6}$/i.test(value)) {
-                    handleColorUpdate(value);
-                  }
-                }}
+                onChange={handleHexInputChange}
               />
             </ColorInfo>
             

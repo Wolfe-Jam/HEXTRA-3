@@ -5,9 +5,10 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import AboutDialog from './AboutDialog';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import GlowText from './GlowText';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Banner = ({ isDarkMode, onThemeToggle }) => {
+  const navigate = useNavigate();
   const [aboutOpen, setAboutOpen] = useState(false);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
 
@@ -15,6 +16,11 @@ const Banner = ({ isDarkMode, onThemeToggle }) => {
     logout({
       post_logout_redirect_uri: process.env.REACT_APP_KINDE_DOMAIN
     });
+  };
+
+  const handleStripeTest = (e) => {
+    e.preventDefault();
+    navigate('/stripe-test');
   };
 
   const COLORS = {
@@ -68,26 +74,22 @@ const Banner = ({ isDarkMode, onThemeToggle }) => {
           >
             About
           </Typography>
-          <Link 
-            to="/stripe-test" 
-            style={{ 
-              textDecoration: 'none',
-              marginTop: '8px'
+          <Typography
+            component="span"
+            sx={{
+              marginTop: '8px',
+              fontSize: '0.875rem',
+              color: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              cursor: 'pointer',
+              '&:hover': {
+                color: '#FED141',
+                textShadow: '0 0 8px rgba(254, 209, 65, 0.4)'
+              }
             }}
+            onClick={handleStripeTest}
           >
-            <Typography
-              sx={{
-                fontSize: '0.875rem',
-                color: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                '&:hover': {
-                  color: '#FED141',
-                  textShadow: '0 0 8px rgba(254, 209, 65, 0.4)'
-                }
-              }}
-            >
-              Test Stripe
-            </Typography>
-          </Link>
+            Test Stripe
+          </Typography>
         </Box>
 
         {/* Center - Logo */}
@@ -99,84 +101,65 @@ const Banner = ({ isDarkMode, onThemeToggle }) => {
             zIndex: 1200
           }}
         >
-          <Box
-            component="img"
-            src={isDarkMode ? '/images/HEXTRA-3-logo-Wht.svg' : '/images/HEXTRA-3-logo-Blk.svg'}
-            alt="HEXTRA-3"
+          <GlowText
+            text="HEXTRA"
             sx={{
-              height: '90px',
-              width: 'auto',
-              objectFit: 'contain',
-              display: 'block',
-              marginTop: '-8px'
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              color: isDarkMode ? '#000' : '#fff',
+              cursor: 'default'
             }}
           />
         </Box>
 
-        {/* Right side - Theme Toggle and Login/Logout */}
-        <Box sx={{ 
-          minWidth: '200px', 
-          display: 'flex', 
-          justifyContent: 'flex-end',
-          marginRight: '24px'
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            {isAuthenticated ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, marginRight: 1 }}>
-                <Typography sx={{ color: isDarkMode ? '#666' : '#999' }}>
-                  {user?.email}
-                </Typography>
-                <GlowText 
-                  onClick={handleLogout}
-                  isDarkMode={isDarkMode}
-                  variant="outlined"
-                >
-                  Logout
-                </GlowText>
-              </Box>
-            ) : (
-              <Box sx={{ marginRight: 1 }}>
-                <GlowText 
-                  onClick={() => login()}
-                  isDarkMode={isDarkMode}
-                  variant="contained"
-                >
-                  Login
-                </GlowText>
-              </Box>
-            )}
-            <IconButton
-              onClick={onThemeToggle}
+        {/* Right side - Theme Toggle and Auth */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <IconButton
+            onClick={onThemeToggle}
+            sx={{
+              color: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              '&:hover': {
+                color: isDarkMode ? '#000' : '#fff'
+              }
+            }}
+          >
+            {isDarkMode ? <DarkModeIcon /> : <LightModeIcon />}
+          </IconButton>
+          
+          {isAuthenticated ? (
+            <Typography
+              component="span"
               sx={{
-                width: '42px',
-                height: '42px',
-                color: isDarkMode ? '#000000' : COLORS.textDark,
-                padding: '8px',
-                border: '1px solid transparent',
-                transition: 'all 0.2s ease-in-out',
+                color: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
                 '&:hover': {
-                  backgroundColor: 'transparent',
-                  borderColor: '#FED141',
-                  color: '#FED141',
-                  boxShadow: `0 0 0 3px ${isDarkMode ? 'rgba(254, 209, 65, 0.2)' : 'rgba(254, 209, 65, 0.25)'}`,
-                  transform: 'scale(1.05)'
+                  color: isDarkMode ? '#000' : '#fff'
                 }
               }}
+              onClick={handleLogout}
             >
-              {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
-            </IconButton>
-          </Box>
+              Logout
+            </Typography>
+          ) : (
+            <Typography
+              component="span"
+              sx={{
+                color: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                '&:hover': {
+                  color: isDarkMode ? '#000' : '#fff'
+                }
+              }}
+              onClick={() => login()}
+            >
+              Login
+            </Typography>
+          )}
         </Box>
       </Box>
-
-      <AboutDialog
-        open={aboutOpen}
-        onClose={() => setAboutOpen(false)}
-      >
-        <Typography variant="body2" sx={{ mb: 1, color: 'var(--text-secondary)' }}>
-          2024 HEXTRA Color System. All rights reserved.
-        </Typography>
-      </AboutDialog>
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Box, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
 import { hexToRgb } from './utils/image-processing';
 import { processImage } from './utils/image-processing';
@@ -13,15 +13,17 @@ import GlowButton from './components/GlowButton';
 import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
 import Banner from './components/Banner';
-import { Routes, Route } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import DefaultTshirt from './components/DefaultTshirt';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
+import { debounce } from 'lodash';
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
 
 function App() {
+  const navigate = useNavigate();
   // State variables
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
@@ -54,22 +56,37 @@ function App() {
   // Add refs
   const wheelRef = useRef(null);
   const hexInputRef = useRef(null);
+  const isDragging = useRef(false);
+
+  // Debounce image processing
+  const debouncedProcessImage = useMemo(
+    () => debounce(async (url, color) => {
+      if (!url || !color) return;
+      try {
+        const processedUrl = await processImage(url, color);
+        setWorkingProcessedUrl(processedUrl);
+        setCanDownload(true);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        setCanDownload(false);
+      }
+    }, 150), // Increased debounce time for better performance
+    []
+  );
 
   const applyColor = useCallback(async (color) => {
     if (!workingImageUrl) return;
     
     try {
       setIsProcessing(true);
-      const processedUrl = await processImage(workingImageUrl, color);
-      setWorkingProcessedUrl(processedUrl);
-      setCanDownload(true);
+      await debouncedProcessImage(workingImageUrl, color);
     } catch (err) {
       console.error('Failed to process image:', err);
       setCanDownload(false);
     } finally {
       setIsProcessing(false);
     }
-  }, [workingImageUrl]);
+  }, [workingImageUrl, debouncedProcessImage]);
 
   useEffect(() => {
     if (selectedColor && imageLoaded) {
@@ -77,14 +94,32 @@ function App() {
     }
   }, [selectedColor, imageLoaded, applyColor]);
 
-  const handleColorChange = (color) => {
-    setSelectedColor(color.hex);
-    setRgbColor(hexToRgb(color.hex));
-    // Focus hex input as per workflow requirements
-    if (hexInputRef.current) {
-      hexInputRef.current.focus();
+  // Debounced input handlers
+  const debouncedHandleColorChange = useMemo(
+    () => debounce((color) => {
+      setSelectedColor(color);
+      processImage(workingImageUrl, color);
+    }, 100),
+    [workingImageUrl]
+  );
+
+  const handleColorChange = useCallback((color) => {
+    setSelectedColor(color);
+    // Only process image if we're not dragging
+    if (!isDragging.current) {
+      debouncedProcessImage(workingImageUrl, color);
     }
-  };
+  }, [workingImageUrl, debouncedProcessImage]);
+
+  const handleDragStart = useCallback(() => {
+    isDragging.current = true;
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    isDragging.current = false;
+    // Process the final color
+    debouncedProcessImage(workingImageUrl, selectedColor);
+  }, [workingImageUrl, selectedColor, debouncedProcessImage]);
 
   const handleDropdownSelect = (color) => {
     setSelectedColor(color.hex);
@@ -266,17 +301,7 @@ function App() {
   };
 
   return (
-    <Box
-      sx={{
-        backgroundColor: 'var(--bg-primary)',
-        minHeight: '100vh',
-        width: '100%',
-        maxWidth: '100%',
-        pt: '48px',  
-        color: 'var(--text-primary)',
-        transition: 'background-color 0.3s, color 0.3s'
-      }}
-    >
+    <Box className={`app ${theme}`}>
       {/* Section A: Banner */}
       <Banner 
         version={''}
@@ -286,18 +311,10 @@ function App() {
           localStorage.setItem('hextraTheme', newTheme);
           return newTheme;
         })}
+        navigate={navigate}
       />
       
-      <Box sx={{ 
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        width: '100%',
-        maxWidth: '100%',
-        pt: '48px',  
-        color: 'var(--text-primary)',
-        transition: 'background-color 0.3s, color 0.3s'
-      }}>
+      <Box className="app-content">
         <Typography 
           variant="h2" 
           sx={{ 
@@ -345,6 +362,8 @@ function App() {
                 onChange={handleColorChange}
                 onClick={handleWheelClick}
                 onDoubleClick={() => applyColor()}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
                 width={240}
                 height={240}
               />
@@ -1254,11 +1273,6 @@ function App() {
           )}
         </Box>
       )}
-      <Routes>
-        <Route path="/" element={<div>Home Page</div>} />
-        <Route path="/stripe-test" element={<div>Stripe Test Page</div>} />
-        <Route path="/pricing" element={<div>Pricing Page</div>} />
-      </Routes>
     </Box>
   );
 }
