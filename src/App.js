@@ -8,7 +8,6 @@ import GlowTextButton from './components/GlowTextButton';
 import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
-import ColorDemo from './components/ColorDemo';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -20,12 +19,6 @@ import { Routes, Route } from 'react-router-dom';
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
-const LUMINANCE_METHODS = {
-  standard: {
-    name: 'Standard',
-    calculate: (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b
-  }
-};
 
 function rgbToHsv(r, g, b) {
   r /= 255;
@@ -79,20 +72,13 @@ function App() {
   const [textureValue, setTextureValue] = useState(50);
   const [isTestingJimp, setIsTestingJimp] = useState(false);
   const [error, setError] = useState('');
-  const [luminanceMethod, setLuminanceMethod] = useState('standard');
-
-  // MEZMERIZE States
   const [batchResults, setBatchResults] = useState([]);
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchStatus, setBatchStatus] = useState('idle');
   const [selectedColors, setSelectedColors] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
-
-  // Add state for catalog colors
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
-
-  // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleHexInputChange = (e) => {
@@ -192,10 +178,10 @@ function App() {
   }, [workingImageUrl]);
 
   useEffect(() => {
-    if (selectedColor && workingImageUrl) {
+    if (selectedColor && imageLoaded) {
       applyColor(selectedColor);
     }
-  }, [selectedColor, workingImageUrl, applyColor]);
+  }, [selectedColor, imageLoaded, applyColor]);
 
   const handleImageUpload = async (file) => {
     if (!file) return;
@@ -215,16 +201,6 @@ function App() {
     }
   };
 
-  const handleDownloadImage = (imageUrl, filename) => {
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(imageUrl);
-  };
-
   const handleDownload = async () => {
     if (!workingProcessedUrl) {
       console.error('No processed image to download');
@@ -236,7 +212,13 @@ function App() {
       const blob = await response.blob();
       const downloadUrl = URL.createObjectURL(blob);
       const filename = `processed-image.png`;
-      handleDownloadImage(downloadUrl, filename);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
     } catch (err) {
       console.error('Failed to download image:', err);
     }
@@ -305,6 +287,7 @@ function App() {
       const blob = await response.blob();
       const file = new File([blob], 'image.png', { type: blob.type });
       await handleImageUpload(file);
+      setUrlInput('');
     } catch (err) {
       console.error('Failed to load image from URL:', err);
     }
@@ -323,17 +306,6 @@ function App() {
 
   // Add refs
   const wheelRef = useRef(null);
-  const grayValueRef = useRef(null);
-  const grayscaleRef = useRef(null);
-  const matteRef = useRef(null);
-
-  const handleGraySwatchClick = () => {
-    const grayValue = Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3);
-    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
-    setHexInput(grayHex);
-    setSelectedColor(grayHex);
-    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
-  };
 
   const handleGrayscaleChange = (event, newValue) => {
     const grayValue = newValue;
@@ -344,43 +316,16 @@ function App() {
     setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
   };
 
-  const handleGradientClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = Math.min(Math.max(x / rect.width, 0), 1);
-    const grayValue = Math.round(percentage * 255);
-    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
-    setHexInput(grayHex);
-    setSelectedColor(grayHex);
-    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
-  };
-
   const handleWheelClick = (e) => {
     const now = Date.now();
     const timeDiff = now - lastClickTime;
     
-    if (lastClickColor && timeDiff < 500) {  // 500ms window for double-click
-      // Average the colors for quick double-click
-      const last = hexToRgb(lastClickColor);
-      const current = hexToRgb(selectedColor);
-      const avgColor = {
-        r: Math.round((last.r + current.r) / 2),
-        g: Math.round((last.g + current.g) / 2),
-        b: Math.round((last.b + current.b) / 2)
-      };
-      const avgHex = `#${avgColor.r.toString(16).padStart(2, '0')}${avgColor.g.toString(16).padStart(2, '0')}${avgColor.b.toString(16).padStart(2, '0')}`.toUpperCase();
-      setSelectedColor(avgHex);
-      setHexInput(avgHex);
-      setRgbColor(avgColor);
-      applyColor();
-      // Reset after applying
-      setLastClickColor(null);
-      setLastClickTime(0);
-    } else {
-      // Store first click info
-      setLastClickColor(selectedColor);
-      setLastClickTime(now);
+    if (timeDiff < 300 && lastClickColor === selectedColor) {
+      applyColor(selectedColor);
     }
+    
+    setLastClickColor(selectedColor);
+    setLastClickTime(now);
   };
 
   // Load default image on mount
@@ -997,7 +942,7 @@ function App() {
   };
 
   const handleLuminanceMethodChange = (value) => {
-    setLuminanceMethod(value);
+    // Removed this function
   };
 
   return (
@@ -1113,25 +1058,6 @@ function App() {
                   {`${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}`.padStart(3, ' ')}
                 </Box>
               </Typography>
-
-              {/* Gray Swatch */}
-              <Box
-                onClick={handleGraySwatchClick}
-                sx={{
-                  width: '36px',
-                  height: '36px',
-                  flexShrink: 0,
-                  backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-color)',
-                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                  cursor: 'pointer',
-                  transition: 'box-shadow 0.2s',
-                  '&:hover': {
-                    boxShadow: '0 0 0 2px var(--glow-color)',
-                  }
-                }}
-              />
 
               {/* Slider */}
               <Box sx={{
@@ -1468,11 +1394,6 @@ function App() {
               transition: 'opacity 0.2s',
               pointerEvents: showAdvanced ? 'auto' : 'none'
             }}>
-              {/* Luminance Method Buttons */}
-              <Box sx={{ mb: 3 }}>
-                {/* Removed this component */}
-              </Box>
-
               {/* Controls Row */}
               <Box sx={{ 
                 display: 'flex',
@@ -1801,8 +1722,6 @@ function App() {
 
         </Box>
       </Box>
-
-      <ColorDemo catalog={GILDAN_64000} />
 
       {/* Footer */}
       <Box 
