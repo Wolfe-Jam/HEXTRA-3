@@ -209,7 +209,9 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
     const hex = typeof color === 'string' ? color : color.hex;
     setLocalColor(hex);
     updateColorState(hex);
-    onColorSelect?.({ hex });
+    if (onColorSelect) {
+      onColorSelect({ hex });
+    }
   }, [updateColorState, onColorSelect]);
 
   const colorState = useMemo(() => {
@@ -231,7 +233,9 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
     debounce((color) => {
       const hex = typeof color === 'string' ? color : color.hex;
       updateColorState(hex);
-      onColorSelect?.({ hex });
+      if (onColorSelect) {
+        onColorSelect({ hex });
+      }
     }, 16),
     [updateColorState, onColorSelect]
   );
@@ -243,9 +247,12 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
     if (isDraggingRef.current) {
       debouncedUpdateState(hex);
     } else {
-      handleColorUpdate(hex);
+      if (onColorSelect) {
+        onColorSelect({ hex });
+      }
+      updateColorState(hex);
     }
-  }, [handleColorUpdate, debouncedUpdateState]);
+  }, [debouncedUpdateState, onColorSelect, updateColorState]);
 
   useEffect(() => {
     return () => {
