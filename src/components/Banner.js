@@ -18,11 +18,6 @@ const Banner = ({ isDarkMode, onThemeToggle }) => {
     });
   };
 
-  const handleStripeTest = (e) => {
-    e.preventDefault();
-    navigate('/stripe-test');
-  };
-
   return (
     <Box 
       className="app-banner"
@@ -81,7 +76,7 @@ const Banner = ({ isDarkMode, onThemeToggle }) => {
                 textShadow: '0 0 8px rgba(254, 209, 65, 0.4)'
               }
             }}
-            onClick={handleStripeTest}
+            onClick={() => navigate('/stripe-test')}
           >
             Test Stripe
           </Typography>

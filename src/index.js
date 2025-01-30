@@ -1,8 +1,7 @@
 import './polyfills';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
+import Router from './Router';
 import themeManager from './theme';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 
@@ -17,9 +16,7 @@ root.render(
       redirectUri={process.env.REACT_APP_KINDE_REDIRECT_URI}
       logoutUri={process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URI}
     >
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <Router />
     </KindeProvider>
   </React.StrictMode>
 );
