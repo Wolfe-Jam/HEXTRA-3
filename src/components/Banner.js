@@ -6,6 +6,7 @@ import AboutDialog from './AboutDialog';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { VERSION } from '../version';
 import GlowText from './GlowText';
+import { Link } from 'react-router-dom';
 
 const Banner = ({ version, isDarkMode, onThemeToggle }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -77,6 +78,26 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
           >
             v{version}
           </Typography>
+          <Link 
+            to="/stripe-test" 
+            style={{ 
+              textDecoration: 'none',
+              marginTop: '8px'
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.875rem',
+                color: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                '&:hover': {
+                  color: '#FED141',
+                  textShadow: '0 0 8px rgba(254, 209, 65, 0.4)'
+                }
+              }}
+            >
+              Test Stripe
+            </Typography>
+          </Link>
         </Box>
 
         {/* Center - Logo */}
