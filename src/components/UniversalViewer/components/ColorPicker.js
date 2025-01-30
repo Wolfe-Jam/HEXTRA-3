@@ -9,32 +9,36 @@ import CatalogGrid from './CatalogGrid';
 import NearestMatches from './NearestMatches.js';
 
 // Fast color conversion
-const hexToRgb = hex => {
+const hexToRgb = (hex) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? {
     r: parseInt(result[1], 16),
     g: parseInt(result[2], 16),
     b: parseInt(result[3], 16)
-  } : { r: 0, g: 0, b: 0 };
+  } : null;
 };
 
 const rgbToHsl = ({ r, g, b }) => {
   r /= 255;
   g /= 255;
   b /= 255;
+
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  let h = 0, s = 0;
-  const l = (max + min) / 2;
+  let h, s, l = (max + min) / 2;
 
-  if (max !== min) {
+  if (max === min) {
+    h = s = 0;
+  } else {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
     switch (max) {
       case r: h = (g - b) / d + (g < b ? 6 : 0); break;
       case g: h = (b - r) / d + 2; break;
       case b: h = (r - g) / d + 4; break;
     }
+
     h /= 6;
   }
 
@@ -197,24 +201,10 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
   const theme = useTheme();
   const { currentColor, updateColorState } = useColorStore();
   const [localColor, setLocalColor] = useState(currentColor);
+  const [hexInput, setHexInput] = useState(currentColor);
   const isDraggingRef = useRef(false);
-  const wheelRef = useRef(null);
+  const debouncedUpdateStateRef = useRef(null);
 
-  // Keep local color in sync with store
-  useEffect(() => {
-    setLocalColor(currentColor);
-  }, [currentColor]);
-
-  // Calculate RGB and HSL values only when color changes
-  const { rgbValues, hslValues } = useMemo(() => {
-    const rgb = hexToRgb(localColor);
-    return {
-      rgbValues: rgb,
-      hslValues: rgbToHsl(rgb)
-    };
-  }, [localColor]);
-
-  // Update state and trigger callbacks
   const updateColor = useCallback((color) => {
     const hex = typeof color === 'string' ? color : color.hex;
     setLocalColor(hex);
@@ -222,60 +212,52 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
     onColorSelect?.({ hex });
   }, [updateColorState, onColorSelect]);
 
-  // Super light debounce for smooth updates during drag
-  const debouncedUpdateState = useCallback(
+  const colorState = useMemo(() => {
+    const rgb = hexToRgb(localColor);
+    if (!rgb) return null;
+
+    return {
+      rgbValues: rgb,
+      hslValues: rgbToHsl(rgb)
+    };
+  }, [localColor]);
+
+  const handleColorUpdate = useCallback((color) => {
+    const hex = typeof color === 'string' ? color : color.hex;
+    updateColor(hex);
+  }, [updateColor]);
+
+  const debouncedUpdateState = useMemo(() => 
     debounce((color) => {
       const hex = typeof color === 'string' ? color : color.hex;
       updateColorState(hex);
       onColorSelect?.({ hex });
-    }, 16), // ~1 frame at 60fps
+    }, 16),
     [updateColorState, onColorSelect]
   );
 
-  // Handle wheel interactions
   const handleColorChange = useCallback((color) => {
     const hex = color.hex.toUpperCase();
-    setLocalColor(hex); // Update local immediately for smooth UI
+    setLocalColor(hex);
 
     if (isDraggingRef.current) {
-      debouncedUpdateState(hex); // Light debounce during drag
+      debouncedUpdateState(hex);
     } else {
-      updateColor(hex); // Immediate update for clicks
+      handleColorUpdate(hex);
     }
-  }, [updateColor, debouncedUpdateState]);
+  }, [handleColorUpdate, debouncedUpdateState]);
 
-  // Track drag state
-  const handleMouseDown = useCallback(() => {
-    isDraggingRef.current = true;
+  useEffect(() => {
+    return () => {
+      if (debouncedUpdateStateRef.current) {
+        debouncedUpdateStateRef.current.cancel();
+      }
+    };
   }, []);
 
-  const handleMouseUp = useCallback(() => {
-    isDraggingRef.current = false;
-    // Ensure final color is synced
-    updateColor(localColor);
-  }, [localColor, updateColor]);
-
-  // Cleanup
   useEffect(() => {
-    const wheelElement = wheelRef.current;
-    if (!wheelElement) return;
-
-    wheelElement.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      wheelElement.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [handleMouseDown, handleMouseUp]);
-
-  // Handle direct hex input
-  const handleHexInput = useCallback((e) => {
-    const hex = e.target.value.toUpperCase();
-    if (/^#[0-9A-F]{6}$/i.test(hex)) {
-      updateColor(hex);
-    }
-  }, [updateColor]);
+    setLocalColor(currentColor);
+  }, [currentColor]);
 
   return (
     <Container $mode={theme.palette.mode}>
@@ -286,20 +268,20 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
         
         <LeftPanelContent>
           <ColorPanel>
-            <div ref={wheelRef}>
-              <Wheel 
-                color={localColor}
-                onChange={handleColorChange}
-                width={200}
-                height={200}
-              />
-            </div>
+            <Wheel 
+              color={localColor}
+              onChange={handleColorChange}
+              onMouseDown={() => { isDraggingRef.current = true; }}
+              onMouseUp={() => { isDraggingRef.current = false; }}
+              width={200}
+              height={200}
+            />
             
             <ColorInfo>
               <RoundSwatch color={localColor} />
               <HexLabel>HEX</HexLabel>
               <TextField 
-                value={localColor}
+                value={hexInput}
                 size="small"
                 sx={{ 
                   width: 100,
@@ -308,7 +290,13 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
                     fontSize: '14px'
                   }
                 }}
-                onChange={handleHexInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setHexInput(value);
+                  if (/^#[0-9A-F]{6}$/i.test(value)) {
+                    handleColorUpdate(value);
+                  }
+                }}
               />
             </ColorInfo>
             
@@ -316,13 +304,13 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
               <ValueGroup className="rgb">
                 <ValueLabel sx={{ backgroundColor: '#f5f5f5' }}>RGB</ValueLabel>
                 <ValueDisplay sx={{ backgroundColor: '#f5f5f5' }}>
-                  {rgbValues.r},{rgbValues.g},{rgbValues.b}
+                  {colorState?.rgbValues.r},{colorState?.rgbValues.g},{colorState?.rgbValues.b}
                 </ValueDisplay>
               </ValueGroup>
               <ValueGroup className="hsl">
                 <ValueLabel sx={{ backgroundColor: '#f5f5f5' }}>HSL</ValueLabel>
                 <ValueDisplay sx={{ backgroundColor: '#f5f5f5' }}>
-                  {hslValues.h}°,{hslValues.s}%,{hslValues.l}%
+                  {colorState?.hslValues.h}°,{colorState?.hslValues.s}%,{colorState?.hslValues.l}%
                 </ValueDisplay>
               </ValueGroup>
             </ColorValues>
@@ -333,7 +321,7 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
       </LeftPanel>
       
       <RightPanel>
-        <CatalogGrid colors={catalog} showHex={false} onColorSelect={updateColor} />
+        <CatalogGrid colors={catalog} showHex={false} onColorSelect={handleColorUpdate} />
       </RightPanel>
     </Container>
   );
