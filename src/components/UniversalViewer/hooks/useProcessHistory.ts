@@ -8,7 +8,12 @@ export const useProcessHistory = () => {
   useEffect(() => {
     const stored = localStorage.getItem('hextra_processed_images');
     if (stored) {
-      setRecentImages(JSON.parse(stored));
+      try {
+        setRecentImages(JSON.parse(stored));
+      } catch (error) {
+        console.error('Failed to parse process history:', error);
+        localStorage.removeItem('hextra_processed_images');
+      }
     }
   }, []);
 
@@ -16,7 +21,11 @@ export const useProcessHistory = () => {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'hextra_processed_images' && e.newValue) {
-        setRecentImages(JSON.parse(e.newValue));
+        try {
+          setRecentImages(JSON.parse(e.newValue));
+        } catch (error) {
+          console.error('Failed to parse process history from storage event:', error);
+        }
       }
     };
 
@@ -33,27 +42,3 @@ export const useProcessHistory = () => {
     }
   };
 };
-
-// Usage example:
-/*
-const MyComponent = () => {
-  const { recentImages, hasHistory, clearHistory } = useProcessHistory();
-
-  return (
-    <div>
-      {hasHistory && (
-        <div>
-          <h3>Recent Processed Images</h3>
-          {recentImages.map(img => (
-            <div key={img.id}>
-              <img src={img.preview?.thumbnail} alt="Processed" />
-              <span>Created: {img.created.toLocaleDateString()}</span>
-            </div>
-          ))}
-          <button onClick={clearHistory}>Clear History</button>
-        </div>
-      )}
-    </div>
-  );
-};
-*/

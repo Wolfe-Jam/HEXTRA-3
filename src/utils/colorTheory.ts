@@ -350,9 +350,13 @@ export class ColorTheory {
     const triad = this.getTriad(hsl);
     
     // Find nearest catalog color if catalog provided
-    const nearest = catalog.length > 0 ? 
-      this.findNearest(rgb, catalog.map(color => ({ rgb: color, name: '' }))).[0].color : 
-      undefined;
+    let nearest = undefined;
+    if (catalog.length > 0) {
+      const matches = this.findNearest(rgb, catalog.map(color => ({ rgb: color, name: '' })));
+      if (matches.length > 0) {
+        nearest = matches[0].color;
+      }
+    }
 
     return {
       opposite,

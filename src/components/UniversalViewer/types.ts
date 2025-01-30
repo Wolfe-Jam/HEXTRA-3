@@ -64,11 +64,14 @@ export interface LayoutConfig {
     margin?: number;
     padding?: number;
   };
+  width: number;
+  height: number;
+  margin?: number;
+  padding?: number;
   containerStyle?: React.CSSProperties;
 }
 
 // Component Props Interfaces
-
 export interface UniversalViewerProps {
   mode: ViewMode;
   items: (SwatchItem | ImageItem)[];
@@ -79,7 +82,7 @@ export interface UniversalViewerProps {
   style?: React.CSSProperties;
 }
 
-export interface ViewerBaseProps extends UniversalViewerProps {
+export interface ViewerBaseProps {
   children?: React.ReactNode;
 }
 
@@ -108,7 +111,6 @@ export interface ImageViewProps {
 }
 
 // State Interfaces
-
 export interface ViewerState {
   selectedItems: (SwatchItem | ImageItem)[];
   zoom: number;
@@ -120,20 +122,18 @@ export interface ViewerState {
 }
 
 // Event Handler Types
-
 export type SelectHandler = (item: SwatchItem | ImageItem) => void;
 export type BulkSelectHandler = (items: (SwatchItem | ImageItem)[]) => void;
 export type ZoomHandler = (level: number) => void;
 export type PanHandler = (x: number, y: number) => void;
 
 // Palette Types
-
 export interface Palette {
   id: string;
   name: string;
   colors: SwatchItem[];
   type: 'small' | 'medium' | 'large' | 'custom';
-  grid?: CustomGrid;  // For custom layouts
+  grid?: CustomGrid;
   description?: string;
   tags?: string[];
   createdAt?: Date;
@@ -141,13 +141,12 @@ export interface Palette {
 }
 
 // Catalog Types
-
 export interface Catalog {
   id: string;
   name: string;
   description?: string;
   colors: SwatchItem[];
-  grid?: CustomGrid;  // For custom layouts like 2x16, 5x10, etc.
+  grid?: CustomGrid;
   groups?: {
     [key: string]: SwatchItem[];
   };
@@ -166,7 +165,8 @@ export interface CoreColorMetadata {
   hex: string;
   rgb: RGBColor;
   name?: string;
-  family?: string;  // For color grouping
+  family?: string;
+  tags?: string[];
 }
 
 export interface CoreAssetMetadata {
@@ -177,121 +177,35 @@ export interface CoreAssetMetadata {
   tags?: string[];
 }
 
-export interface CoreCatalogMetadata extends CoreAssetMetadata {
+export interface CoreCatalogMetadata {
   type: 'catalog';
   colors: CoreColorMetadata[];
-  family?: string;  // For catalog grouping
+  family?: string;
   version: string;
 }
 
-export interface CorePaletteMetadata extends CoreAssetMetadata {
+export interface CorePaletteMetadata {
   type: 'palette';
   colors: CoreColorMetadata[];
-  parentCatalog?: string;  // Reference to source catalog
-}
-
-export interface CoreImageMetadata extends CoreAssetMetadata {
-  type: 'image';
-  colors: CoreColorMetadata[];
-  sourceFile: string;
-  processing: {
-    method: string;
-    timestamp: Date;
-  };
-  preview?: {
-    thumbnail: string;
-  };
-}
-
-// Future expansion fields commented for reference
-/*
-Future Fields:
-- HSL color values
-- Digital watermarks
-- QR codes
-- Copyright details
-- Usage rights
-- Advanced relationships
-*/
-
-// Metadata Types
-export interface ColorMetadata {
-  hex: string;
-  rgb: RGBColor;
-  hsl?: {
-    h: number;
-    s: number;
-    l: number;
-  };
-  name?: string;
-  family?: string;
-  tags?: string[];
-}
-
-export interface AssetMetadata {
-  id: string;
-  created: Date;
-  modified: Date;
-  owner: string;
-  digitalWatermark?: string;
-  copyright?: {
-    holder: string;
-    year: number;
-    rights: string;
-  };
-  usage?: {
-    license: string;
-    restrictions?: string[];
-    allowedUses?: string[];
-  };
-  qrCode?: {
-    data: string;
-    version: string;
-  };
-}
-
-export interface CatalogMetadata extends AssetMetadata {
-  type: 'catalog';
-  colors: ColorMetadata[];
-  family?: string;
-  relationships?: {
-    parent?: string;
-    children?: string[];
-    related?: string[];
-  };
-  version: string;
-}
-
-export interface PaletteMetadata extends AssetMetadata {
-  type: 'palette';
-  colors: ColorMetadata[];
   parentCatalog?: string;
-  derivedFrom?: string[];
-  usage?: {
-    project?: string;
-    brand?: string;
-    season?: string;
-  };
 }
 
-export interface ImageMetadata extends AssetMetadata {
+export interface CoreImageMetadata {
+  id: string;
   type: 'image';
-  colors: ColorMetadata[];
+  colors: CoreColorMetadata[];
   sourceFile: string;
+  created: Date;
   processing: {
     method: string;
-    parameters: Record<string, any>;
     timestamp: Date;
   };
   preview?: {
     thumbnail: string;
-    medium: string;
-    large: string;
   };
 }
 
 // Display Configuration
-
 export interface DisplayConfig {
   showHeaders?: boolean;
   showLabels?: boolean;
@@ -309,88 +223,3 @@ export interface DisplayConfig {
     highlight?: string;
   };
 }
-
-// Examples of usage:
-
-/*
-// Single Color Swatch
-const swatch: SwatchItem = {
-  id: '1',
-  hex: '#FF0000',
-  rgb: { r: 255, g: 0, b: 0 },
-  name: 'Bright Red'
-};
-
-// Small Palette
-const palette: Palette = {
-  id: 'basic-5',
-  name: 'Basic 5',
-  colors: [
-    { id: '1', hex: '#FF0000', rgb: { r: 255, g: 0, b: 0 } },
-    { id: '2', hex: '#00FF00', rgb: { r: 0, g: 255, b: 0 } },
-    { id: '3', hex: '#0000FF', rgb: { r: 0, g: 0, b: 255 } },
-    { id: '4', hex: '#FFFF00', rgb: { r: 255, g: 255, b: 0 } },
-    { id: '5', hex: '#FF00FF', rgb: { r: 255, g: 0, b: 255 } }
-  ],
-  type: 'small'
-};
-
-// Product Image
-const image: ImageItem = {
-  id: 'tshirt-1',
-  url: '/images/full/tshirt-1.jpg',
-  thumb: '/images/thumbs/tshirt-1.jpg',
-  preview: '/images/previews/tshirt-1.jpg',
-  title: 'Red T-Shirt',
-  metadata: {
-    width: 1200,
-    height: 800,
-    format: 'jpg'
-  }
-};
-
-// Custom 2x16 Grid Catalog
-const customCatalog: Catalog = {
-  id: 'custom-32',
-  name: 'Custom 32 Colors',
-  colors: [], // 32 SwatchItems
-  grid: {
-    rows: 2,
-    columns: 16,
-    gap: 8,
-    totalItems: 32,
-    scrollable: true
-  }
-};
-
-// 5x10 Grid Layout
-const fiftyCatalog: Catalog = {
-  id: 'fifty-colors',
-  name: '50 Color Grid',
-  colors: [], // 50 SwatchItems
-  grid: {
-    rows: 5,
-    columns: 10,
-    gap: 12,
-    totalItems: 50,
-    aspectRatio: 1
-  }
-};
-
-// Classic 64 Grid (8x8)
-const classic64: Catalog = {
-  id: '64000',
-  name: '64000 Catalog',
-  colors: [], // 64 SwatchItems
-  grid: {
-    rows: 8,
-    columns: 8,
-    gap: 10,
-    totalItems: 64
-  },
-  metadata: {
-    source: 'Standard',
-    brand: 'HEXTRA'
-  }
-};
-*/

@@ -34,69 +34,125 @@ const detectFamily = (name: string): ColorFamily => {
 // Helper to detect if color is a heather variant
 const isHeather = (name: string): boolean => name.toLowerCase().includes('heather');
 
+// Helper to convert hex to RGB
+const hexToRgb = (hex: string): RGBColor => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) {
+    return { r: 0, g: 0, b: 0 };
+  }
+  return {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  };
+};
+
+// Helper to create color metadata
+const createColorMetadata = (hex: string, name: string): CoreColorMetadata => {
+  const family = detectFamily(name);
+  const tags = isHeather(name) ? ['heather'] : [];
+  
+  return {
+    hex,
+    rgb: hexToRgb(hex),
+    name,
+    family,
+    tags
+  };
+};
+
 // Base catalog data
 export const GILDAN_64: CoreColorMetadata[] = [
-  { hex: '#FFFFFF', name: 'White', family: ColorFamily.NEUTRAL },
-  { hex: '#97999B', name: 'Sport Grey', family: ColorFamily.GREY },
-  { hex: '#D7D2CB', name: 'Ice Grey', family: ColorFamily.GREY },
-  { hex: '#7E7F74', name: 'Heather Military Green', family: ColorFamily.GREEN, tags: ['heather'] },
-  { hex: '#75787B', name: 'Graphite Heather', family: ColorFamily.GREY, tags: ['heather'] },
-  { hex: '#425563', name: 'Dark Heather', family: ColorFamily.GREY, tags: ['heather'] },
-  { hex: '#4D6995', name: 'Heather Indigo', family: ColorFamily.BLUE, tags: ['heather'] },
-  { hex: '#333F48', name: 'Heather Navy', family: ColorFamily.BLUE, tags: ['heather'] },
-  { hex: '#66676C', name: 'Charcoal', family: ColorFamily.GREY },
-  { hex: '#25282A', name: 'Black', family: ColorFamily.NEUTRAL },
-  { hex: '#971B2F', name: 'Antique Cherry Red', family: ColorFamily.RED, tags: ['antique'] },
-  { hex: '#AC2B37', name: 'Cherry Red', family: ColorFamily.RED },
-  { hex: '#BF0D3E', name: 'Heather Red', family: ColorFamily.RED, tags: ['heather'] },
-  { hex: '#D50032', name: 'Red', family: ColorFamily.RED },
-  { hex: '#382F2D', name: 'Dark Chocolate', family: ColorFamily.BROWN },
-  { hex: '#672E45', name: 'Heather Maroon', family: ColorFamily.RED, tags: ['heather'] },
-  { hex: '#5B2B42', name: 'Maroon', family: ColorFamily.RED },
-  { hex: '#8A1538', name: 'Cardinal Red', family: ColorFamily.RED },
-  { hex: '#9B2743', name: 'Heather Cardinal', family: ColorFamily.RED, tags: ['heather'] },
-  { hex: '#E7CEB5', name: 'Natural', family: ColorFamily.NEUTRAL },
-  { hex: '#F4633A', name: 'Orange', family: ColorFamily.ORANGE },
-  { hex: '#EEAD1A', name: 'Gold', family: ColorFamily.YELLOW },
-  { hex: '#FED141', name: 'Daisy', family: ColorFamily.YELLOW },
-  { hex: '#F0EC74', name: 'Cornsilk', family: ColorFamily.YELLOW },
-  { hex: '#A9C47F', name: 'Pistachio', family: ColorFamily.GREEN },
-  { hex: '#89A84F', name: 'Kiwi', family: ColorFamily.GREEN },
-  { hex: '#92BF55', name: 'Lime', family: ColorFamily.GREEN },
-  { hex: '#A0CFA8', name: 'Mint Green', family: ColorFamily.GREEN },
-  { hex: '#00A74A', name: 'Irish Green', family: ColorFamily.GREEN },
-  { hex: '#00805E', name: 'Kelly Green', family: ColorFamily.GREEN },
-  { hex: '#5E7461', name: 'Military Green', family: ColorFamily.GREEN },
-  { hex: '#273B33', name: 'Forest Green', family: ColorFamily.GREEN },
-  { hex: '#5CAA7F', name: 'Heather Irish Green', family: ColorFamily.GREEN, tags: ['heather'] },
-  { hex: '#008E85', name: 'Jade Dome', family: ColorFamily.GREEN },
-  { hex: '#00859B', name: 'Tropical Blue', family: ColorFamily.BLUE },
-  { hex: '#006A8E', name: 'Antique Sapphire', family: ColorFamily.BLUE, tags: ['antique'] },
-  { hex: '#0076A8', name: 'Sapphire', family: ColorFamily.BLUE },
-  { hex: '#0076A8', name: 'Heather Sapphire', family: ColorFamily.BLUE, tags: ['heather'] },
-  { hex: '#486D87', name: 'Indigo Blue', family: ColorFamily.BLUE },
-  { hex: '#7E93A7', name: 'Stone Blue', family: ColorFamily.BLUE },
-  { hex: '#464E7E', name: 'Metro Blue', family: ColorFamily.BLUE },
-  { hex: '#A4C8E1', name: 'Light Blue', family: ColorFamily.BLUE },
-  { hex: '#7BA4DB', name: 'Carolina Blue', family: ColorFamily.BLUE },
-  { hex: '#0093B2', name: 'Heather Galapagos Blue', family: ColorFamily.BLUE, tags: ['heather'] },
-  { hex: '#3975B7', name: 'Iris', family: ColorFamily.BLUE },
-  { hex: '#307FE2', name: 'Heather Royal', family: ColorFamily.BLUE, tags: ['heather'] },
-  { hex: '#307FE2', name: 'Royal', family: ColorFamily.BLUE },
-  { hex: '#263147', name: 'Navy', family: ColorFamily.BLUE },
-  { hex: '#948794', name: 'Paragon', family: ColorFamily.PURPLE },
-  { hex: '#A15A95', name: 'Heather Radiant Orchid', family: ColorFamily.PURPLE, tags: ['heather'] },
-  { hex: '#614B79', name: 'Heather Purple', family: ColorFamily.PURPLE, tags: ['heather'] },
-  { hex: '#464E7E', name: 'Purple', family: ColorFamily.PURPLE },
-  { hex: '#E4C6D4', name: 'Light Pink', family: ColorFamily.PINK },
-  { hex: '#994878', name: 'Heather Berry', family: ColorFamily.PINK, tags: ['heather'] },
-  { hex: '#AA0061', name: 'Antique Heliconia', family: ColorFamily.PINK, tags: ['antique'] },
-  { hex: '#DD74A1', name: 'Azalea', family: ColorFamily.PINK },
-  { hex: '#DB3E79', name: 'Heliconia', family: ColorFamily.PINK },
-  { hex: '#E24585', name: 'Heather Heliconia', family: ColorFamily.PINK, tags: ['heather'] },
-  { hex: '#FF8D6D', name: 'Heather Orange', family: ColorFamily.ORANGE, tags: ['heather'] },
-  { hex: '#FB637E', name: 'Coral Silk', family: ColorFamily.PINK }
+  createColorMetadata('#FFFFFF', 'White'),
+  createColorMetadata('#97999B', 'Sport Grey'),
+  createColorMetadata('#D7D2CB', 'Ice Grey'),
+  createColorMetadata('#7E7F74', 'Heather Military Green'),
+  createColorMetadata('#75787B', 'Graphite Heather'),
+  createColorMetadata('#425563', 'Dark Heather'),
+  createColorMetadata('#4D6995', 'Heather Indigo'),
+  createColorMetadata('#333F48', 'Heather Navy'),
+  createColorMetadata('#66676C', 'Charcoal'),
+  createColorMetadata('#25282A', 'Black'),
+  createColorMetadata('#971B2F', 'Antique Cherry Red'),
+  createColorMetadata('#AC2B37', 'Cherry Red'),
+  createColorMetadata('#BF0D3E', 'Heather Red'),
+  createColorMetadata('#D50032', 'Red'),
+  createColorMetadata('#382F2D', 'Dark Chocolate'),
+  createColorMetadata('#672E45', 'Heather Maroon'),
+  createColorMetadata('#5B2B42', 'Maroon'),
+  createColorMetadata('#8A1538', 'Cardinal Red'),
+  createColorMetadata('#9B2743', 'Heather Cardinal'),
+  createColorMetadata('#E7CEB5', 'Natural'),
+  createColorMetadata('#F4633A', 'Orange'),
+  createColorMetadata('#EEAD1A', 'Gold'),
+  createColorMetadata('#FED141', 'Daisy'),
+  createColorMetadata('#F0EC74', 'Cornsilk'),
+  createColorMetadata('#A9C47F', 'Pistachio'),
+  createColorMetadata('#89A84F', 'Kiwi'),
+  createColorMetadata('#92BF55', 'Lime'),
+  createColorMetadata('#A0CFA8', 'Mint Green'),
+  createColorMetadata('#00A74A', 'Irish Green'),
+  createColorMetadata('#00805E', 'Kelly Green'),
+  createColorMetadata('#5E7461', 'Military Green'),
+  createColorMetadata('#273B33', 'Forest Green'),
+  createColorMetadata('#5CAA7F', 'Heather Irish Green'),
+  createColorMetadata('#008E85', 'Jade Dome'),
+  createColorMetadata('#00859B', 'Tropical Blue'),
+  createColorMetadata('#006A8E', 'Antique Sapphire'),
+  createColorMetadata('#0076A8', 'Sapphire'),
+  createColorMetadata('#0076A8', 'Heather Sapphire'),
+  createColorMetadata('#486D87', 'Indigo Blue'),
+  createColorMetadata('#7E93A7', 'Stone Blue'),
+  createColorMetadata('#464E7E', 'Metro Blue'),
+  createColorMetadata('#A4C8E1', 'Light Blue'),
+  createColorMetadata('#7BA4DB', 'Carolina Blue'),
+  createColorMetadata('#0093B2', 'Heather Galapagos Blue'),
+  createColorMetadata('#3975B7', 'Iris'),
+  createColorMetadata('#307FE2', 'Heather Royal'),
+  createColorMetadata('#307FE2', 'Royal'),
+  createColorMetadata('#263147', 'Navy'),
+  createColorMetadata('#948794', 'Paragon'),
+  createColorMetadata('#A15A95', 'Heather Radiant Orchid'),
+  createColorMetadata('#614B79', 'Heather Purple'),
+  createColorMetadata('#464E7E', 'Purple'),
+  createColorMetadata('#E4C6D4', 'Light Pink'),
+  createColorMetadata('#994878', 'Heather Berry'),
+  createColorMetadata('#AA0061', 'Antique Heliconia'),
+  createColorMetadata('#DD74A1', 'Azalea'),
+  createColorMetadata('#DB3E79', 'Heliconia'),
+  createColorMetadata('#E24585', 'Heather Heliconia'),
+  createColorMetadata('#FF8D6D', 'Heather Orange'),
+  createColorMetadata('#FB637E', 'Coral Silk')
 ];
+
+// Helper functions
+export const getColorsByFamily = (family: ColorFamily): CoreColorMetadata[] => {
+  return GILDAN_64.filter(color => color.family === family);
+};
+
+export const getHeatherColors = (): CoreColorMetadata[] => {
+  return GILDAN_64.filter(color => color.tags?.includes('heather'));
+};
+
+export const getAntiqueColors = (): CoreColorMetadata[] => {
+  return GILDAN_64.filter(color => color.name.toLowerCase().includes('antique'));
+};
+
+export const findSimilarColors = (hex: string): CoreColorMetadata[] => {
+  const targetRgb = hexToRgb(hex);
+  return GILDAN_64
+    .map(color => ({
+      color,
+      distance: Math.sqrt(
+        Math.pow(targetRgb.r - hexToRgb(color.hex).r, 2) +
+        Math.pow(targetRgb.g - hexToRgb(color.hex).g, 2) +
+        Math.pow(targetRgb.b - hexToRgb(color.hex).b, 2)
+      )
+    }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 5)
+    .map(result => result.color);
+};
 
 // Create the catalog metadata
 export const createGildan64Catalog = (): CoreCatalogMetadata => ({
@@ -110,23 +166,5 @@ export const createGildan64Catalog = (): CoreCatalogMetadata => ({
   version: '2024.1',
   tags: ['gildan', 'base-catalog', '64-colors']
 });
-
-// Helper to get colors by family
-export const getColorsByFamily = (family: ColorFamily): CoreColorMetadata[] => 
-  GILDAN_64.filter(color => color.family === family);
-
-// Helper to get heather variants
-export const getHeatherColors = (): CoreColorMetadata[] =>
-  GILDAN_64.filter(color => color.tags?.includes('heather'));
-
-// Helper to get antique variants
-export const getAntiqueColors = (): CoreColorMetadata[] =>
-  GILDAN_64.filter(color => color.tags?.includes('antique'));
-
-// Helper to find similar colors
-export const findSimilarColors = (hex: string): CoreColorMetadata[] => {
-  // TODO: Implement color similarity algorithm
-  return [];
-};
 
 export default GILDAN_64;
