@@ -95,7 +95,9 @@ export const ProcessHistory: React.FC<ProcessHistoryProps> = ({ onItemClick }) =
 
   const handleItemClick = (metadata: CoreImageMetadata) => {
     setSelectedId(metadata.id);
-    onItemClick?.(metadata);
+    if (onItemClick) {
+      onItemClick(metadata);
+    }
   };
 
   if (!hasHistory) {
@@ -163,22 +165,3 @@ export const CompactProcessHistory = styled(ProcessHistory)`
     height: 20px;
   }
 `;
-
-// Usage example:
-/*
-const App = () => {
-  const handleImageSelect = (metadata: CoreImageMetadata) => {
-    console.log('Selected:', metadata);
-    // Handle reloading the image into editor, etc.
-  };
-
-  return (
-    <div>
-      <ProcessHistory onItemClick={handleImageSelect} />
-      
-      {/* Or use compact version in sidebar */}
-      <CompactProcessHistory onItemClick={handleImageSelect} />
-    </div>
-  );
-};
-*/
