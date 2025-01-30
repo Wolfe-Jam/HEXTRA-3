@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import JSZip from 'jszip';
-import Jimp from 'jimp';
 import Banner from './components/Banner';
 import GlowButton from './components/GlowButton';
 import GlowTextButton from './components/GlowTextButton';
@@ -17,10 +16,16 @@ import { LinkRounded as LinkIcon } from '@mui/icons-material';
 import TagIcon from '@mui/icons-material/Tag';
 import DefaultTshirt from './components/DefaultTshirt';
 import { hexToRgb, processImage } from './utils/image-processing';
-import { replaceColor } from './utils/jimp-test';
 import { Routes, Route } from 'react-router-dom';
 
+// Constants
 const DEFAULT_COLOR = '#FED141';
+const LUMINANCE_METHODS = {
+  standard: {
+    name: 'Standard',
+    calculate: (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b
+  }
+};
 
 function rgbToHsv(r, g, b) {
   r /= 255;
@@ -51,14 +56,10 @@ function rgbToHsv(r, g, b) {
 function App() {
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
-  const [workingImage, setWorkingImage] = useState(null);
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
   const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
-  const [testImageUrl, setTestImageUrl] = useState(null);
-  const [testProcessedUrl, setTestProcessedUrl] = useState(null);
   const [originalImage, setOriginalImage] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);
-  const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
   const [hexInput, setHexInput] = useState(DEFAULT_COLOR);
@@ -72,12 +73,13 @@ function App() {
   const [lastClickTime, setLastClickTime] = useState(0);
   const [enhanceEffect, setEnhanceEffect] = useState(true);
   const [showTooltips, setShowTooltips] = useState(true);
-  const [useTestImage, setUseTestImage] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [grayscaleValue, setGrayscaleValue] = useState(128);
   const [matteValue, setMatteValue] = useState(50);
   const [textureValue, setTextureValue] = useState(50);
   const [isTestingJimp, setIsTestingJimp] = useState(false);
+  const [error, setError] = useState('');
+  const [luminanceMethod, setLuminanceMethod] = useState('standard');
 
   // MEZMERIZE States
   const [batchResults, setBatchResults] = useState([]);
@@ -92,12 +94,6 @@ function App() {
 
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('hextraTheme', newTheme);
-  };
 
   const handleHexInputChange = (e) => {
     const value = e.target.value;
@@ -166,7 +162,7 @@ function App() {
     
     if (workingImageUrl) {
       setIsTestingJimp(true);
-      replaceColor(workingImageUrl, newRgb)
+      processImage(workingImageUrl, newRgb)
         .then(processedUrl => {
           setWorkingProcessedUrl(processedUrl);
           setCanDownload(true);
@@ -188,7 +184,8 @@ function App() {
       setWorkingProcessedUrl(processedUrl);
       setCanDownload(true);
     } catch (err) {
-      setError('Failed to process image: ' + err.message);
+      console.error('Failed to process image:', err);
+      setCanDownload(false);
     } finally {
       setIsProcessing(false);
     }
@@ -205,7 +202,6 @@ function App() {
     
     try {
       const url = URL.createObjectURL(file);
-      setWorkingImage(file);
       setWorkingImageUrl(url);
       setImageLoaded(true);
       
@@ -214,30 +210,110 @@ function App() {
         await applyColor(selectedColor);
       }
     } catch (err) {
-      setError('Failed to load image: ' + err.message);
+      console.error('Failed to load image:', err);
       setImageLoaded(false);
     }
   };
 
-  const handleLoadUrl = () => {
-    if (!urlInput.trim()) {
-      // If no URL, open Google search for blank white t-shirts
-      window.open('https://www.google.com/search?q=blank+white+t-shirts', '_blank');
+  const handleDownloadImage = (imageUrl, filename) => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(imageUrl);
+  };
+
+  const handleDownload = async () => {
+    if (!workingProcessedUrl) {
+      console.error('No processed image to download');
       return;
     }
-    // Reset file input by clearing imageFile state
-    setWorkingImage(null);
-    const url = urlInput.trim();
-    setWorkingImageUrl(url);
+
+    try {
+      const response = await fetch(workingProcessedUrl);
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const filename = `processed-image.png`;
+      handleDownloadImage(downloadUrl, filename);
+    } catch (err) {
+      console.error('Failed to download image:', err);
+    }
+  };
+
+  const handleBatchProcess = async () => {
+    if (!workingImageUrl || selectedColors.length === 0) {
+      console.error('Please select an image and colors first');
+      return;
+    }
+
+    setBatchStatus('processing');
+    setBatchProgress(0);
+    setTotalCount(selectedColors.length);
+    setProcessedCount(0);
+
+    const results = [];
+    const zip = new JSZip();
+
+    try {
+      for (let i = 0; i < selectedColors.length; i++) {
+        const color = selectedColors[i];
+        const processedUrl = await processImage(workingImageUrl, color.hex);
+        
+        // Add to zip
+        const response = await fetch(processedUrl);
+        const blob = await response.blob();
+        zip.file(`${color.name}.png`, blob);
+
+        results.push({
+          color: color,
+          url: processedUrl
+        });
+
+        setProcessedCount(i + 1);
+        setBatchProgress(((i + 1) / selectedColors.length) * 100);
+      }
+
+      // Generate zip file
+      const content = await zip.generateAsync({ type: 'blob' });
+      const downloadUrl = window.URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `HEXTRA-${activeCatalog}-${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      setBatchResults(results);
+      setBatchStatus('complete');
+    } catch (err) {
+      console.error('Failed to process batch:', err);
+      setBatchStatus('error');
+    }
+  };
+
+  const handleLoadUrl = async () => {
+    if (!urlInput.trim()) {
+      window.open('https://www.google.com/search?q=blank+white+t-shirt&tbm=isch', '_blank');
+      return;
+    }
+
+    try {
+      const response = await fetch(urlInput);
+      const blob = await response.blob();
+      const file = new File([blob], 'image.png', { type: blob.type });
+      await handleImageUpload(file);
+    } catch (err) {
+      console.error('Failed to load image from URL:', err);
+    }
   };
 
   const handleUrlKeyPress = (e) => {
-    if (e.key === 'Enter' && urlInput.trim()) {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      // Reset file input by clearing imageFile state
-      setWorkingImage(null);
-      const url = urlInput.trim();
-      setWorkingImageUrl(url);
+      handleLoadUrl();
     }
   };
 
@@ -248,6 +324,8 @@ function App() {
   // Add refs
   const wheelRef = useRef(null);
   const grayValueRef = useRef(null);
+  const grayscaleRef = useRef(null);
+  const matteRef = useRef(null);
 
   const handleGraySwatchClick = () => {
     const grayValue = Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3);
@@ -391,11 +469,12 @@ function App() {
     const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.png`;
     
     const link = document.createElement('a');
-    link.href = useTestImage ? testProcessedUrl : workingProcessedUrl;
+    link.href = workingProcessedUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(workingProcessedUrl);
   };
 
   useEffect(() => {
@@ -759,7 +838,7 @@ function App() {
       });
       
       // Create download link
-      const url = URL.createObjectURL(content);
+      const url = window.URL.createObjectURL(content);
       const link = document.createElement('a');
       link.href = url;
       link.download = `HEXTRA-${activeCatalog}-${new Date().toISOString().split('T')[0]}.zip`;
@@ -910,10 +989,6 @@ function App() {
     height: '36px',  // Consistent height
   };
 
-  const handleTestImageToggle = (e) => {
-    setUseTestImage(e.target.checked);
-  };
-
   const handleEnhanceChange = (e) => {
     setEnhanceEffect(e.target.checked);
     if (imageLoaded) {
@@ -922,7 +997,7 @@ function App() {
   };
 
   const handleLuminanceMethodChange = (value) => {
-    // Removed this function
+    setLuminanceMethod(value);
   };
 
   return (
@@ -941,7 +1016,11 @@ function App() {
       <Banner 
         version={''}
         isDarkMode={theme === 'dark'}
-        onThemeToggle={toggleTheme}
+        onThemeToggle={() => setTheme(prevTheme => {
+          const newTheme = prevTheme === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('hextraTheme', newTheme);
+          return newTheme;
+        })}
       />
       
       <Box sx={{ 
@@ -1318,7 +1397,7 @@ function App() {
           }}>
             <DefaultTshirt onLoad={handleDefaultImageLoad} />
             <img
-              src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
+              src={workingProcessedUrl || workingImageUrl}
               alt="Working"
               style={{
                 maxWidth: '100%',
@@ -1416,11 +1495,6 @@ function App() {
                   checked={showTooltips}
                   onChange={(e) => setShowTooltips(e.target.checked)}
                   label="Tooltips"
-                />
-                <GlowSwitch
-                  checked={useTestImage}
-                  onChange={(e) => setUseTestImage(e.target.checked)}
-                  label="Test Image"
                 />
               </Box>
 
