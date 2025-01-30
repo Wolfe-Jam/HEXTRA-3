@@ -1,67 +1,47 @@
-import { CoreCatalogMetadata, CoreColorMetadata, RGBColor } from '../../components/UniversalViewer/types';
+import { CoreCatalogMetadata, CoreColorMetadata, RGBColor, ColorFamily } from '../../components/UniversalViewer/types';
+import { hexToRgb } from '../../utils/colorTheory';
 
-// Color families for smart grouping
-export enum ColorFamily {
-  NEUTRAL = 'neutral',
-  RED = 'red',
-  ORANGE = 'orange',
-  YELLOW = 'yellow',
-  GREEN = 'green',
-  BLUE = 'blue',
-  PURPLE = 'purple',
-  PINK = 'pink',
-  BROWN = 'brown',
-  GREY = 'grey'
-}
-
-// Helper to detect color family from name
-const detectFamily = (name: string): ColorFamily => {
-  const nameLower = name.toLowerCase();
+// Helper to detect color family
+const detectFamily = (name: string): ColorFamily | undefined => {
+  const lowerName = name.toLowerCase();
   
-  if (nameLower.includes('red') || nameLower.includes('cardinal') || nameLower.includes('cherry')) return ColorFamily.RED;
-  if (nameLower.includes('orange') || nameLower.includes('coral')) return ColorFamily.ORANGE;
-  if (nameLower.includes('yellow') || nameLower.includes('gold') || nameLower.includes('daisy') || nameLower.includes('cornsilk')) return ColorFamily.YELLOW;
-  if (nameLower.includes('green')) return ColorFamily.GREEN;
-  if (nameLower.includes('blue') || nameLower.includes('sapphire') || nameLower.includes('navy')) return ColorFamily.BLUE;
-  if (nameLower.includes('purple') || nameLower.includes('orchid')) return ColorFamily.PURPLE;
-  if (nameLower.includes('pink') || nameLower.includes('heliconia')) return ColorFamily.PINK;
-  if (nameLower.includes('brown') || nameLower.includes('chocolate')) return ColorFamily.BROWN;
-  if (nameLower.includes('grey') || nameLower.includes('gray') || nameLower.includes('charcoal')) return ColorFamily.GREY;
+  if (lowerName.includes('white') || lowerName.includes('natural')) return ColorFamily.NEUTRAL;
+  if (lowerName.includes('red') || lowerName.includes('cardinal')) return ColorFamily.RED;
+  if (lowerName.includes('orange') || lowerName.includes('tangerine')) return ColorFamily.ORANGE;
+  if (lowerName.includes('yellow') || lowerName.includes('gold')) return ColorFamily.YELLOW;
+  if (lowerName.includes('green') || lowerName.includes('forest')) return ColorFamily.GREEN;
+  if (lowerName.includes('blue') || lowerName.includes('navy')) return ColorFamily.BLUE;
+  if (lowerName.includes('purple') || lowerName.includes('violet')) return ColorFamily.PURPLE;
+  if (lowerName.includes('pink') || lowerName.includes('rose')) return ColorFamily.PINK;
+  if (lowerName.includes('brown') || lowerName.includes('mocha')) return ColorFamily.BROWN;
+  if (lowerName.includes('grey') || lowerName.includes('gray')) return ColorFamily.GREY;
   
-  return ColorFamily.NEUTRAL;
+  return undefined;
 };
 
 // Helper to detect if color is a heather variant
 const isHeather = (name: string): boolean => name.toLowerCase().includes('heather');
 
-// Helper to convert hex to RGB
-const hexToRgb = (hex: string): RGBColor => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) {
-    return { r: 0, g: 0, b: 0 };
-  }
-  return {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  };
-};
-
 // Helper to create color metadata
 const createColorMetadata = (hex: string, name: string): CoreColorMetadata => {
   const family = detectFamily(name);
-  const tags = isHeather(name) ? ['heather'] : [];
-  
+  const rgb = hexToRgb(hex);
+  if (!rgb) throw new Error(`Invalid hex color: ${hex}`);
+
+  const tags: string[] = [];
+  if (isHeather(name)) tags.push('heather');
+  if (name.toLowerCase().includes('antique')) tags.push('antique');
+
   return {
     hex,
-    rgb: hexToRgb(hex),
+    rgb,
     name,
     family,
-    tags
+    tags: tags.length > 0 ? tags : undefined
   };
 };
 
-// Base catalog data
+// Base colors
 export const GILDAN_64: CoreColorMetadata[] = [
   createColorMetadata('#FFFFFF', 'White'),
   createColorMetadata('#97999B', 'Sport Grey'),
@@ -125,7 +105,14 @@ export const GILDAN_64: CoreColorMetadata[] = [
   createColorMetadata('#FB637E', 'Coral Silk')
 ];
 
-// Helper functions
+// Catalog metadata
+export const GILDAN_64_CATALOG: CoreCatalogMetadata = {
+  type: 'catalog',
+  colors: GILDAN_64,
+  family: 'Gildan',
+  version: '6.4.0'
+};
+
 export const getColorsByFamily = (family: ColorFamily): CoreColorMetadata[] => {
   return GILDAN_64.filter(color => color.family === family);
 };
@@ -135,36 +122,25 @@ export const getHeatherColors = (): CoreColorMetadata[] => {
 };
 
 export const getAntiqueColors = (): CoreColorMetadata[] => {
-  return GILDAN_64.filter(color => color.name.toLowerCase().includes('antique'));
+  return GILDAN_64.filter(color => color.name?.toLowerCase().includes('antique'));
 };
 
 export const findSimilarColors = (hex: string): CoreColorMetadata[] => {
   const targetRgb = hexToRgb(hex);
+  if (!targetRgb) return [];
+
   return GILDAN_64
     .map(color => ({
       color,
       distance: Math.sqrt(
-        Math.pow(targetRgb.r - hexToRgb(color.hex).r, 2) +
-        Math.pow(targetRgb.g - hexToRgb(color.hex).g, 2) +
-        Math.pow(targetRgb.b - hexToRgb(color.hex).b, 2)
+        Math.pow(targetRgb.r - color.rgb.r, 2) +
+        Math.pow(targetRgb.g - color.rgb.g, 2) +
+        Math.pow(targetRgb.b - color.rgb.b, 2)
       )
     }))
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 5)
     .map(result => result.color);
 };
-
-// Create the catalog metadata
-export const createGildan64Catalog = (): CoreCatalogMetadata => ({
-  id: 'gildan-64-2024',
-  type: 'catalog',
-  created: new Date(),
-  modified: new Date(),
-  owner: 'HEXTRA',
-  colors: GILDAN_64,
-  family: 'Gildan',
-  version: '2024.1',
-  tags: ['gildan', 'base-catalog', '64-colors']
-});
 
 export default GILDAN_64;

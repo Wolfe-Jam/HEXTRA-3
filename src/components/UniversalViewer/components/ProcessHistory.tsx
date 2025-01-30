@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useProcessHistory } from '../hooks/useProcessHistory';
 import { CoreImageMetadata } from '../types';
 import styled from 'styled-components';
@@ -149,19 +150,3 @@ export const ProcessHistory: React.FC<ProcessHistoryProps> = ({ onItemClick }) =
     </HistoryContainer>
   );
 };
-
-// Optional: Export a compact version for sidebars
-export const CompactProcessHistory = styled(ProcessHistory)`
-  ${HistoryGrid} {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  }
-
-  ${Thumbnail} {
-    height: 100px;
-  }
-
-  ${ColorChip} {
-    width: 20px;
-    height: 20px;
-  }
-`;

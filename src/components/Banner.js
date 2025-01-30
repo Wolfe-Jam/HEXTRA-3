@@ -4,11 +4,10 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import AboutDialog from './AboutDialog';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
-import { VERSION } from '../version';
 import GlowText from './GlowText';
 import { Link } from 'react-router-dom';
 
-const Banner = ({ version, isDarkMode, onThemeToggle }) => {
+const Banner = ({ isDarkMode, onThemeToggle }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
 
@@ -68,15 +67,6 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
             onClick={() => setAboutOpen(true)}
           >
             About
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: '0.875rem',
-              color: isDarkMode ? '#000000' : COLORS.textDark,
-              opacity: 0.7
-            }}
-          >
-            v{version}
           </Typography>
           <Link 
             to="/stripe-test" 
@@ -182,12 +172,8 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
       <AboutDialog
         open={aboutOpen}
         onClose={() => setAboutOpen(false)}
-        version={`v${version}`}
       >
         <Typography variant="body2" sx={{ mb: 1, color: 'var(--text-secondary)' }}>
-          Version {version}
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
           2024 HEXTRA Color System. All rights reserved.
         </Typography>
       </AboutDialog>

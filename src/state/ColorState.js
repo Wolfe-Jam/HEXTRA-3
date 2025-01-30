@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import GILDAN_64000 from '../data/catalogs/gildan64000';
 
 // Color conversion utilities
 const hexToRgb = (hex) => {
@@ -28,6 +27,7 @@ const rgbToHsl = ({ r, g, b }) => {
       case r: h = (g - b) / d + (g < b ? 6 : 0); break;
       case g: h = (b - r) / d + 2; break;
       case b: h = (r - g) / d + 4; break;
+      default: break;
     }
     h /= 6;
   }
@@ -47,21 +47,6 @@ const isValidHex = (hex) => {
 const normalizeHex = (hex) => {
   const cleaned = hex.toUpperCase().replace(/[^0-9A-F]/g, '');
   return `#${cleaned.padStart(6, '0')}`;
-};
-
-// Pre-compute catalog colors once
-const catalogColors = GILDAN_64000.map(color => ({
-  rgb: hexToRgb(color.hex),
-  name: color.name,
-  hex: color.hex
-})).filter(color => color.rgb);
-
-// Fast color distance calculation
-const getColorDistance = (color1, color2) => {
-  const dr = color1.r - color2.r;
-  const dg = color1.g - color2.g;
-  const db = color1.b - color2.b;
-  return dr * dr + dg * dg + db * db; // Skip sqrt for speed
 };
 
 // Default color (Royal Blue)

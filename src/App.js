@@ -1,53 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Box, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import JSZip from 'jszip';
 import Jimp from 'jimp';
 import Banner from './components/Banner';
 import GlowButton from './components/GlowButton';
 import GlowTextButton from './components/GlowTextButton';
-import GlowToggleGroup from './components/GlowToggleGroup';
 import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import ColorDemo from './components/ColorDemo';
-import { ToggleButton } from '@mui/material';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
-import GILDAN_3000 from './data/catalogs/gildan3000';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
-import { TextField, InputAdornment, IconButton } from '@mui/material';
+import { LinkRounded as LinkIcon } from '@mui/icons-material';
 import TagIcon from '@mui/icons-material/Tag';
-import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
 import { hexToRgb, processImage } from './utils/image-processing';
-import { testJimp, replaceColor } from './utils/jimp-test';
+import { replaceColor } from './utils/jimp-test';
 import { Routes, Route } from 'react-router-dom';
 
 const DEFAULT_COLOR = '#FED141';
-const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
-const TEST_IMAGE_URL = '/images/Test-Gradient-600-400.webp';
-const DEFAULT_COLORS = [
-  '#D50032',  // Red
-  '#00805E',  // Green
-  '#224D8F',  // Blue
-  '#FED141',  // Yellow
-  '#FF4400',  // Orange
-  '#CABFAD'   // Neutral
-];
-
-function normalizeHex(hex) {
-  // Remove #
-  hex = hex.replace('#', '');
-  
-  // Handle short forms like #000 -> #000000
-  if (hex.length === 3) {
-    hex = hex.split('').map(char => char + char).join('');
-  }
-  
-  return '#' + hex;
-}
 
 function rgbToHsv(r, g, b) {
   r /= 255;
@@ -81,7 +54,6 @@ function App() {
   const [workingImage, setWorkingImage] = useState(null);
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
   const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
-  const [testImage, setTestImage] = useState(null);
   const [testImageUrl, setTestImageUrl] = useState(null);
   const [testProcessedUrl, setTestProcessedUrl] = useState(null);
   const [originalImage, setOriginalImage] = useState(null);
@@ -98,28 +70,25 @@ function App() {
   const [isDropdownSelection, setIsDropdownSelection] = useState(false);
   const [lastClickColor, setLastClickColor] = useState(null);
   const [lastClickTime, setLastClickTime] = useState(0);
-  const [enhanceEffect, setEnhanceEffect] = useState(true);  // Default to enhanced
-  const [showTooltips, setShowTooltips] = useState(true);  // Default tooltips on
+  const [enhanceEffect, setEnhanceEffect] = useState(true);
+  const [showTooltips, setShowTooltips] = useState(true);
   const [useTestImage, setUseTestImage] = useState(false);
-  const [lastWorkingImage, setLastWorkingImage] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
+  const [grayscaleValue, setGrayscaleValue] = useState(128);
   const [matteValue, setMatteValue] = useState(50);
   const [textureValue, setTextureValue] = useState(50);
   const [isTestingJimp, setIsTestingJimp] = useState(false);
 
   // MEZMERIZE States
-  const [isBatchMode, setIsBatchMode] = useState(false);
   const [batchResults, setBatchResults] = useState([]);
   const [batchProgress, setBatchProgress] = useState(0);
-  const [batchStatus, setBatchStatus] = useState('idle'); // idle, processing, complete, error
+  const [batchStatus, setBatchStatus] = useState('idle');
   const [selectedColors, setSelectedColors] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
 
   // Add state for catalog colors
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
-  const [catalogColors, setCatalogColors] = useState(GILDAN_64000);
 
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -210,77 +179,42 @@ function App() {
     }
   };
 
-  const applyColor = async () => {
-    if (!imageLoaded || !originalImage) return;
-    
-    setIsProcessing(true);
-    setError('');
+  const applyColor = useCallback(async (color) => {
+    if (!workingImageUrl) return;
     
     try {
-      const colorized = originalImage.clone();
-      
-      colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-        const red = this.bitmap.data[idx + 0];
-        const green = this.bitmap.data[idx + 1];
-        const blue = this.bitmap.data[idx + 2];
-        const alpha = this.bitmap.data[idx + 3];
-        
-        if (alpha > 0) {
-          const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-          
-          // Always apply color to working image, keep test image grayscale
-          if (useTestImage) {
-            const value = Math.round(luminance * 255);
-            this.bitmap.data[idx + 0] = value;
-            this.bitmap.data[idx + 1] = value;
-            this.bitmap.data[idx + 2] = value;
-          } else {
-            this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
-            this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
-            this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
-          }
-        }
-      });
-
-      const base64 = await new Promise((resolve, reject) => {
-        colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
-          if (err) reject(err);
-          else resolve(base64);
-        });
-      });
-      
-      setProcessedImage(colorized);
-      if (useTestImage) {
-        setTestProcessedUrl(base64);
-      } else {
-        setWorkingProcessedUrl(base64);
-      }
+      setIsProcessing(true);
+      const processedUrl = await processImage(workingImageUrl, color);
+      setWorkingProcessedUrl(processedUrl);
       setCanDownload(true);
-      setError('');
     } catch (err) {
-      console.error('Error in colorize:', err);
-      setError('Error processing image');
-      setCanDownload(false);
+      setError('Failed to process image: ' + err.message);
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [workingImageUrl]);
+
+  useEffect(() => {
+    if (selectedColor && workingImageUrl) {
+      applyColor(selectedColor);
+    }
+  }, [selectedColor, workingImageUrl, applyColor]);
 
   const handleImageUpload = async (file) => {
     if (!file) return;
     
     try {
       const url = URL.createObjectURL(file);
+      setWorkingImage(file);
       setWorkingImageUrl(url);
-      setWorkingProcessedUrl(url);
       setImageLoaded(true);
       
       // Process with current color
-      const processedUrl = await processImage(url, selectedColor);
-      setWorkingProcessedUrl(processedUrl);
-      setCanDownload(true);
-    } catch (error) {
-      console.error('Error uploading image:', error);
+      if (selectedColor) {
+        await applyColor(selectedColor);
+      }
+    } catch (err) {
+      setError('Failed to load image: ' + err.message);
       setImageLoaded(false);
     }
   };
@@ -717,7 +651,6 @@ function App() {
       console.log('Final colors:', colors);
       
       if (colors.length > 0) {
-        setCatalogColors(colors);
         setBatchResults(colors);
       }
       
@@ -739,7 +672,7 @@ function App() {
     setError('');
     
     try {
-      const colors = catalogColors; // Use current catalog
+      const colors = GILDAN_64000; // Use current catalog
       console.log(`Processing ${colors.length} colors from ${activeCatalog}`);
       
       const zip = new JSZip();
@@ -947,15 +880,12 @@ function App() {
     switch(catalogName) {
       case 'GILDAN_64000':
         setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64000);
         break;
       case 'GILDAN_3000':
         setActiveCatalog('GILDAN_3000');
-        setCatalogColors(GILDAN_3000);
         break;
       default:
         setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64000);
     }
   };
 
@@ -1009,7 +939,7 @@ function App() {
     >
       {/* Section A: Banner */}
       <Banner 
-        version={VERSION}
+        version={''}
         isDarkMode={theme === 'dark'}
         onThemeToggle={toggleTheme}
       />
@@ -1798,7 +1728,7 @@ function App() {
         </Box>
       </Box>
 
-      <ColorDemo catalog={catalogColors} />
+      <ColorDemo catalog={GILDAN_64000} />
 
       {/* Footer */}
       <Box 
@@ -1816,7 +1746,7 @@ function App() {
           color="text.secondary" 
           align="center"
         >
-          2025 HEXTRA Color System v{VERSION}. All rights reserved.
+          2025 HEXTRA Color System v. All rights reserved.
         </Typography>
       </Box>
 

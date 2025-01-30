@@ -56,4 +56,5 @@ class ThemeManager {
     }
 }
 
-export default new ThemeManager();
+const themeManager = new ThemeManager();
+export { themeManager as default };

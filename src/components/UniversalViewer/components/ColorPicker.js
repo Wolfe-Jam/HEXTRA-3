@@ -169,14 +169,6 @@ const ValueDisplay = styled(Typography)`
   background-color: #f5f5f5;
 `;
 
-const ValueText = styled(Typography)`
-  font-family: 'Inter', monospace;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
 const PanelTitle = styled(Typography)`
   font-family: 'Inter', sans-serif;
   font-size: 16px;
@@ -196,6 +188,23 @@ const HexLabel = styled(Typography)`
   font-size: 14px;
   color: #666;
 `;
+
+const getColorByHex = (hex) => {
+  switch(hex.toUpperCase()) {
+    case '#000000':
+      return { name: 'Black', hex: '#000000' };
+    case '#FFFFFF':
+      return { name: 'White', hex: '#FFFFFF' };
+    case '#FF0000':
+      return { name: 'Red', hex: '#FF0000' };
+    case '#00FF00':
+      return { name: 'Green', hex: '#00FF00' };
+    case '#0000FF':
+      return { name: 'Blue', hex: '#0000FF' };
+    default:
+      return { name: 'Custom', hex: hex };
+  }
+};
 
 const ColorPicker = ({ catalog = [], onColorSelect }) => {
   const theme = useTheme();
@@ -255,9 +264,11 @@ const ColorPicker = ({ catalog = [], onColorSelect }) => {
   }, [debouncedUpdateState, onColorSelect, updateColorState]);
 
   useEffect(() => {
+    const currentDebouncedUpdateState = debouncedUpdateStateRef.current;
+    
     return () => {
-      if (debouncedUpdateStateRef.current) {
-        debouncedUpdateStateRef.current.cancel();
+      if (currentDebouncedUpdateState) {
+        currentDebouncedUpdateState.cancel();
       }
     };
   }, []);

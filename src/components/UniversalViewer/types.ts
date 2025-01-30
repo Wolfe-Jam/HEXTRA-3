@@ -5,6 +5,19 @@ export type ColorFormat = 'rgb' | 'hex' | 'gray';
 export type ImageSize = 'thumb' | 'preview' | 'full';
 
 // Color Types
+export enum ColorFamily {
+  NEUTRAL = 'neutral',
+  RED = 'red',
+  ORANGE = 'orange',
+  YELLOW = 'yellow',
+  GREEN = 'green',
+  BLUE = 'blue',
+  PURPLE = 'purple',
+  PINK = 'pink',
+  BROWN = 'brown',
+  GREY = 'grey'
+}
+
 export interface RGBColor {
   r: number;
   g: number;
@@ -165,7 +178,7 @@ export interface CoreColorMetadata {
   hex: string;
   rgb: RGBColor;
   name?: string;
-  family?: string;
+  family?: ColorFamily;
   tags?: string[];
 }
 

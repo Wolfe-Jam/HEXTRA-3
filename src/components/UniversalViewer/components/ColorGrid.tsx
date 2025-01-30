@@ -1,8 +1,36 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { ColorTheory } from '../../../utils/colorTheory';
+import { CoreColorMetadata } from '../types';
 
-const Grid = styled.div`
+interface GridProps {
+  columns?: number;
+  rows?: number;
+  gap?: number;
+}
+
+interface ColorTileProps {
+  selected?: boolean;
+}
+
+interface ColorSwatchProps {
+  color: string;
+}
+
+interface ColorInfoProps {
+  dark?: boolean;
+}
+
+interface ColorGridProps {
+  colors: CoreColorMetadata[];
+  layout?: {
+    rows: number;
+    columns: number;
+    gap: number;
+  };
+  onColorSelect?: (color: CoreColorMetadata) => void;
+}
+
+const Grid = styled.div<GridProps>`
   display: grid;
   grid-template-columns: repeat(${props => props.columns || 8}, 1fr);
   grid-template-rows: repeat(${props => props.rows || 8}, 1fr);
@@ -12,7 +40,7 @@ const Grid = styled.div`
   border-radius: 8px;
 `;
 
-const ColorTile = styled.div`
+const ColorTile = styled.div<ColorTileProps>`
   position: relative;
   aspect-ratio: 1;
   border-radius: 4px;
@@ -28,14 +56,14 @@ const ColorTile = styled.div`
   }
 `;
 
-const ColorSwatch = styled.div`
+const ColorSwatch = styled.div<ColorSwatchProps>`
   width: 100%;
   height: 100%;
   background-color: ${props => props.color};
   border-radius: inherit;
 `;
 
-const ColorInfo = styled.div`
+const ColorInfo = styled.div<ColorInfoProps>`
   position: absolute;
   bottom: 0;
   left: 0;
@@ -82,92 +110,58 @@ const RelationshipGrid = styled.div`
   margin-top: 16px;
 `;
 
-const ColorGrid = ({
+const ColorGrid: React.FC<ColorGridProps> = ({
   colors,
   layout = { rows: 8, columns: 8, gap: 8 },
   onColorSelect
 }) => {
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [showRelationships, setShowRelationships] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<CoreColorMetadata | null>(null);
+  const [showRelationships, setShowRelationships] = useState<boolean>(false);
 
-  const handleColorClick = (color) => {
+  const handleColorClick = (color: CoreColorMetadata) => {
     setSelectedColor(color);
-    onColorSelect?.(color);
+    if (onColorSelect) {
+      onColorSelect(color);
+    }
   };
 
-  const handleDoubleClick = (color) => {
+  const handleDoubleClick = (color: CoreColorMetadata) => {
     setSelectedColor(color);
     setShowRelationships(true);
   };
 
-  const renderRelationships = () => {
-    if (!selectedColor) return null;
-
-    const relationships = ColorTheory.getRelationships(
-      selectedColor.hex,
-      colors.map(c => ColorTheory.hexToRgb(c.hex))
-    );
-
-    return (
-      <RelationshipOverlay onClick={() => setShowRelationships(false)}>
-        <RelationshipPanel onClick={e => e.stopPropagation()}>
-          <h3>{selectedColor.name} Relationships</h3>
-          <RelationshipGrid>
-            <div>
-              <h4>Opposite</h4>
-              <ColorSwatch 
-                color={ColorTheory.rgbToHex(
-                  ColorTheory.hslToRgb(relationships.opposite)
-                )} 
-              />
-            </div>
-            <div>
-              <h4>Split Complements</h4>
-              {relationships.splitComplements.map((hsl, i) => (
-                <ColorSwatch 
-                  key={i}
-                  color={ColorTheory.rgbToHex(ColorTheory.hslToRgb(hsl))}
-                />
-              ))}
-            </div>
-            <div>
-              <h4>Triad</h4>
-              {relationships.triad.map((hsl, i) => (
-                <ColorSwatch 
-                  key={i}
-                  color={ColorTheory.rgbToHex(ColorTheory.hslToRgb(hsl))}
-                />
-              ))}
-            </div>
-          </RelationshipGrid>
-        </RelationshipPanel>
-      </RelationshipOverlay>
-    );
+  const handleCloseRelationships = () => {
+    setShowRelationships(false);
   };
 
   return (
     <>
-      <Grid 
-        columns={layout.columns} 
-        rows={layout.rows} 
-        gap={layout.gap}
-      >
-        {colors.map(color => (
-          <ColorTile 
-            key={color.hex + color.name}
+      <Grid {...layout}>
+        {colors.map((color) => (
+          <ColorTile
+            key={color.hex}
             selected={selectedColor?.hex === color.hex}
             onClick={() => handleColorClick(color)}
             onDoubleClick={() => handleDoubleClick(color)}
           >
             <ColorSwatch color={color.hex} />
             <ColorInfo>
-              <div>{color.name}</div>
-              <div>{color.hex}</div>
+              {color.name || color.hex}
             </ColorInfo>
           </ColorTile>
         ))}
       </Grid>
-      {showRelationships && renderRelationships()}
+
+      {showRelationships && selectedColor && (
+        <RelationshipOverlay onClick={handleCloseRelationships}>
+          <RelationshipPanel onClick={e => e.stopPropagation()}>
+            <h3>Color Relationships</h3>
+            <RelationshipGrid>
+              {/* Add color relationship display here */}
+            </RelationshipGrid>
+          </RelationshipPanel>
+        </RelationshipOverlay>
+      )}
     </>
   );
 };
