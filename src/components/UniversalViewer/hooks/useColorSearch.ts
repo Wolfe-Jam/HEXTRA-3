@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import { CoreColorMetadata, ColorFamily } from '../types';
-import { GILDAN_64, getColorsByFamily, getHeatherColors, getAntiqueColors } from '../../../data/catalogs/gildan64';
+import { CoreColorMetadata } from '../../../types/color';
+import { GILDAN_6400, getColorsByFamily, getHeatherColors, getAntiqueColors } from '../../../data/catalogs/gildan64';
 
 type SearchFilters = {
-  family?: ColorFamily;
+  family?: string;
   isHeather?: boolean;
   isAntique?: boolean;
 };
@@ -13,7 +13,7 @@ export const useColorSearch = () => {
   const [filters, setFilters] = useState<SearchFilters>({});
 
   const searchResults = useMemo(() => {
-    let results = [...GILDAN_64];
+    let results = [...GILDAN_6400];
 
     // Apply text search
     if (searchTerm) {
@@ -42,7 +42,7 @@ export const useColorSearch = () => {
 
   // Get unique families for filtering
   const availableFamilies = useMemo(() => 
-    Array.from(new Set(GILDAN_64.map(color => color.family))),
+    Array.from(new Set(GILDAN_6400.map(color => color.family))),
     []
   );
 
@@ -53,7 +53,7 @@ export const useColorSearch = () => {
     setFilters,
     searchResults,
     availableFamilies,
-    totalColors: GILDAN_64.length,
+    totalColors: GILDAN_6400.length,
     // Helper functions
     getColorsByFamily,
     getHeatherColors,
@@ -84,7 +84,7 @@ const ColorSearch = () => {
       
       <select
         value={filters.family || ''}
-        onChange={(e) => setFilters({ ...filters, family: e.target.value as ColorFamily })}
+        onChange={(e) => setFilters({ ...filters, family: e.target.value as string })}
       >
         <option value="">All Families</option>
         {availableFamilies.map(family => (

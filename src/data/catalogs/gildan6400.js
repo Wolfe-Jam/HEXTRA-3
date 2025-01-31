@@ -1,5 +1,5 @@
 // Base catalog data
-const GILDAN_64 = [
+const GILDAN_6400 = [
   { hex: '#FFFFFF', name: 'White', family: 'neutral' },
   { hex: '#97999B', name: 'Sport Grey', family: 'grey' },
   { hex: '#D7D2CB', name: 'Ice Grey', family: 'grey' },
@@ -65,4 +65,4 @@ const GILDAN_64 = [
   { hex: '#FB637E', name: 'Coral Silk', family: 'pink' }
 ];
 
-export default GILDAN_64;
+export default GILDAN_6400;

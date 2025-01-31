@@ -1,6 +1,6 @@
 import React from 'react';
-import { ColorGrid } from '../components/UniversalViewer/components/ColorGrid';
-import { GILDAN_64 } from '../data/catalogs/gildan64';
+import { ColorGrid } from '../components/ColorGrid';
+import { GILDAN_6400 } from '../data/catalogs/gildan64';
 import styled from 'styled-components';
 
 const DemoContainer = styled.div`
@@ -18,7 +18,7 @@ const Demo = () => {
   return (
     <DemoContainer>
       <Title>HEXTRA Color System Demo</Title>
-      <ColorGrid colors={GILDAN_64} />
+      <ColorGrid colors={GILDAN_6400} />
     </DemoContainer>
   );
 };

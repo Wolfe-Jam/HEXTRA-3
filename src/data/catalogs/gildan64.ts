@@ -35,7 +35,7 @@ const detectFamily = (name: string): ColorFamily => {
 const isHeather = (name: string): boolean => name.toLowerCase().includes('heather');
 
 // Base catalog data
-export const GILDAN_64: CoreColorMetadata[] = [
+export const GILDAN_6400: CoreColorMetadata[] = [
   { hex: '#FFFFFF', name: 'White', family: ColorFamily.NEUTRAL },
   { hex: '#97999B', name: 'Sport Grey', family: ColorFamily.GREY },
   { hex: '#D7D2CB', name: 'Ice Grey', family: ColorFamily.GREY },
@@ -99,29 +99,32 @@ export const GILDAN_64: CoreColorMetadata[] = [
 ];
 
 // Create the catalog metadata
-export const createGildan64Catalog = (): CoreCatalogMetadata => ({
-  id: 'gildan-64-2024',
-  type: 'catalog',
-  created: new Date(),
-  modified: new Date(),
-  owner: 'HEXTRA',
-  colors: GILDAN_64,
-  family: 'Gildan',
+export const createGildan6400Catalog = (): CoreCatalogMetadata => ({
+  id: 'gildan-6400-2024',
+  name: 'GILDAN 6400',
+  description: 'Core colors from the GILDAN 6400 catalog',
   version: '2024.1',
-  tags: ['gildan', 'base-catalog', '64-colors']
+  colors: GILDAN_6400,
+  family: 'Gildan',
+  style: '6400',
+  tags: ['gildan', 'base-catalog', '6400-colors']
 });
 
 // Helper to get colors by family
-export const getColorsByFamily = (family: ColorFamily): CoreColorMetadata[] => 
-  GILDAN_64.filter(color => color.family === family);
+export const getColorsByFamily = (family: string): CoreColorMetadata[] =>
+  GILDAN_6400.filter(color => color.family === family);
 
 // Helper to get heather variants
 export const getHeatherColors = (): CoreColorMetadata[] =>
-  GILDAN_64.filter(color => color.tags?.includes('heather'));
+  GILDAN_6400.filter(color => color.tags?.includes('heather'));
 
 // Helper to get antique variants
 export const getAntiqueColors = (): CoreColorMetadata[] =>
-  GILDAN_64.filter(color => color.tags?.includes('antique'));
+  GILDAN_6400.filter(color => color.tags?.includes('antique'));
+
+// Helper to get colors by tag
+export const getColorsByTag = (tag: string): CoreColorMetadata[] =>
+  GILDAN_6400.filter(color => color.tags?.includes(tag));
 
 // Helper to find similar colors
 export const findSimilarColors = (hex: string): CoreColorMetadata[] => {
@@ -129,4 +132,4 @@ export const findSimilarColors = (hex: string): CoreColorMetadata[] => {
   return [];
 };
 
-export default GILDAN_64;
+export default GILDAN_6400;

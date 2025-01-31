@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import GILDAN_64000 from '../data/catalogs/gildan64000';
+import GILDAN_6400 from '../data/catalogs/gildan6400';
 
 // Color conversion utilities
 const hexToRgb = (hex) => {
@@ -50,7 +50,7 @@ const normalizeHex = (hex) => {
 };
 
 // Pre-compute catalog colors once
-const catalogColors = GILDAN_64000.map(color => ({
+const catalogColors = GILDAN_6400.map(color => ({
   rgb: hexToRgb(color.hex),
   name: color.name,
   hex: color.hex

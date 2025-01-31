@@ -1,5 +1,5 @@
-// Gildan 3000 Color Catalog
-const GILDAN_3000 = [
+// HEXTRA 21 Color Catalog
+const HEXTRA_21 = [
   // Core Colors
   { hex: '#FFFFFF', name: 'White', family: 'neutral' },
   { hex: '#000000', name: 'Black', family: 'neutral' },
@@ -32,4 +32,4 @@ const GILDAN_3000 = [
   { hex: '#F0FFF0', name: 'Honeydew', family: 'green' }
 ];
 
-export default GILDAN_3000;
+export default HEXTRA_21;

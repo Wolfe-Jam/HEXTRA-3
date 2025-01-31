@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress } from '@mui/material';
+import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress, Chip } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import JSZip from 'jszip';
 import Jimp from 'jimp';
@@ -12,8 +12,8 @@ import IconTextField from './components/IconTextField';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import ColorDemo from './components/ColorDemo';
 import { ToggleButton } from '@mui/material';
-import GILDAN_64000 from './data/catalogs/gildan64000.js';
-import GILDAN_3000 from './data/catalogs/gildan3000';
+import GILDAN_6400 from './data/catalogs/gildan6400.js';
+import HEXTRA_21 from './data/catalogs/hextra21';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
@@ -117,8 +117,8 @@ function App() {
   const [processedCount, setProcessedCount] = useState(0);
 
   // Add state for catalog colors
-  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
-  const [catalogColors, setCatalogColors] = useState(GILDAN_64000);
+  const [activeCatalog, setActiveCatalog] = useState('GILDAN_6400');
+  const [catalogColors, setCatalogColors] = useState(GILDAN_6400);
 
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -894,19 +894,19 @@ function App() {
     }
   };
 
-  const handleCatalogSwitch = (catalogName) => {
-    switch(catalogName) {
-      case 'GILDAN_64000':
-        setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64000);
+  const handleCatalogSwitch = (catalog) => {
+    switch (catalog) {
+      case 'GILDAN_6400':
+        setActiveCatalog('GILDAN_6400');
+        setCatalogColors(GILDAN_6400);
         break;
-      case 'GILDAN_3000':
-        setActiveCatalog('GILDAN_3000');
-        setCatalogColors(GILDAN_3000);
+      case 'HEXTRA_21':
+        setActiveCatalog('HEXTRA_21');
+        setCatalogColors(HEXTRA_21);
         break;
       default:
-        setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64000);
+        setActiveCatalog('GILDAN_6400');
+        setCatalogColors(GILDAN_6400);
     }
   };
 
@@ -1029,7 +1029,7 @@ function App() {
         minHeight: '100vh',
         width: '100%',
         maxWidth: '100%',
-        pt: '48px',  // Increased by 8px
+        pt: '48px',  
         color: 'var(--text-primary)',
         transition: 'background-color 0.3s, color 0.3s'
       }}
@@ -1047,7 +1047,7 @@ function App() {
         minHeight: '100vh',
         width: '100%',
         maxWidth: '100%',
-        pt: '48px',  // Increased by 8px
+        pt: '48px',  
         color: 'var(--text-primary)',
         transition: 'background-color 0.3s, color 0.3s'
       }}>
@@ -1060,7 +1060,7 @@ function App() {
             letterSpacing: '0.25em',
             textTransform: 'uppercase',
             color: 'var(--text-secondary)',
-            mb: 5,  // Add margin below the text
+            mb: 5,  
             '@media (max-width: 532px)': {
               fontSize: '0.7rem'
             }
@@ -1075,12 +1075,12 @@ function App() {
           flexDirection: 'column',
           gap: 4,
           width: '100%',
-          maxWidth: '800px',  // Maximum before image quality suffers
+          maxWidth: '800px',  
           mx: 'auto',
           p: 3,
           alignItems: 'center',
-          '@media (max-width: 832px)': { // 800px + 2 * 16px padding
-            maxWidth: 'calc(100% - 32px)', // Maintain right border padding
+          '@media (max-width: 832px)': { 
+            maxWidth: 'calc(100% - 32px)', 
             p: 2
           }
         }}>
@@ -1110,7 +1110,7 @@ function App() {
               gap: 2,
               width: '100%',
               mb: 3,
-              pl: '40px'  // Match the HEX input bar padding
+              pl: '40px'  
             }}>
               {/* GRAY Value Display */}
               <Typography sx={{ 
@@ -1209,16 +1209,16 @@ function App() {
             {/* Section D: HEX Input Bar */}
             <Box sx={{ 
               display: 'flex',
-              flexWrap: 'wrap',  // Allow wrapping
+              flexWrap: 'wrap',  
               gap: 2,
               alignItems: 'center',
               width: '100%',
-              pl: '40px',  // Consistent left padding
+              pl: '40px',  
               '@media (max-width: 532px)': {
                 justifyContent: 'center',
-                pl: 2,  // Reduce padding on mobile
+                pl: 2,  
                 '& #apply-button': {
-                  width: '100%',  // Full width apply button on mobile
+                  width: '100%',  
                   maxWidth: '200px',
                   marginTop: '8px'
                 }
@@ -1230,7 +1230,7 @@ function App() {
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
                 whiteSpace: 'nowrap',
-                width: '140px',  // Fixed width
+                width: '140px',  
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1
@@ -1238,7 +1238,7 @@ function App() {
                 <Box component="span" sx={{ flexShrink: 0 }}>RGB:</Box>
                 <Box component="span" sx={{ 
                   fontFamily: 'monospace',
-                  width: '85px',  // Fixed width for numbers
+                  width: '85px',  
                   textAlign: 'left'
                 }}>
                   {rgbColor.r},{rgbColor.g},{rgbColor.b}
@@ -1302,20 +1302,22 @@ function App() {
             </Box>
           </Box>
 
-          <Box
-            sx={{
-              width: '100%',
-              height: '4px',
-              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  // Increased vertical margin
-            }}
-          />
+          <Box sx={{ my: 5 }}>
+            <Box
+              sx={{
+                width: '100%',
+                height: '4px',
+                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+                my: 5  
+              }}
+            />
+          </Box>
 
           {/* Section D: Main Image Window Title */}
           <Typography 
             variant="h2" 
             sx={{ 
-              mb: 4,  // Increased bottom margin
+              mb: 4,  
               textAlign: 'center',
               fontFamily: "'Inter', sans-serif",
               fontSize: '1.25rem',
@@ -1334,15 +1336,15 @@ function App() {
             display: 'flex', 
             gap: 2,
             alignItems: 'center',
-            justifyContent: 'center', // Center the upload button when stacked
+            justifyContent: 'center', 
             mt: 1,
             mb: 3,
             width: '100%',
             '@media (max-width: 600px)': {
               flexDirection: 'column',
-              alignItems: 'center', // Center all items when stacked
+              alignItems: 'center', 
               '& > button': {
-                width: '110px', // Keep buttons at normal width even when stacked
+                width: '110px', 
                 alignSelf: 'center'
               }
             }
@@ -1368,8 +1370,8 @@ function App() {
 
             <Box sx={{ 
               flex: 1,
-              minWidth: 0, // Allow box to shrink below minWidth
-              maxWidth: '600px', // Maximum width for URL input
+              minWidth: 0, 
+              maxWidth: '600px',  
               '@media (max-width: 600px)': {
                 width: '100%',
                 maxWidth: '300px',
@@ -1410,7 +1412,7 @@ function App() {
             alignItems: 'center',
             minHeight: '200px',
             width: '100%',
-            maxWidth: '800px', // Match container max-width
+            maxWidth: '800px', 
             overflow: 'hidden'
           }}>
             {!imageLoaded && <DefaultTshirt onLoad={handleDefaultImageLoad} />}
@@ -1421,7 +1423,7 @@ function App() {
                 style={{
                   maxWidth: '100%',
                   height: 'auto',
-                  display: 'block' // Remove any extra space below image
+                  display: 'block' 
                 }}
               />
             )}
@@ -1452,14 +1454,13 @@ function App() {
             width: '100%', 
             mt: 2,
             position: 'relative',
-            zIndex: 2  // Higher z-index for controls
+            zIndex: 2  
           }}>
             {/* Advanced Settings Toggle Section */}
             <Box sx={{ 
               display: 'flex',
               justifyContent: 'flex-end',
-              alignItems: 'center',
-              mb: 2
+              alignItems: 'center'
             }}>
               <Box sx={{ 
                 display: 'flex',
@@ -1482,140 +1483,28 @@ function App() {
             </Box>
 
             {/* Image Processing Section */}
-            <Box sx={{ 
-              width: '100%',
-              opacity: showAdvanced ? 1 : 0.6,
-              transition: 'opacity 0.2s',
-              pointerEvents: showAdvanced ? 'auto' : 'none'
-            }}>
-              {/* Luminance Method Buttons */}
-              <Box sx={{ mb: 3 }}>
-                {/* Removed this component */}
-              </Box>
-
-              {/* Controls Row */}
-              <Box sx={{ 
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 4,
-                mb: 3
+            {showAdvanced && (
+              <Typography sx={{ 
+                color: 'var(--text-secondary)',
+                fontSize: '0.85rem',
+                textAlign: 'center',
+                mb: 2
               }}>
-                <GlowSwitch
-                  checked={enhanceEffect}
-                  onChange={(e) => {
-                    setEnhanceEffect(e.target.checked);
-                    if (imageLoaded) {
-                      applyColor();
-                    }
-                  }}
-                  label="Enhanced"
-                />
-                <GlowSwitch
-                  checked={showTooltips}
-                  onChange={(e) => setShowTooltips(e.target.checked)}
-                  label="Tooltips"
-                />
-                <GlowSwitch
-                  checked={useTestImage}
-                  onChange={(e) => setUseTestImage(e.target.checked)}
-                  label="Test Image"
-                />
-              </Box>
-
-              {/* Sliders */}
-              <Box sx={{ px: 3 }}>
-                <Box sx={{ mb: 2 }}>
-                  <Typography gutterBottom sx={{ 
-                    fontFamily: "'Inter', sans-serif",
-                    letterSpacing: '0.05em',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    Matte Effect
-                  </Typography>
-                  <Slider
-                    value={matteValue}
-                    onChange={(e, newValue) => setMatteValue(newValue)}
-                    min={0}
-                    max={100}
-                    disabled={true}
-                    sx={{ 
-                      color: 'var(--text-secondary)',
-                      '& .MuiSlider-thumb': {
-                        color: 'var(--text-secondary)',
-                      },
-                      '& .MuiSlider-track': {
-                        color: 'var(--text-secondary)',
-                      },
-                      '& .MuiSlider-rail': {
-                        color: 'var(--text-secondary)',
-                      }
-                    }}
-                  />
-                </Box>
-                <Box>
-                  <Typography gutterBottom sx={{ 
-                    fontFamily: "'Inter', sans-serif",
-                    letterSpacing: '0.05em',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    Texture Effect
-                  </Typography>
-                  <Slider
-                    value={textureValue}
-                    onChange={(e, newValue) => setTextureValue(newValue)}
-                    min={0}
-                    max={100}
-                    disabled={true}
-                    sx={{ 
-                      color: 'var(--text-secondary)',
-                      '& .MuiSlider-thumb': {
-                        color: 'var(--text-secondary)',
-                      },
-                      '& .MuiSlider-track': {
-                        color: 'var(--text-secondary)',
-                      },
-                      '& .MuiSlider-rail': {
-                        color: 'var(--text-secondary)',
-                      }
-                    }}
-                  />
-                </Box>
-              </Box>
-            </Box>
+                Enhanced image processing features coming soon - Stay tuned!
+              </Typography>
+            )}
           </Box>
-
-          <Box sx={{ my: 5 }}>
-            <Box
-              sx={{
-                width: '100%',
-                height: '4px',
-                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-              }}
-            />
-          </Box>
-
-          {/* Third separator - before MESMERIZE section */}
-          <Box
-            sx={{
-              width: '100%',
-              height: '4px',
-              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  // Increased vertical margin
-            }}
-          />
 
           {/* Section H: MESMERIZE */}
           <Box sx={{ 
             width: '100%',
             maxWidth: '800px',
-            mt: 3 
+            mt: 2
           }}>
             {/* MESMERIZE Section Title */}
             <Typography 
               variant="h2" 
               sx={{ 
-                mb: 4,  // Increased bottom margin
                 textAlign: 'center',
                 fontFamily: "'Inter', sans-serif",
                 fontSize: '1.25rem',
@@ -1634,36 +1523,38 @@ function App() {
               display: 'flex', 
               gap: 2, 
               justifyContent: 'center', 
-              mb: 2,
-              mt: 4  // This creates the space between title and buttons
+              mt: 2,
+              mb: 3
             }}>
               <GlowTextButton
                 variant="contained"
-                onClick={() => handleCatalogSwitch('GILDAN_64000')}
+                onClick={() => handleCatalogSwitch('GILDAN_6400')}
                 sx={{
                   width: '140px',
                   height: '36px',
                   fontSize: '0.8rem',
                   letterSpacing: '0.05em',
                   whiteSpace: 'nowrap',
-                  opacity: activeCatalog === 'GILDAN_64000' ? 1 : 0.7
+                  opacity: activeCatalog === 'GILDAN_6400' ? 1 : 0.7,
+                  p: 1
                 }}
               >
-                GILDAN 64,000
+                GILDAN 6400
               </GlowTextButton>
               <GlowTextButton
                 variant="contained"
-                onClick={() => handleCatalogSwitch('GILDAN_3000')}
+                onClick={() => handleCatalogSwitch('HEXTRA_21')}
                 sx={{
                   width: '140px',
                   height: '36px',
                   fontSize: '0.8rem',
                   letterSpacing: '0.05em',
                   whiteSpace: 'nowrap',
-                  opacity: activeCatalog === 'GILDAN_3000' ? 1 : 0.7
+                  opacity: activeCatalog === 'HEXTRA_21' ? 1 : 0.7,
+                  p: 1
                 }}
               >
-                GILDAN 3000
+                HEXTRA 21
               </GlowTextButton>
             </Box>
 
@@ -1756,7 +1647,7 @@ function App() {
                   mt: 3
                 }}>
                   <Typography variant="subtitle2" sx={{ 
-                    mb: 2, 
+                    mb: 2,  
                     textAlign: 'center',
                     color: 'var(--text-secondary)',
                     letterSpacing: '0.1em'
@@ -1820,7 +1711,7 @@ function App() {
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  // Increased vertical margin
+              my: 5  
             }}
           />
 

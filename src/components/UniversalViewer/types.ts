@@ -379,8 +379,8 @@ const fiftyCatalog: Catalog = {
 
 // Classic 64 Grid (8x8)
 const classic64: Catalog = {
-  id: '64000',
-  name: '64000 Catalog',
+  id: '6400',
+  name: '6400 Catalog',
   colors: [], // 64 SwatchItems
   grid: {
     rows: 8,

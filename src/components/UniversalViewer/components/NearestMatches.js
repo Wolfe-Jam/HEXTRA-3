@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import useColorStore from '../../../state/ColorState';
 import { SwatchCard, SwatchCardColor, SwatchCardInfo } from '../styles/SwatchStyles';
-import GILDAN_64000 from '../../../data/catalogs/gildan64000';
+import GILDAN_6400 from '../../../data/catalogs/gildan6400';
 
 // Constants
 const MAX_MATCHES = 3;
@@ -86,7 +85,7 @@ const NearestMatches = () => {
       }
 
       // Calculate distances for all colors
-      const colorMatches = GILDAN_64000
+      const colorMatches = GILDAN_6400
         .map(color => {
           const targetRgb = hexToRgb(color.hex);
           if (!targetRgb) return null;
