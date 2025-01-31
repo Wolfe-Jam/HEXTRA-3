@@ -1650,19 +1650,18 @@ function App() {
             {/* Batch Processing Controls */}
             {isAuthenticated ? (
               <Box sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-                alignItems: 'center',
+                mt: 4,
                 p: 3,
                 borderRadius: '8px',
                 bgcolor: 'var(--bg-secondary)',
-                border: '1px solid var(--border-subtle)'
+                border: '1px solid var(--border-subtle)',
+                width: '100%'
               }}>
                 <Typography variant="h6" sx={{ 
                   fontFamily: "'Inter', sans-serif",
                   fontWeight: 500,
-                  color: 'var(--text-primary)'
+                  color: 'var(--text-primary)',
+                  mb: 3
                 }}>
                   Batch Processing
                 </Typography>
@@ -1671,7 +1670,8 @@ function App() {
                 <Box sx={{ 
                   display: 'flex', 
                   gap: 2,
-                  mb: 2
+                  mb: 3,
+                  justifyContent: 'center'
                 }}>
                   <GlowTextButton
                     variant="contained"
@@ -1710,24 +1710,26 @@ function App() {
                 </Box>
 
                 {/* CSV Upload Button */}
-                <GlowTextButton
-                  component="label"
-                  variant="contained"
-                  disabled={isProcessing || batchStatus === 'processing'}
-                  sx={{ width: '140px' }}
-                >
-                  UPLOAD CSV
-                  <input
-                    type="file"
-                    hidden
-                    accept=".csv"
-                    onChange={handleCSVUpload}
-                  />
-                </GlowTextButton>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                  <GlowTextButton
+                    component="label"
+                    variant="contained"
+                    disabled={isProcessing || batchStatus === 'processing'}
+                    sx={{ width: '140px' }}
+                  >
+                    UPLOAD CSV
+                    <input
+                      type="file"
+                      hidden
+                      accept=".csv"
+                      onChange={handleCSVUpload}
+                    />
+                  </GlowTextButton>
+                </Box>
 
                 {/* Progress Indicator */}
                 {(batchStatus === 'processing' || batchStatus === 'saving') && (
-                  <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
+                  <Box sx={{ width: '100%', maxWidth: 400, mt: 2, mx: 'auto' }}>
                     <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
                       {batchStatus === 'processing' ? (
                         `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
@@ -1748,60 +1750,6 @@ function App() {
                         }
                       }}
                     />
-                  </Box>
-                )}
-
-                {/* Color Results */}
-                {batchResults && batchResults.length > 0 && (
-                  <Box sx={{ 
-                    width: '100%',
-                    maxWidth: '800px',
-                    mt: 3
-                  }}>
-                    <Typography variant="subtitle2" sx={{ 
-                      mb: 2,  
-                      textAlign: 'center',
-                      color: 'var(--text-secondary)',
-                      letterSpacing: '0.1em'
-                    }}>
-                      Available Colors
-                    </Typography>
-                    <Box sx={{ 
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 1.5,
-                      justifyContent: 'center',
-                      maxWidth: '100%',
-                      p: 2
-                    }}>
-                      {batchResults.map((color, index) => (
-                        <Tooltip 
-                          key={index} 
-                          title={color.name || color.hex}
-                          arrow
-                          placement="top"
-                        >
-                          <Box
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              aspectRatio: '1/1',
-                              backgroundColor: color.hex,
-                              borderRadius: '50%',
-                              cursor: 'pointer',
-                              border: '1px solid var(--border-color)',
-                              boxShadow: theme => `0 0 0 ${selectedColors.includes(color.hex) ? '2px var(--glow-color)' : '1px rgba(0, 0, 0, 0.1)'}`,
-                              transition: 'transform 0.2s, box-shadow 0.2s',
-                              '&:hover': {
-                                transform: 'scale(1.1)',
-                                boxShadow: '0 0 0 2px var(--glow-color)',
-                              }
-                            }}
-                            onClick={() => handleColorSelect(color.hex)}
-                          />
-                        </Tooltip>
-                      ))}
-                    </Box>
                   </Box>
                 )}
               </Box>

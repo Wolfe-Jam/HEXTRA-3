@@ -3,17 +3,19 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import GlowButton from './GlowButton';
 
 export default function KindeAuthButtons() {
-  const { isLoading, isAuthenticated, user, login, logout } = useKindeAuth();
-
-  if (isLoading) {
-    return null;
-  }
+  const { isAuthenticated, user, login, logout } = useKindeAuth();
 
   if (isAuthenticated) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <span>Welcome, {user?.given_name || user?.email}</span>
-        <GlowButton onClick={logout} variant="outlined">
+        <span style={{ color: 'var(--text-primary)' }}>
+          Welcome, {user?.given_name || user?.email}
+        </span>
+        <GlowButton 
+          onClick={logout} 
+          variant="outlined"
+          sx={{ minWidth: '100px' }}
+        >
           Sign Out
         </GlowButton>
       </div>
@@ -21,7 +23,11 @@ export default function KindeAuthButtons() {
   }
 
   return (
-    <GlowButton onClick={login} variant="contained">
+    <GlowButton 
+      onClick={login} 
+      variant="contained"
+      sx={{ minWidth: '100px' }}
+    >
       Sign In
     </GlowButton>
   );
