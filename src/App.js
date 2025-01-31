@@ -23,6 +23,7 @@ import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
 import { hexToRgb, processImage } from './utils/image-processing';
 import { testJimp, replaceColor } from './utils/jimp-test';
+import { LUMINANCE_METHODS } from './constants/luminance';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -687,10 +688,13 @@ function App() {
     
     setIsProcessing(true);
     setBatchStatus('processing');
+    setBatchProgress(0);
+    setProcessedCount(0);
     setError('');
     
     try {
       const colors = catalogColors; // Use current catalog
+      setTotalCount(colors.length);
       console.log(`Processing ${colors.length} colors from ${activeCatalog}`);
       
       const zip = new JSZip();
@@ -703,6 +707,7 @@ function App() {
         chunks.push(colors.slice(i, i + CHUNK_SIZE));
       }
       
+      let processed = 0;
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
         const chunk = chunks[chunkIndex];
         
@@ -710,32 +715,36 @@ function App() {
         await Promise.all(chunk.map(async (color) => {
           console.log(`Processing color: ${color.name} (${color.hex})`);
           
-          const rgb = hexToRgb(color.hex);
-          if (!rgb) {
+          const rgbColor = hexToRgb(color.hex);
+          if (!rgbColor) {
             console.error(`Invalid hex color: ${color.hex}`);
             return;
           }
           
           const colorized = originalImage.clone();
           
-          // Process image
-          colorized.bitmap.data = colorized.bitmap.data.map((pixel, index) => {
-            const red = colorized.bitmap.data[index + 0];
-            const green = colorized.bitmap.data[index + 1];
-            const blue = colorized.bitmap.data[index + 2];
-            const alpha = colorized.bitmap.data[index + 3];
+          // Process image using exact required implementation
+          for (let idx = 0; idx < colorized.bitmap.data.length; idx += 4) {
+            const red = colorized.bitmap.data[idx + 0];
+            const green = colorized.bitmap.data[idx + 1];
+            const blue = colorized.bitmap.data[idx + 2];
+            const alpha = colorized.bitmap.data[idx + 3];
             
             if (alpha > 0) {
-              const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-              return [
-                Math.round(rgb.r * luminance),
-                Math.round(rgb.g * luminance),
-                Math.round(rgb.b * luminance),
-                alpha
-              ];
+              // Calculate SINGLE luminance value using required method
+              const luminance = LUMINANCE_METHODS.NATURAL.calculate(red, green, blue);
+              
+              // Validate color application
+              if (!validateColorApplication(red, green, blue, rgbColor, luminance)) {
+                throw new Error('Color application validation failed - please report this issue');
+              }
+              
+              // Apply same luminance value to each channel exactly as specified
+              colorized.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
+              colorized.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
+              colorized.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
             }
-            return [red, green, blue, alpha];
-          }).flat();
+          }
           
           const base64 = await new Promise((resolve, reject) => {
             const canvas = document.createElement('canvas');
@@ -753,11 +762,10 @@ function App() {
             });
           });
           folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, base64);
+          processed++;
+          setProcessedCount(processed);
+          setBatchProgress(Math.round((processed / colors.length) * 100));
         }));
-        
-        // Update progress after each chunk
-        const progress = Math.round(((chunkIndex + 1) * CHUNK_SIZE / colors.length) * 100);
-        setBatchProgress(Math.min(progress, 100));
         
         // Let UI update
         await new Promise(resolve => setTimeout(resolve, 0));
@@ -765,6 +773,7 @@ function App() {
       
       console.log('Generating ZIP file...');
       setBatchStatus('saving');
+      setBatchProgress(0);
       
       const content = await zip.generateAsync({
         type: "blob",
@@ -796,6 +805,8 @@ function App() {
     } finally {
       setIsProcessing(false);
       setBatchProgress(0);
+      setProcessedCount(0);
+      setTotalCount(0);
     }
   };
 
@@ -1020,6 +1031,24 @@ function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
+
+  const validateColorApplication = (red, green, blue, rgbColor, luminance) => {
+    // Verify we're using LUMINANCE_METHODS
+    if (typeof LUMINANCE_METHODS.NATURAL.calculate !== 'function') {
+      console.error('Color Application Error: LUMINANCE_METHODS.NATURAL.calculate is not available');
+      return false;
+    }
+
+    // Verify luminance matches the required calculation
+    const correctLuminance = LUMINANCE_METHODS.NATURAL.calculate(red, green, blue);
+    if (Math.abs(correctLuminance - luminance) > 0.001) {
+      console.error('Color Application Error: Incorrect luminance calculation detected');
+      return false;
+    }
+
+    return true;
   };
 
   return (
@@ -1087,10 +1116,26 @@ function App() {
           {/* Color Section */}
           <Box sx={{ mb: 1 }}>
             {/* Section B: RGB Color Disc */}
+            <Typography 
+              variant="h2" 
+              sx={{ 
+                mb: 2,
+                textAlign: 'center',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                '@media (max-width: 532px)': {
+                  fontSize: '1.1rem'
+                }
+              }}
+            >
+              Pick a color or Enter a HEX code
+            </Typography>
             <Box sx={{ 
               display: 'flex',
               justifyContent: 'center',
-              mb: 3
+              mb: 2
             }}>
               <Wheel
                 ref={wheelRef}
@@ -1109,7 +1154,7 @@ function App() {
               alignItems: 'center',
               gap: 2,
               width: '100%',
-              mb: 3,
+              mb: 2,
               pl: '40px'  
             }}>
               {/* GRAY Value Display */}
@@ -1302,13 +1347,13 @@ function App() {
             </Box>
           </Box>
 
-          <Box sx={{ my: 5 }}>
+          <Box sx={{ my: 2 }}>
             <Box
               sx={{
                 width: '100%',
                 height: '4px',
                 backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-                my: 5  
+                my: 2  
               }}
             />
           </Box>
@@ -1317,7 +1362,7 @@ function App() {
           <Typography 
             variant="h2" 
             sx={{ 
-              mb: 4,  
+              mb: 2,  
               textAlign: 'center',
               fontFamily: "'Inter', sans-serif",
               fontSize: '1.25rem',
@@ -1338,7 +1383,7 @@ function App() {
             alignItems: 'center',
             justifyContent: 'center', 
             mt: 1,
-            mb: 3,
+            mb: 2,
             width: '100%',
             '@media (max-width: 600px)': {
               flexDirection: 'column',
@@ -1406,7 +1451,7 @@ function App() {
           <Box sx={{
             position: 'relative',
             zIndex: 1,
-            mt: 2,
+            mt: 1,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
@@ -1452,7 +1497,7 @@ function App() {
           {/* Section G: Image Processing */}
           <Box sx={{ 
             width: '100%', 
-            mt: 2,
+            mt: 1,
             position: 'relative',
             zIndex: 2  
           }}>
@@ -1510,12 +1555,13 @@ function App() {
                 fontSize: '1.25rem',
                 fontWeight: 600,
                 color: 'var(--text-primary)',
+                mb: 3,  // Added margin bottom
                 '@media (max-width: 532px)': {
                   fontSize: '1.1rem'
                 }
               }}
             >
-              Create your color T-shirt/product blanks in Bulk
+              Create BULK T-Shirt blanks in True Color
             </Typography>
 
             {/* Catalog selector */}
@@ -1587,9 +1633,27 @@ function App() {
                   variant="contained"
                   onClick={handleGenerateAll}
                   disabled={isProcessing || !imageLoaded}
-                  sx={{ width: '140px' }}
+                  sx={{ 
+                    width: '140px',
+                    position: 'relative'
+                  }}
                 >
-                  GENERATE ALL
+                  {isProcessing ? (
+                    <>
+                      <CircularProgress
+                        size={16}
+                        sx={{
+                          color: 'var(--text-primary)',
+                          position: 'absolute',
+                          left: '50%',
+                          marginLeft: '-8px'
+                        }}
+                      />
+                      <span style={{ visibility: 'hidden' }}>GENERATE ALL</span>
+                    </>
+                  ) : (
+                    'GENERATE ALL'
+                  )}
                 </GlowTextButton>
                 <GlowTextButton
                   variant="contained"
@@ -1618,13 +1682,17 @@ function App() {
               </GlowTextButton>
 
               {/* Progress Indicator */}
-              {batchStatus === 'processing' && (
+              {(batchStatus === 'processing' || batchStatus === 'saving') && (
                 <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
                   <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
-                    Processing: {batchProgress}% ({processedCount} of {totalCount})
+                    {batchStatus === 'processing' ? (
+                      `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
+                    ) : (
+                      'Creating ZIP file...'
+                    )}
                   </Typography>
                   <LinearProgress 
-                    variant="determinate" 
+                    variant={batchStatus === 'saving' ? 'indeterminate' : 'determinate'}
                     value={batchProgress} 
                     sx={{
                       height: 8,
@@ -1705,100 +1773,89 @@ function App() {
             />
           </Box>
 
-          {/* Fourth separator - before HEXTRA section */}
-          <Box
+          <ColorDemo catalog={catalogColors} />
+
+          {/* Footer */}
+          <Box 
+            component="footer" 
             sx={{
               width: '100%',
-              height: '4px',
-              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  
+              borderTop: '1px solid var(--border-color)',
+              bgcolor: 'var(--background-paper)',
+              p: 2,
+              mt: 'auto'
             }}
-          />
+          >
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              align="center"
+            >
+              2025 HEXTRA Color System v{VERSION}. All rights reserved.
+            </Typography>
+          </Box>
 
-        </Box>
-      </Box>
-
-      <ColorDemo catalog={catalogColors} />
-
-      {/* Footer */}
-      <Box 
-        component="footer" 
-        sx={{
-          width: '100%',
-          borderTop: '1px solid var(--border-color)',
-          bgcolor: 'var(--background-paper)',
-          p: 2,
-          mt: 'auto'
-        }}
-      >
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          align="center"
-        >
-          2025 HEXTRA Color System v{VERSION}. All rights reserved.
-        </Typography>
-      </Box>
-
-      {isProcessing && (
-        <Box
-          position="fixed"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bgcolor="rgba(0, 0, 0, 0.7)"
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          zIndex={9999}
-        >
-          <CircularProgress size={60} thickness={4} />
-          <Typography variant="h6" color="white" mt={2}>
-            {batchStatus === 'processing' ? 'Processing Images...' : 'Preparing Download...'}
-          </Typography>
-          {batchProgress > 0 && (
-            <Box sx={{ width: '200px', mt: 2 }}>
-              <Typography variant="body2" color="white" align="center" mt={1}>
-                Processing: {batchProgress}%
+          {isProcessing && (
+            <Box
+              position="fixed"
+              top={0}
+              left={0}
+              right={0}
+              bottom={0}
+              bgcolor="rgba(0, 0, 0, 0.7)"
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              zIndex={9999}
+            >
+              <CircularProgress size={60} thickness={4} />
+              <Typography variant="h6" color="white" mt={2}>
+                {batchStatus === 'processing' ? 'Processing Images...' : 'Preparing Download...'}
               </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={batchProgress} 
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 4,
-                  }
-                }}
-              />
+              {batchProgress > 0 && (
+                <Box sx={{ width: '200px', mt: 2 }}>
+                  <Typography variant="body2" color="white" align="center" mt={1}>
+                    Processing: {batchProgress}%
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={batchProgress} 
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 4,
+                      }
+                    }}
+                  />
+                </Box>
+              )}
+            </Box>
+          )}
+          {isTestingJimp && (
+            <Box
+              position="fixed"
+              top={0}
+              left={0}
+              right={0}
+              bottom={0}
+              bgcolor="rgba(0, 0, 0, 0.7)"
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              zIndex={9999}
+            >
+              <CircularProgress size={60} thickness={4} />
+              <Typography variant="h6" color="white" mt={2}>
+                Testing Jimp color processing...
+              </Typography>
             </Box>
           )}
         </Box>
-      )}
-      {isTestingJimp && (
-        <Box
-          position="fixed"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bgcolor="rgba(0, 0, 0, 0.7)"
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          zIndex={9999}
-        >
-          <CircularProgress size={60} thickness={4} />
-          <Typography variant="h6" color="white" mt={2}>
-            Testing Jimp color processing...
-          </Typography>
-        </Box>
-      )}
+      </Box>
     </Box>
   );
 }

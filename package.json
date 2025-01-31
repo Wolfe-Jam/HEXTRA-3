@@ -61,9 +61,11 @@
     "assert": "assert"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "DISABLE_ESLINT_PLUGIN=true react-scripts start",
+    "build": "cross-env CI=false react-scripts build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:color": "jest color-application.test.js --watch",
     "eject": "react-scripts eject",
     "generate-icons": "node scripts/generate-icons.js",
     "vercel-build": "cross-env CI=false REACT_APP_KINDE_REDIRECT_URI=https://test.hextra.io/api/auth/kinde/callback REACT_APP_KINDE_LOGOUT_URI=https://test.hextra.io react-scripts build"

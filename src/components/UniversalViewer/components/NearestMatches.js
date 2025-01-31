@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
+import styled from '@emotion/styled';
 import useColorStore from '../../../state/ColorState';
 import { SwatchCard, SwatchCardColor, SwatchCardInfo } from '../styles/SwatchStyles';
 import GILDAN_6400 from '../../../data/catalogs/gildan6400';
