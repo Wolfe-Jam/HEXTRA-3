@@ -1788,10 +1788,13 @@ function App() {
           >
             <Typography 
               variant="body2" 
-              color="text.secondary" 
-              align="center"
+              sx={{
+                textAlign: 'center',
+                color: theme === 'dark' ? '#E8E8E8' : '#1A1A1A',
+                opacity: 0.8
+              }}
             >
-              2025 HEXTRA Color System v{VERSION}. All rights reserved.
+              {'\u00A9'} 2025 HEXTRA Color System v{VERSION}. All rights reserved.
             </Typography>
           </Box>
 
