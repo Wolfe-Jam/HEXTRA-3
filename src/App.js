@@ -205,44 +205,54 @@ function App() {
     setError('');
     
     try {
-      const colorized = originalImage.clone();
+      // Create a new image object with the same dimensions
+      const colorized = {
+        width: originalImage.width,
+        height: originalImage.height,
+        bitmap: {
+          data: new Uint8ClampedArray(originalImage.bitmap.data),
+          width: originalImage.width,
+          height: originalImage.height
+        }
+      };
       
-      colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-        const red = this.bitmap.data[idx + 0];
-        const green = this.bitmap.data[idx + 1];
-        const blue = this.bitmap.data[idx + 2];
-        const alpha = this.bitmap.data[idx + 3];
+      // Process each pixel
+      for (let i = 0; i < colorized.bitmap.data.length; i += 4) {
+        const red = colorized.bitmap.data[i];
+        const green = colorized.bitmap.data[i + 1];
+        const blue = colorized.bitmap.data[i + 2];
+        const alpha = colorized.bitmap.data[i + 3];
         
         if (alpha > 0) {
-          const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+          // Calculate single luminance value
+          const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
           
-          // Always apply color to working image, keep test image grayscale
-          if (useTestImage) {
-            const value = Math.round(luminance * 255);
-            this.bitmap.data[idx + 0] = value;
-            this.bitmap.data[idx + 1] = value;
-            this.bitmap.data[idx + 2] = value;
-          } else {
-            this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
-            this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
-            this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
-          }
+          // Apply same luminance to each channel of target color
+          colorized.bitmap.data[i] = Math.round(rgbColor.r * luminance);
+          colorized.bitmap.data[i + 1] = Math.round(rgbColor.g * luminance);
+          colorized.bitmap.data[i + 2] = Math.round(rgbColor.b * luminance);
         }
-      });
+      }
 
-      const base64 = await new Promise((resolve, reject) => {
-        colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
-          if (err) reject(err);
-          else resolve(base64);
-        });
-      });
+      // Create canvas to generate base64
+      const canvas = document.createElement('canvas');
+      canvas.width = colorized.width;
+      canvas.height = colorized.height;
+      const ctx = canvas.getContext('2d');
+      
+      // Create ImageData and put on canvas
+      const imageData = new ImageData(
+        colorized.bitmap.data,
+        colorized.width,
+        colorized.height
+      );
+      ctx.putImageData(imageData, 0, 0);
+      
+      // Get base64
+      const base64 = canvas.toDataURL('image/png');
       
       setProcessedImage(colorized);
-      if (useTestImage) {
-        setTestProcessedUrl(base64);
-      } else {
-        setWorkingProcessedUrl(base64);
-      }
+      setWorkingProcessedUrl(base64);
       setCanDownload(true);
       setError('');
     } catch (err) {
@@ -367,93 +377,62 @@ function App() {
     setRgbColor(hexToRgb(DEFAULT_COLOR));
   }, []);
 
-  const handleDefaultImageLoad = (imageUrl) => {
-    setWorkingImageUrl(imageUrl);
-    setWorkingProcessedUrl(imageUrl);
-    setImageLoaded(true);
-    setCanDownload(true);
-  };
+  const handleDefaultImageLoad = async (imageUrl) => {
+    try {
+      console.log('Loading default WebP image from:', imageUrl);
+      
+      // Load image as HTMLImageElement first
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      
+      await new Promise((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Failed to load default image'));
+        img.src = imageUrl;
+      });
 
-  // Theme effect
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.style.setProperty('--text-primary', theme === 'light' ? '#141414' : '#F8F8F8');
-    document.documentElement.style.setProperty('--text-secondary', theme === 'light' ? '#666666' : '#A0A0A0');
-    document.documentElement.style.setProperty('--text-disabled', theme === 'light' ? 'rgba(20, 20, 20, 0.26)' : 'rgba(248, 248, 248, 0.3)');
-    document.documentElement.style.setProperty('--bg-primary', theme === 'light' ? '#F8F8F8' : '#141414');
-    document.documentElement.style.setProperty('--bg-secondary', theme === 'light' ? '#F0F0F0' : '#1E1E1E');
-    document.documentElement.style.setProperty('--element-bg', theme === 'light' ? '#FFFFFF' : '#000000');
-    document.documentElement.style.setProperty('--border-color', theme === 'light' ? '#E0E0E0' : '#2A2A2A');
-    document.documentElement.style.setProperty('--border-subtle', theme === 'light' ? 'rgba(20, 20, 20, 0.1)' : 'rgba(248, 248, 248, 0.15)');
-    document.documentElement.style.setProperty('--input-border', theme === 'light' ? '#E0E0E0' : '#333333');
-    document.documentElement.style.setProperty('--glow-color', '#FF9900');
-    document.documentElement.style.setProperty('--glow-subtle', theme === 'light' ? 'rgba(255, 153, 0, 0.2)' : 'rgba(255, 153, 0, 0.25)');
-    document.documentElement.style.setProperty('--accent-color', '#FF4400');
-    document.documentElement.style.setProperty('--accent-color-hover', '#FF5500');
-    document.documentElement.style.setProperty('--accent-color-subtle', theme === 'light' ? 'rgba(255, 68, 0, 0.15)' : 'rgba(255, 68, 0, 0.25)');
-  }, [theme]);
-
-  // Input hover/focus styles
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      input:hover {
-        border-color: var(--glow-color) !important;
-        box-shadow: 0 0 0 3px var(--glow-subtle) !important;
-      }
-      input:focus {
-        border-color: var(--glow-color) !important;
-        box-shadow: 0 0 0 3px var(--glow-subtle) !important;
-      }
-      input::placeholder {
-        color: var(--text-secondary);
-      }
-    `;
-    document.head.appendChild(style);
-    return () => document.head.removeChild(style);
-  }, [theme]);
-
-  useEffect(() => {
-    if (isDropdownSelection) {
-      applyColor();
-      setIsDropdownSelection(false);  // Reset the flag after applying
+      // Create a canvas to get pixel data
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      
+      // Get image data
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      
+      // Create image from raw data
+      const image = {
+        width: imageData.width,
+        height: imageData.height,
+        bitmap: {
+          data: imageData.data,
+          width: imageData.width,
+          height: imageData.height
+        }
+      };
+      
+      console.log('Default image loaded successfully');
+      
+      setOriginalImage(image);
+      setWorkingImageUrl(imageUrl);
+      setWorkingProcessedUrl(imageUrl);
+      setImageLoaded(true);
+      setCanDownload(true);
+      setError('');
+    } catch (err) {
+      console.error('Error loading default image:', err);
+      setError('Failed to load default image');
+      setImageLoaded(false);
+      setCanDownload(false);
     }
-  }, [isDropdownSelection]);  
-
-  const handleDropdownSelection = (color) => {
-    const rgb = hexToRgb(color);
-    if (rgb) {
-      setRgbColor(rgb);
-      setSelectedColor(color);
-      setHexInput(color);
-      setIsDropdownSelection(true);
-      if (wheelRef.current) {
-        wheelRef.current.setHsva({
-          h: rgbToHsv(rgb.r, rgb.g, rgb.b).h,
-          s: rgbToHsv(rgb.r, rgb.g, rgb.b).s,
-          v: rgbToHsv(rgb.r, rgb.g, rgb.b).v,
-          a: 1
-        });
-      }
-    }
-  };
-
-  const handleQuickDownload = () => {
-    if (!processedImage || !canDownload) return;
-    
-    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.png`;
-    
-    const link = document.createElement('a');
-    link.href = useTestImage ? testProcessedUrl : workingProcessedUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   useEffect(() => {
     if (!workingImageUrl) return;
+    
+    // Skip if this is just a processed URL update
+    if (workingImageUrl.startsWith('data:')) return;
     
     setError('');
     setIsProcessing(true);
@@ -497,24 +476,8 @@ function App() {
         
         setOriginalImage(image);
         setImageLoaded(true);
-        
-        const base64 = await new Promise((resolve, reject) => {
-          const canvas = document.createElement('canvas');
-          canvas.width = image.width;
-          canvas.height = image.height;
-          const ctx = canvas.getContext('2d');
-          const imageData = new ImageData(image.bitmap.data, image.width, image.height);
-          ctx.putImageData(imageData, 0, 0);
-          canvas.toBlob((blob) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              resolve(reader.result);
-            };
-            reader.readAsDataURL(blob);
-          });
-        });
         setProcessedImage(image);
-        setWorkingProcessedUrl(base64);
+        setWorkingProcessedUrl(workingImageUrl);
         setCanDownload(true);
       } catch (error) {
         console.error('Error loading image:', error);
@@ -983,6 +946,82 @@ function App() {
     // Removed this function
   };
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.style.setProperty('--text-primary', theme === 'light' ? '#141414' : '#F8F8F8');
+    document.documentElement.style.setProperty('--text-secondary', theme === 'light' ? '#666666' : '#A0A0A0');
+    document.documentElement.style.setProperty('--text-disabled', theme === 'light' ? 'rgba(20, 20, 20, 0.26)' : 'rgba(248, 248, 248, 0.3)');
+    document.documentElement.style.setProperty('--bg-primary', theme === 'light' ? '#F8F8F8' : '#141414');
+    document.documentElement.style.setProperty('--bg-secondary', theme === 'light' ? '#F0F0F0' : '#1E1E1E');
+    document.documentElement.style.setProperty('--element-bg', theme === 'light' ? '#FFFFFF' : '#000000');
+    document.documentElement.style.setProperty('--border-color', theme === 'light' ? '#E0E0E0' : '#2A2A2A');
+    document.documentElement.style.setProperty('--border-subtle', theme === 'light' ? 'rgba(20, 20, 20, 0.1)' : 'rgba(248, 248, 248, 0.15)');
+    document.documentElement.style.setProperty('--input-border', theme === 'light' ? '#E0E0E0' : '#333333');
+    document.documentElement.style.setProperty('--glow-color', '#FF9900');
+    document.documentElement.style.setProperty('--glow-subtle', theme === 'light' ? 'rgba(255, 153, 0, 0.2)' : 'rgba(255, 153, 0, 0.25)');
+    document.documentElement.style.setProperty('--accent-color', '#FF4400');
+    document.documentElement.style.setProperty('--accent-color-hover', '#FF5500');
+    document.documentElement.style.setProperty('--accent-color-subtle', theme === 'light' ? 'rgba(255, 68, 0, 0.15)' : 'rgba(255, 68, 0, 0.25)');
+  }, [theme]);
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      input:hover {
+        border-color: var(--glow-color) !important;
+        box-shadow: 0 0 0 3px var(--glow-subtle) !important;
+      }
+      input:focus {
+        border-color: var(--glow-color) !important;
+        box-shadow: 0 0 0 3px var(--glow-subtle) !important;
+      }
+      input::placeholder {
+        color: var(--text-secondary);
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, [theme]);
+
+  useEffect(() => {
+    if (isDropdownSelection) {
+      applyColor();
+      setIsDropdownSelection(false);  // Reset the flag after applying
+    }
+  }, [isDropdownSelection]);  
+
+  const handleDropdownSelection = (color) => {
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      setRgbColor(rgb);
+      setSelectedColor(color);
+      setHexInput(color);
+      setIsDropdownSelection(true);
+      if (wheelRef.current) {
+        wheelRef.current.setHsva({
+          h: rgbToHsv(rgb.r, rgb.g, rgb.b).h,
+          s: rgbToHsv(rgb.r, rgb.g, rgb.b).s,
+          v: rgbToHsv(rgb.r, rgb.g, rgb.b).v,
+          a: 1
+        });
+      }
+    }
+  };
+
+  const handleQuickDownload = () => {
+    if (!processedImage || !canDownload) return;
+    
+    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.png`;
+    
+    const link = document.createElement('a');
+    link.href = useTestImage ? testProcessedUrl : workingProcessedUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <Box
       sx={{
@@ -1374,16 +1413,18 @@ function App() {
             maxWidth: '800px', // Match container max-width
             overflow: 'hidden'
           }}>
-            <DefaultTshirt onLoad={handleDefaultImageLoad} />
-            <img
-              src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
-              alt="Working"
-              style={{
-                maxWidth: '100%',
-                height: 'auto',
-                display: 'block' // Remove any extra space below image
-              }}
-            />
+            {!imageLoaded && <DefaultTshirt onLoad={handleDefaultImageLoad} />}
+            {imageLoaded && (
+              <img
+                src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
+                alt="Working"
+                style={{
+                  maxWidth: '100%',
+                  height: 'auto',
+                  display: 'block' // Remove any extra space below image
+                }}
+              />
+            )}
             {/* Download button using GlowButton */}
             <GlowButton
               onClick={handleQuickDownload}

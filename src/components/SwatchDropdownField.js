@@ -125,6 +125,7 @@ const SwatchDropdownField = ({
         }
         onChange?.({ target: { value: newValue } });
       }}
+      onKeyDown={onKeyDown}
       selectOnFocus
       handleHomeEndKeys
       autoSelect
@@ -147,7 +148,6 @@ const SwatchDropdownField = ({
         <StyledTextField
           {...params}
           placeholder={placeholder}
-          onKeyDown={onKeyDown}
           sx={{ ...sx }}
           InputProps={{
             ...params.InputProps,
