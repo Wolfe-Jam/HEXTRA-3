@@ -1,6 +1,6 @@
 {
-  "name": "hextra",
-  "version": "2.1.0",
+  "name": "hextra-3",
+  "version": "2.1.5",
   "private": true,
   "engines": {
     "node": "18.x",

@@ -1,5 +1,14 @@
 import Jimp from 'jimp';
 
+// Luminance calculation methods
+export const LUMINANCE_METHODS = {
+  NATURAL: {
+    calculate: (r, g, b) => {
+      return (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+    }
+  }
+};
+
 // Cache for processed images
 const processedImageCache = new Map();
 
@@ -32,22 +41,37 @@ export const processImage = async (imageUrl, color) => {
     const image = await Jimp.read(imageUrl);
     const { r, g, b } = hexToRgb(color);
     
-    // Pre-calculate division
-    const inv255 = 1 / 255;
+    // Create clean copy of original image
+    const imageData = {
+      width: image.bitmap.width,
+      height: image.bitmap.height,
+      bitmap: {
+        data: new Uint8ClampedArray(image.bitmap.data),
+        width: image.bitmap.width,
+        height: image.bitmap.height
+      }
+    };
     
-    // Use Uint8Array for better performance
-    const { data } = image.bitmap;
-    const buffer = new Uint8Array(data.buffer);
-    
-    for (let i = 0; i < buffer.length; i += 4) {
-      // Fast grayscale calculation
-      const gray = (buffer[i] + buffer[i + 1] + buffer[i + 2]) * inv255 * 0.333333;
+    // Process each pixel
+    for (let idx = 0; idx < imageData.bitmap.data.length; idx += 4) {
+      const red = imageData.bitmap.data[idx];
+      const green = imageData.bitmap.data[idx + 1];
+      const blue = imageData.bitmap.data[idx + 2];
+      const alpha = imageData.bitmap.data[idx + 3];
       
-      // Direct buffer manipulation
-      buffer[i] = r * gray;
-      buffer[i + 1] = g * gray;
-      buffer[i + 2] = b * gray;
+      if (alpha > 0) {
+        // Calculate NATURAL luminance
+        const luminance = LUMINANCE_METHODS.NATURAL.calculate(red, green, blue);
+        
+        // Apply same luminance to each channel
+        imageData.bitmap.data[idx] = Math.round(r * luminance);
+        imageData.bitmap.data[idx + 1] = Math.round(g * luminance);
+        imageData.bitmap.data[idx + 2] = Math.round(b * luminance);
+      }
     }
+    
+    // Update image with processed data
+    image.bitmap.data = Buffer.from(imageData.bitmap.data);
     
     // Convert to base64
     const base64 = await image.getBase64Async(Jimp.MIME_PNG);

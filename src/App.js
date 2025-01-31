@@ -303,7 +303,22 @@ function App() {
           return newTheme;
         })}
         navigate={navigate}
-      />
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <GlowTextButton 
+            disabled={true} 
+            sx={{ 
+              opacity: 0.5,
+              cursor: 'not-allowed',
+              '&:hover': {
+                opacity: 0.5
+              }
+            }}
+          >
+            Login (Coming in v2.2.0)
+          </GlowTextButton>
+        </Box>
+      </Banner>
       
       <Box className="app-content">
         <Typography 
@@ -979,7 +994,9 @@ function App() {
                           const response = await fetch(processedUrl);
                           const blob = await response.blob();
                           
-                          folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, blob);
+                          const date = new Date().toISOString().split('T')[0];
+                          const filename = `HEXTRA-${date}-${activeCatalog}_${color.hex.replace('#', '')}.png`;
+                          folder.file(filename, blob);
                         }));
                         
                         // Update progress after each chunk
@@ -1007,7 +1024,8 @@ function App() {
                       const url = window.URL.createObjectURL(content);
                       const link = document.createElement('a');
                       link.href = url;
-                      link.download = `HEXTRA-${activeCatalog}-${new Date().toISOString().split('T')[0]}.zip`;
+                      const date = new Date().toISOString().split('T')[0];
+                      link.download = `HEXTRA-${date}-${activeCatalog}_${colors.length}`;
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
