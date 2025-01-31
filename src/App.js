@@ -1,25 +1,25 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress, TextField, InputAdornment, IconButton, ToggleButton } from '@mui/material';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Box, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
+import { hexToRgb } from './utils/image-processing';
+import { processImage } from './utils/image-processing';
+import TagIcon from '@mui/icons-material/Tag';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { LinkRounded as LinkIcon } from '@mui/icons-material';
 import { Wheel } from '@uiw/react-color';
-import Jimp from 'jimp';
 import JSZip from 'jszip';
-import Banner from './components/Banner';
-import GlowButton from './components/GlowButton';
+import SwatchDropdownField from './components/SwatchDropdownField';
 import GlowTextButton from './components/GlowTextButton';
-import GlowToggleGroup from './components/GlowToggleGroup';
+import GlowButton from './components/GlowButton';
 import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
-import SwatchDropdownField from './components/SwatchDropdownField';
-import HCS from './components/HCS';
-import GILDAN_64 from './data/catalogs/gildan64000';
-import GILDAN_3000 from './data/catalogs/gildan3000';
+import Banner from './components/Banner';
+import { useNavigate } from 'react-router-dom';
+import DefaultTshirt from './components/DefaultTshirt';
+import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
-import TagIcon from '@mui/icons-material/Tag';
-import { ColorTheory } from './utils/colorTheory';
+import { debounce } from 'lodash';
 
-const DEFAULT_COLOR = GILDAN_64[0].hex;  // White
+const DEFAULT_COLOR = GILDAN_64000[0].hex;  // White
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.png';
 const TEST_IMAGE_URL = '/images/Test-Gradient-600-400.webp';
 const DEFAULT_COLORS = [
@@ -31,56 +31,6 @@ const DEFAULT_COLORS = [
   '#CABFAD'   // Neutral
 ];
 const VERSION = '2.1.1'; // Starting new features after THE IMAGE FACTORY
-
-function hexToRgb(hex) {
-  // Remove the hash if present
-  hex = hex.replace('#', '');
-  
-  // Parse the hex values
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  
-  return { r, g, b };
-}
-
-function normalizeHex(hex) {
-  // Remove #
-  hex = hex.replace('#', '');
-  
-  // Handle short forms like #000 -> #000000
-  if (hex.length === 3) {
-    hex = hex.split('').map(char => char + char).join('');
-  }
-  
-  return '#' + hex;
-}
-
-function rgbToHsv(r, g, b) {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const delta = max - min;
-
-  let h;
-  if (delta === 0) {
-    h = 0;
-  } else if (max === r) {
-    h = (60 * ((g - b) / delta) + 360) % 360;
-  } else if (max === g) {
-    h = (60 * ((b - r) / delta) + 120) % 360;
-  } else if (max === b) {
-    h = (60 * ((r - g) / delta) + 240) % 360;
-  }
-
-  const s = max === 0 ? 0 : delta / max;
-  const v = max;
-
-  return { h, s, v };
-}
 
 function App() {
   // State for color selection
@@ -132,16 +82,16 @@ function App() {
 
   // Add state for catalog colors
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
-  const [catalogColors, setCatalogColors] = useState(GILDAN_64);
+  const [catalogColors, setCatalogColors] = useState(GILDAN_64000);
 
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Color catalog with RGB values for matching
   const colorCatalog = useMemo(() => 
-    GILDAN_64.map(color => ({
+    GILDAN_64000.map(color => ({
       ...color,
-      rgb: ColorTheory.hexToRgb(color.hex)
+      rgb: hexToRgb(color.hex)
     }))
   , []);
 
@@ -151,8 +101,8 @@ function App() {
     
     // If it's a valid hex color, find nearest matches
     if (/^#?[0-9A-F]{6}$/i.test(searchValue.replace('#', ''))) {
-      const targetRgb = ColorTheory.hexToRgb(searchValue);
-      return ColorTheory.findNearest(targetRgb, colorCatalog);
+      const targetRgb = hexToRgb(searchValue);
+      return findNearest(targetRgb, colorCatalog);
     }
     
     // Otherwise filter by name and family
@@ -252,10 +202,10 @@ function App() {
   };
 
   const resetColor = () => {
-    const defaultColor = GILDAN_64[0].hex; // White
+    const defaultColor = GILDAN_64000[0].hex; // White
     setSelectedColor(defaultColor);
     setHexInput(defaultColor.replace('#', ''));
-    setRgbColor(ColorTheory.hexToRgb(defaultColor));
+    setRgbColor(hexToRgb(defaultColor));
     updateSingleColor(defaultColor);
   };
 
@@ -276,22 +226,8 @@ function App() {
     setError('');
     
     try {
-      const colorized = originalImage.clone();
+      const colorized = await processImage(originalImage, rgbColor, luminanceMethod, enhanceEffect);
       
-      colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-        const red = this.bitmap.data[idx + 0];
-        const green = this.bitmap.data[idx + 1];
-        const blue = this.bitmap.data[idx + 2];
-        const alpha = this.bitmap.data[idx + 3];
-        
-        if (alpha > 0) {
-          const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-          this.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
-          this.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
-          this.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
-        }
-      });
-
       const base64 = await new Promise((resolve, reject) => {
         colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
           if (err) reject(err);
@@ -324,21 +260,7 @@ function App() {
       const rgb = hexToRgb(hex);
       if (!rgb) return;
       
-      const colorized = originalImage.clone();
-      
-      colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-        const red = this.bitmap.data[idx + 0];
-        const green = this.bitmap.data[idx + 1];
-        const blue = this.bitmap.data[idx + 2];
-        const alpha = this.bitmap.data[idx + 3];
-        
-        if (alpha > 0) {
-          const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-          this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
-          this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
-          this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
-        }
-      });
+      const colorized = await processImage(originalImage, rgb, luminanceMethod, enhanceEffect);
       
       const buffer = await colorized.getBufferAsync(Jimp.MIME_PNG);
       const url = URL.createObjectURL(new Blob([buffer], { type: 'image/png' }));
@@ -366,9 +288,14 @@ function App() {
       const image = await Jimp.read(await file.arrayBuffer());
       setOriginalImage(image);
       setImageLoaded(true);
-      setWorkingImage(file);
-      setWorkingImageUrl(DEFAULT_IMAGE_URL);
-      setWorkingProcessedUrl(DEFAULT_IMAGE_URL);
+      // Get initial base64 for display
+      image.getBase64(Jimp.MIME_PNG, (err, base64) => {
+        if (!err) {
+          setProcessedImage(image);
+          setWorkingProcessedUrl(base64);
+          setCanDownload(true);
+        }
+      });
     } catch (err) {
       console.error('Error loading image:', err);
       setError('Error loading image. Please try a different file.');
@@ -407,63 +334,6 @@ function App() {
   const wheelRef = useRef(null);
   const grayValueRef = useRef(null);
   const hexInputRef = useRef(null);
-
-  // Convert RGB to HSL
-  const rgbToHsl = (r, g, b) => {
-    r /= 255;
-    g /= 255;
-    b /= 255;
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
-
-    if (max === min) {
-      h = s = 0;
-    } else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        case b: h = (r - g) / d + 4; break;
-      }
-      h /= 6;
-    }
-    return { h: h * 360, s: s * 100, l: l * 100 };
-  };
-
-  // Convert HSL to RGB
-  const hslToRgb = (h, s, l) => {
-    h /= 360;
-    s /= 100;
-    l /= 100;
-    let r, g, b;
-
-    if (s === 0) {
-      r = g = b = l;
-    } else {
-      const hue2rgb = (p, q, t) => {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1/6) return p + (q - p) * 6 * t;
-        if (t < 1/2) return q;
-        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-        return p;
-      };
-
-      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-      const p = 2 * l - q;
-      r = hue2rgb(p, q, h + 1/3);
-      g = hue2rgb(p, q, h);
-      b = hue2rgb(p, q, h - 1/3);
-    }
-
-    return {
-      r: Math.round(r * 255),
-      g: Math.round(g * 255),
-      b: Math.round(b * 255)
-    };
-  };
 
   const handleGraySwatchClick = (e) => {
     e.preventDefault();
@@ -1037,10 +907,13 @@ function App() {
     
     setIsProcessing(true);
     setBatchStatus('processing');
+    setBatchProgress(0);
+    setProcessedCount(0);
     setError('');
     
     try {
       const colors = catalogColors; // Use current catalog
+      setTotalCount(colors.length);
       console.log(`Processing ${colors.length} colors from ${activeCatalog}`);
       
       const zip = new JSZip();
@@ -1053,6 +926,7 @@ function App() {
         chunks.push(colors.slice(i, i + CHUNK_SIZE));
       }
       
+      let processed = 0;
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
         const chunk = chunks[chunkIndex];
         
@@ -1060,36 +934,53 @@ function App() {
         await Promise.all(chunk.map(async (color) => {
           console.log(`Processing color: ${color.name} (${color.hex})`);
           
-          const rgb = hexToRgb(color.hex);
-          if (!rgb) {
+          const rgbColor = hexToRgb(color.hex);
+          if (!rgbColor) {
             console.error(`Invalid hex color: ${color.hex}`);
             return;
           }
           
           const colorized = originalImage.clone();
           
-          // Process image
-          colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-            const red = this.bitmap.data[idx + 0];
-            const green = this.bitmap.data[idx + 1];
-            const blue = this.bitmap.data[idx + 2];
-            const alpha = this.bitmap.data[idx + 3];
+          // Process image using exact required implementation
+          for (let idx = 0; idx < colorized.bitmap.data.length; idx += 4) {
+            const red = colorized.bitmap.data[idx + 0];
+            const green = colorized.bitmap.data[idx + 1];
+            const blue = colorized.bitmap.data[idx + 2];
+            const alpha = colorized.bitmap.data[idx + 3];
             
             if (alpha > 0) {
-              const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-              this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
-              this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
-              this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
+              // Calculate SINGLE luminance value using required method
+              const luminance = LUMINANCE_METHODS.NATURAL.calculate(red, green, blue);
+              
+              // Apply same luminance value to each channel exactly as specified
+              colorized.bitmap.data[idx + 0] = Math.round(rgbColor.r * luminance);
+              colorized.bitmap.data[idx + 1] = Math.round(rgbColor.g * luminance);
+              colorized.bitmap.data[idx + 2] = Math.round(rgbColor.b * luminance);
             }
+          }
+          
+          const base64 = await new Promise((resolve, reject) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = colorized.width;
+            canvas.height = colorized.height;
+            const ctx = canvas.getContext('2d');
+            const imageData = new ImageData(colorized.bitmap.data, colorized.width, colorized.height);
+            ctx.putImageData(imageData, 0, 0);
+            canvas.toBlob((blob) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                resolve(reader.result);
+              };
+              reader.readAsDataURL(blob);
+            });
           });
           
-          const buffer = await colorized.getBufferAsync(Jimp.MIME_PNG);
-          folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, buffer);
+          folder.file(`${color.name.replace(/[^a-z0-9]/gi, '_')}.png`, base64);
+          processed++;
+          setProcessedCount(processed);
+          setBatchProgress(Math.round((processed / colors.length) * 100));
         }));
-        
-        // Update progress after each chunk
-        const progress = Math.round(((chunkIndex + 1) * CHUNK_SIZE / colors.length) * 100);
-        setBatchProgress(Math.min(progress, 100));
         
         // Let UI update
         await new Promise(resolve => setTimeout(resolve, 0));
@@ -1097,6 +988,7 @@ function App() {
       
       console.log('Generating ZIP file...');
       setBatchStatus('saving');
+      setBatchProgress(0);
       
       const content = await zip.generateAsync({
         type: "blob",
@@ -1128,6 +1020,8 @@ function App() {
     } finally {
       setIsProcessing(false);
       setBatchProgress(0);
+      setProcessedCount(0);
+      setTotalCount(0);
     }
   };
 
@@ -1146,22 +1040,7 @@ function App() {
         const color = colors[i];
         const rgb = hexToRgb(color);
         
-        const colorized = originalImage.clone();
-        
-        colorized.scan(0, 0, colorized.bitmap.width, colorized.bitmap.height, function(x, y, idx) {
-          const red = this.bitmap.data[idx + 0];
-          const green = this.bitmap.data[idx + 1];
-          const blue = this.bitmap.data[idx + 2];
-          const alpha = this.bitmap.data[idx + 3];
-          
-          if (alpha > 0) {
-            const luminance = LUMINANCE_METHODS[luminanceMethod].calculate(red, green, blue);
-            
-            this.bitmap.data[idx + 0] = Math.round(rgb.r * luminance);
-            this.bitmap.data[idx + 1] = Math.round(rgb.g * luminance);
-            this.bitmap.data[idx + 2] = Math.round(rgb.b * luminance);
-          }
-        });
+        const colorized = await processImage(originalImage, rgb, luminanceMethod, enhanceEffect);
         
         const base64 = await new Promise((resolve, reject) => {
           colorized.getBase64(Jimp.MIME_PNG, (err, base64) => {
@@ -1217,7 +1096,7 @@ function App() {
     switch(catalogName) {
       case 'GILDAN_64000':
         setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64);
+        setCatalogColors(GILDAN_64000);
         break;
       case 'GILDAN_3000':
         setActiveCatalog('GILDAN_3000');
@@ -1225,7 +1104,7 @@ function App() {
         break;
       default:
         setActiveCatalog('GILDAN_64000');
-        setCatalogColors(GILDAN_64);
+        setCatalogColors(GILDAN_64000);
     }
   };
 
@@ -1386,743 +1265,374 @@ function App() {
   };
 
   return (
-    <Box sx={{ 
-      width: '100vw',
-      height: '100vh',
-      bgcolor: 'var(--bg-primary)',
-      color: 'var(--text-primary)',
-      transition: 'all 0.2s',
-      overflow: 'auto'
+    <Box className="App" sx={{ 
+      minHeight: '100vh',
+      backgroundColor: '#000000',
+      color: '#ffffff',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      p: 2
     }}>
-      <Banner 
-        title="HEXTRA"
-        version="2.1.1"
-        subtitle="Color Management for T-Shirt Design"
-        isDarkMode={theme === 'dark'}
-        onThemeToggle={toggleTheme}
-      />
-
-      {/* Main Content Container */}
-      <Box sx={{
-        flex: 1,
+      <Banner version={VERSION} />
+      
+      {/* Main Content Area */}
+      <Box sx={{ 
+        width: '100%',
+        maxWidth: '1200px',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        width: '100%',
-        maxWidth: '800px',
-        mx: 'auto',
-        px: 3,
-        '@media (max-width: 832px)': {
-          px: 2
-        }
+        gap: 2,
+        mt: 2
       }}>
-        {/* Upload Controls */}
-        <Box sx={{ 
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 2,
-          width: '100%',
-          mt: 16,
-          mb: 1
-        }}>
-          <GlowTextButton
-            component="label"
-            variant="contained"
-            disabled={isProcessing}
-            sx={{ width: '110px' }}
-          >
-            UPLOAD
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              onChange={(e) => handleImageUpload(e.target.files[0])}
-            />
-          </GlowTextButton>
-        </Box>
-
-        {/* URL Input and Button */}
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 2,
-          alignItems: 'center',
-          width: '100%',
-          maxWidth: '800px',
-          mb: 3
-        }}>
-          <IconTextField
-            placeholder="Paste image URL here..."
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            onKeyDown={handleUrlKeyPress}
-            startIcon={<LinkIcon />}
-            hasReset
-            onReset={() => setUrlInput('')}
-            sx={{ 
-              flex: 1,
-              minWidth: '500px',
-              '& .MuiInputBase-root': {
-                width: '100%'
-              }
-            }}
-          />
-          <GlowTextButton
-            variant="contained"
-            onClick={handleLoadUrl}
-            sx={{ 
-              width: '110px',
-              flexShrink: 0
-            }}
-          >
-            USE URL
-          </GlowTextButton>
-        </Box>
-
-        {/* Background toggles */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 3,
-          mb: 1
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-              Show Background
-            </Typography>
-            <GlowSwitch
-              checked={showCheckerboard}
-              onChange={handleShowCheckerboardChange}
-              size="small"
-            />
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-              Use Chroma
-            </Typography>
-            <GlowSwitch
-              checked={useChroma}
-              onChange={(e) => setUseChroma(e.target.checked)}
-              disabled={!showCheckerboard}
-              size="small"
-            />
-          </Box>
-        </Box>
-
-        {/* Main Image Window with Controls */}
+        
+        {/* Image Preview Section */}
         <Box sx={{
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          flexDirection: { xs: 'column', md: 'row' },
           gap: 2,
           width: '100%'
         }}>
-          {/* Image Display */}
+          
+          {/* Original Image */}
           <Box sx={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: '6000px',
-            minHeight: '400px',
-            maxHeight: '6000px',
-            backgroundColor: showCheckerboard ? (useChroma ? '#00FF00' : 'transparent') : 'transparent',
-            backgroundImage: showCheckerboard && !useChroma ? 'var(--checkerboard-pattern)' : 'none',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            transition: 'border-color 0.2s',
-            mb: 1
-          }}>
-            {/* Checkerboard background */}
-            {showCheckerboard && !useChroma && (
-              <Box sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 0,
-                backgroundImage: `
-                  linear-gradient(45deg, #808080 25%, transparent 25%),
-                  linear-gradient(-45deg, #808080 25%, transparent 25%),
-                  linear-gradient(45deg, transparent 75%, #808080 75%),
-                  linear-gradient(-45deg, transparent 75%, #808080 75%)
-                `,
-                backgroundSize: '20px 20px',
-                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                opacity: 0.1
-              }} />
-            )}
-            {/* Image content */}
-            <Box sx={{ 
-              position: 'relative', 
-              zIndex: 1, 
-              width: '100%',
-              height: '100%',
-              maxWidth: '6000px',
-              maxHeight: '6000px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}>
-              {isProcessing ? (
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  width: '100%',
-                  height: '100%',
-                  minHeight: '400px'
-                }}>
-                  <CircularProgress size={48} />
-                </Box>
-              ) : workingImageUrl ? (
-                <img
-                  src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
-                  alt="Working"
-                  onLoad={handleImageLoad}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    display: 'block'
-                  }}
-                />
-              ) : (
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  width: '100%',
-                  height: '100%',
-                  minHeight: '400px',
-                  color: 'var(--text-secondary)'
-                }}>
-                  Upload an image to begin
-                </Box>
-              )}
-            </Box>
-
-            {/* Download button */}
-            <GlowButton
-              onClick={handleDownload}
-              disabled={!canDownload}
-              sx={{
-                position: 'absolute',
-                right: '12px',
-                bottom: '12px',
-                minWidth: 'auto',
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 3
-              }}
-            >
-              <FileDownloadIcon />
-            </GlowButton>
-          </Box>
-
-          {/* Format toggle */}
-          <Box sx={{ 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',  
-            gap: 2,
-            width: '100%',
-            pr: 1,
-            mb: 3
-          }}>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                color: !useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                fontWeight: !useWebP ? 600 : 400
-              }}
-            >
-              PNG
-            </Typography>
-            <GlowSwitch
-              checked={useWebP}
-              onChange={handleWebPToggle}
-              size="small"
-            />
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                color: useWebP ? 'var(--primary-main)' : 'var(--text-secondary)',
-                fontWeight: useWebP ? 600 : 400
-              }}
-            >
-              WebP
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Color Controls Section */}
-        <Box sx={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          mb: 3
-        }}>
-          {/* Color Wheel */}
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            gap: 4,
-            width: '100%'
-          }}>
-            {/* Left side - Color Wheel */}
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 1,
-              mb: 2
-            }}>
-              <div 
-                style={{ 
-                  position: 'relative',
-                  width: '240px',
-                  height: '240px',
-                  cursor: 'crosshair'
-                }}
-              >
-                <Wheel
-                  color={selectedColor}
-                  onChange={(color) => {
-                    const hex = color.hex.toUpperCase();
-                    setSelectedColor(hex);
-                    setHexInput(hex.replace('#', ''));
-                    const newRgb = ColorTheory.hexToRgb(hex);
-                    setRgbColor(newRgb);
-                    // Update gray value (L from HSL)
-                    const { l } = rgbToHsl(newRgb.r, newRgb.g, newRgb.b);
-                    setGrayscaleValue(Math.round(l * 255 / 100));
-                    // Focus the HEX input
-                    if (hexInputRef.current) {
-                      hexInputRef.current.focus();
-                    }
-                  }}
-                  style={{
-                    width: '240px',
-                    height: '240px',
-                    touchAction: 'none'
-                  }}
-                />
-              </div>
-              <Typography sx={{ 
-                fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                whiteSpace: 'nowrap',
-                minWidth: '240px',
-                mr: -0.5  
-              }}>
-                RGB: {rgbColor.r.toString().padStart(3)}, {rgbColor.g.toString().padStart(3)}, {rgbColor.b.toString().padStart(3)}
-              </Typography>
-            </Box>
-
-            {/* Right side - Controls */}
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3,
-              flex: 1,
-              maxWidth: '400px',
-              pt: 1
-            }}>
-              {/* Title */}
-              <Typography sx={{
-                fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-                fontSize: '1rem',
-                color: 'var(--text-primary)',
-                ml: -1  // Align with color swatch
-              }}>
-                SINGLE COLOR APPLICATION
-              </Typography>
-
-              {/* Color Swatch and HEX Input on same line */}
-              <Box sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                ml: -1 // Adjust to align with wheel
-              }}>
-                <Box
-                  sx={{
-                    width: '54px',
-                    height: '54px',
-                    backgroundColor: selectedColor,
-                    borderRadius: '50%',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                    flexShrink: 0
-                  }}
-                />
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <SwatchDropdownField
-                    ref={hexInputRef}
-                    value={hexInput}
-                    onChange={(e) => {
-                      const newHex = e.target.value.toUpperCase();
-                      setHexInput(newHex);
-                      // Only update preview if it's a valid HEX
-                      if (/^[0-9A-F]{6}$/.test(newHex)) {
-                        const hex = '#' + newHex;
-                        setSelectedColor(hex);
-                        setRgbColor(ColorTheory.hexToRgb(hex));
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const hex = '#' + hexInput;
-                        setSelectedColor(hex);
-                        const newRgb = hexToRgb(hex);
-                        setRgbColor(newRgb);
-                        // Update gray value
-                        const grayValue = Math.round((newRgb.r + newRgb.g + newRgb.b) / 3);
-                        setGrayscaleValue(grayValue);
-                        applyColor();
-                      }
-                    }}
-                    placeholder={GILDAN_64[0].hex.replace('#', '')}
-                    startIcon={<TagIcon />}
-                    hasReset
-                    onReset={resetColor}
-                    options={GILDAN_64}
-                    onSelectionChange={(selected) => {
-                      // Only for catalog colors
-                      const hex = selected.hex;
-                      setHexInput(hex.replace('#', ''));
-                      setSelectedColor(hex);
-                      setRgbColor(ColorTheory.hexToRgb(hex));
-                      updateSingleColor(hex);
-                    }}
-                    sx={{ 
-                      minWidth: '160px',
-                      maxWidth: '200px',
-                      '& .MuiOutlinedInput-root': {
-                        paddingLeft: '8px'
-                      }
-                    }}
-                  />
-                  <Typography sx={{ 
-                    fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-                    fontSize: '0.75rem',
-                    color: 'var(--text-secondary)',
-                    mt: 1,
-                    ml: 1,
-                    letterSpacing: '0.05em'
-                  }}>
-                    {colorCatalog.find(c => c.hex.replace('#', '') === hexInput)?.name?.toUpperCase() || '\u00A0'}
-                  </Typography>
-                </Box>
-              </Box>
-
-              {/* Grayscale Controls */}
-              <Box sx={{
-                position: 'relative',
-                width: '100%',
-                height: '24px',
-                mt: 3,  // Add margin top
-                backgroundColor: 'transparent',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)',
-                background: 'linear-gradient(to right, #000000, #FFFFFF)',
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                px: 1
-              }}>
-                <Slider
-                  value={grayscaleValue}
-                  onChange={handleGrayscaleChange}
-                  min={0}
-                  max={255}
-                  sx={{
-                    width: '100%',
-                    '& .MuiSlider-thumb': {
-                      width: 20,
-                      height: 20,
-                      backgroundColor: 'transparent',
-                      border: '2px solid var(--glow-color)',
-                      outline: '1px solid rgba(0, 0, 0, 0.3)',
-                      boxShadow: 'inset 0 0 4px var(--glow-color), 0 0 4px var(--glow-color)',
-                      '&:before': {
-                        content: '""',
-                        position: 'absolute',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        backgroundColor: 'transparent',
-                      },
-                      '&:hover, &.Mui-focusVisible': {
-                        outline: '1px solid rgba(0, 0, 0, 0.4)',
-                        boxShadow: 'inset 0 0 6px var(--glow-color), 0 0 8px var(--glow-color)',
-                      }
-                    },
-                    '& .MuiSlider-track': {
-                      display: 'none'
-                    },
-                    '& .MuiSlider-rail': {
-                      opacity: 0
-                    }
-                  }}
-                />
-              </Box>
-
-              {/* Gray value display */}
-              <Box sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0,  
-                mt: 1
-              }}>
-                <Typography sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  whiteSpace: 'nowrap',
-                  minWidth: '120px',
-                  mr: -0.5  
-                }}>
-                  GRAY Value: {grayscaleValue}
-                </Typography>
-                <Box
-                  onClick={handleGraySwatchClick}
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    flexShrink: 0,
-                    backgroundColor: `rgb(${grayscaleValue}, ${grayscaleValue}, ${grayscaleValue})`,
-                    borderRadius: '50%',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                    cursor: 'pointer',
-                    transition: 'box-shadow 0.2s',
-                    ml: 2,  
-                    '&:hover': {
-                      boxShadow: '0 0 0 2px var(--glow-color)',
-                    }
-                  }}
-                />
-              </Box>
-
-            </Box>
-          </Box>
-
-          {/* Divider */}
-          <Box sx={{ 
-            width: '100%',  
-            height: '1px',  
-            bgcolor: 'var(--border-subtle)',
-            mb: 2 
-          }} />
-
-          {/* Batch Processing */}
-          <Box sx={{
+            flex: 1,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 2,
-            width: '100%',
-            maxWidth: '800px'
+            gap: 1
           }}>
-            {/* Catalog selector */}
-            <Box sx={{ 
-              display: 'flex',  
-              justifyContent: 'center',
-              gap: 2,
-              width: '100%',
-              mb: 1
-            }}>
-              <GlowTextButton
-                variant="contained"
-                onClick={() => {
-                  setActiveCatalog('GILDAN_64000');
-                  setCatalogColors(GILDAN_64);
-                }}
-                sx={{ 
-                  width: '180px',
-                  backgroundColor: activeCatalog === 'GILDAN_64000' ? 'var(--primary-main)' : 'transparent'
-                }}
-              >
-                GILDAN 64000
-              </GlowTextButton>
-              <GlowTextButton
-                variant="contained"
-                onClick={() => {
-                  setActiveCatalog('GILDAN_3000');
-                  setCatalogColors(GILDAN_3000);
-                }}
-                sx={{ 
-                  width: '180px',
-                  backgroundColor: activeCatalog === 'GILDAN_3000' ? 'var(--primary-main)' : 'transparent'
-                }}
-              >
-                GILDAN 3000
-              </GlowTextButton>
-            </Box>
-
-            {/* Batch Processing Box */}
+            <Typography variant="h6" sx={{ color: '#ffffff' }}>
+              Original Image
+            </Typography>
+            
             <Box sx={{
+              width: '100%',
+              aspectRatio: '1',
+              backgroundColor: '#1a1a1a',
+              borderRadius: 2,
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {imageLoaded ? (
+                <img
+                  src={workingImageUrl}
+                  alt="Original"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+              ) : (
+                <DefaultTshirt />
+              )}
+            </Box>
+            
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+              ref={fileInputRef}
+            />
+            
+            <GlowButton
+              variant="contained"
+              onClick={() => fileInputRef.current?.click()}
+              sx={{ width: '180px' }}
+            >
+              Upload Image
+            </GlowButton>
+          </Box>
+          
+          {/* Processed Image */}
+          <Box sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <Typography variant="h6" sx={{ color: '#ffffff' }}>
+              Processed Image
+            </Typography>
+            
+            <Box sx={{
+              width: '100%',
+              aspectRatio: '1',
+              backgroundColor: '#1a1a1a',
+              borderRadius: 2,
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}>
+              {isProcessing && (
+                <CircularProgress
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 1
+                  }}
+                />
+              )}
+              
+              <img
+                src={workingProcessedUrl}
+                alt="Processed"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  opacity: isProcessing ? 0.5 : 1
+                }}
+              />
+            </Box>
+            
+            <GlowButton
+              variant="contained"
+              onClick={handleDownload}
+              disabled={!canDownload}
+              startIcon={<FileDownloadIcon />}
+              sx={{ width: '180px' }}
+            >
+              Download
+            </GlowButton>
+          </Box>
+        </Box>
+        
+        {/* Color Selection Section */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 2,
+          width: '100%'
+        }}>
+          
+          {/* Color Wheel */}
+          <Box sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <Typography variant="h6" sx={{ color: '#ffffff' }}>
+              Color Selection
+            </Typography>
+            
+            <Box sx={{
+              width: '100%',
+              aspectRatio: '1',
+              backgroundColor: '#1a1a1a',
+              borderRadius: 2,
+              p: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Wheel
+                width={240}
+                height={240}
+                color={selectedColor}
+                onChange={(color) => {
+                  const hex = color.hex.toUpperCase();
+                  setSelectedColor(hex);
+                  setHexInput(hex.replace('#', ''));
+                  setRgbColor(hexToRgb(hex));
+                  updateSingleColor(hex);
+                }}
+              />
+            </Box>
+            
+            <Box sx={{
+              width: '100%',
               display: 'flex',
               flexDirection: 'column',
-              gap: 2,
-              alignItems: 'center',
-              p: 3,
-              borderRadius: '8px',
-              bgcolor: 'var(--bg-secondary)',
-              border: '1px solid var(--border-subtle)',
-              width: '100%'
+              gap: 1
             }}>
-              <Typography variant="h6" sx={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: 500,
-                color: 'var(--text-primary)'
+              <SwatchDropdownField
+                ref={hexInputRef}
+                label="HEX Color"
+                value={hexInput}
+                onChange={(e) => {
+                  const newHex = e.target.value.toUpperCase();
+                  setHexInput(newHex);
+                  if (/^[0-9A-F]{6}$/.test(newHex)) {
+                    const hex = '#' + newHex;
+                    setSelectedColor(hex);
+                    setRgbColor(hexToRgb(hex));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const hex = '#' + hexInput;
+                    setSelectedColor(hex);
+                    setRgbColor(hexToRgb(hex));
+                    updateSingleColor(hex);
+                  }
+                }}
+                placeholder={GILDAN_64000[0].hex.replace('#', '')}
+                startIcon={<TagIcon />}
+                hasReset
+                onReset={resetColor}
+                options={GILDAN_64000}
+                onSelectionChange={(selected) => {
+                  const hex = selected.hex;
+                  setHexInput(hex.replace('#', ''));
+                  setSelectedColor(hex);
+                  setRgbColor(hexToRgb(hex));
+                  updateSingleColor(hex);
+                }}
+                sx={{ 
+                  width: '100%',
+                  '& .MuiInputBase-root': {
+                    backgroundColor: '#1a1a1a'
+                  }
+                }}
+              />
+              
+              <Box sx={{
+                display: 'flex',
+                gap: 1
               }}>
-                Batch Processing
-              </Typography>
-
-              {/* Main Action Buttons */}
-              <Box sx={{ 
-                display: 'flex',  
-                gap: 2,
-                mb: 1
-              }}>
-                <GlowTextButton
+                <GlowButton
                   variant="contained"
-                  onClick={handleGenerateAll}
-                  disabled={isProcessing || !imageLoaded}
-                  sx={{ width: '140px' }}
+                  onClick={applyColor}
+                  disabled={!imageLoaded || isProcessing}
+                  sx={{ flex: 1 }}
                 >
-                  GENERATE ALL
-                </GlowTextButton>
-                <GlowTextButton
+                  Apply Color
+                </GlowButton>
+              </Box>
+            </Box>
+          </Box>
+          
+          {/* Catalog Colors */}
+          <Box sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <Typography variant="h6" sx={{ color: '#ffffff' }}>
+              Catalog Colors
+            </Typography>
+            
+            <Box sx={{
+              width: '100%',
+              aspectRatio: '1',
+              backgroundColor: '#1a1a1a',
+              borderRadius: 2,
+              p: 2,
+              overflowY: 'auto'
+            }}>
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))',
+                gap: 1
+              }}>
+                {catalogColors.map((color) => (
+                  <Tooltip
+                    key={color.hex}
+                    title={`${color.name} (${color.hex})`}
+                    arrow
+                  >
+                    <Box
+                      onClick={() => {
+                        setSelectedColor(color.hex);
+                        setHexInput(color.hex.replace('#', ''));
+                        setRgbColor(hexToRgb(color.hex));
+                        updateSingleColor(color.hex);
+                      }}
+                      sx={{
+                        width: '100%',
+                        aspectRatio: '1',
+                        backgroundColor: color.hex,
+                        borderRadius: 1,
+                        cursor: 'pointer',
+                        border: selectedColor === color.hex ? '2px solid #ffffff' : 'none',
+                        '&:hover': {
+                          transform: 'scale(1.1)',
+                          transition: 'transform 0.2s'
+                        }
+                      }}
+                    />
+                  </Tooltip>
+                ))}
+              </Box>
+            </Box>
+            
+            <Box sx={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1
+            }}>
+              <Box sx={{
+                display: 'flex',
+                gap: 1
+              }}>
+                <GlowButton
                   variant="contained"
                   onClick={handleGenerateSelected}
-                  disabled={isProcessing || !imageLoaded || !selectedColors.length}
-                  sx={{ width: '140px' }}
+                  disabled={!imageLoaded || isProcessing}
+                  sx={{ flex: 1 }}
                 >
-                  SELECTED
-                </GlowTextButton>
+                  Generate Selected
+                </GlowButton>
+                
+                <GlowButton
+                  variant="contained"
+                  onClick={handleGenerateAll}
+                  disabled={!imageLoaded || isProcessing}
+                  sx={{ flex: 1 }}
+                >
+                  Generate All
+                </GlowButton>
               </Box>
-
-              {/* CSV Upload Button */}
-              <GlowTextButton
-                component="label"
-                variant="contained"
-                disabled={isProcessing || batchStatus === 'processing'}
-                sx={{ width: '140px' }}
-              >
-                UPLOAD CSV
-                <input
-                  type="file"
-                  hidden
-                  accept=".csv"
-                  onChange={handleCSVUpload}
-                />
-              </GlowTextButton>
-
-              {/* Progress Indicator */}
-              {batchStatus === 'processing' && (
-                <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
-                  <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
-                    Processing: {batchProgress}% ({processedCount} of {totalCount})
-                  </Typography>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={batchProgress} 
+              
+              {batchStatus !== 'idle' && (
+                <Box sx={{ width: '100%' }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={batchProgress}
                     sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: 'var(--border-subtle)',
+                      height: 10,
+                      borderRadius: 5,
+                      backgroundColor: '#1a1a1a',
                       '& .MuiLinearProgress-bar': {
-                        backgroundColor: 'var(--glow-color)',
-                        borderRadius: 4
+                        backgroundColor: '#00ff00'
                       }
                     }}
                   />
-                </Box>
-              )}
-
-              {/* Color Results */}
-              {batchResults && batchResults.length > 0 && (
-                <Box sx={{ 
-                  width: '100%',
-                  maxWidth: '800px',
-                  mt: 2
-                }}>
-                  <Typography variant="subtitle2" sx={{ 
-                    mb: 1,  
-                    textAlign: 'center',
-                    color: 'var(--text-secondary)',
-                    letterSpacing: '0.1em'
-                  }}>
-                    Available Colors
+                  
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#ffffff',
+                      mt: 0.5,
+                      display: 'block',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {batchStatus === 'processing' && `Processing ${processedCount} of ${totalCount}`}
+                    {batchStatus === 'saving' && 'Creating ZIP file...'}
+                    {batchStatus === 'complete' && 'Processing complete!'}
+                    {batchStatus === 'error' && error}
                   </Typography>
-                  <Box sx={{ 
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 1.5,
-                    justifyContent: 'center',
-                    maxWidth: '100%',
-                    p: 2
-                  }}>
-                    {batchResults.map((color, index) => (
-                      <Tooltip 
-                        key={index} 
-                        title={color.name || color.hex}
-                        arrow
-                        placement="top"
-                      >
-                        <Box
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            aspectRatio: '1/1',
-                            backgroundColor: color.hex,
-                            borderRadius: '50%',
-                            cursor: 'pointer',
-                            border: '1px solid var(--border-color)',
-                            boxShadow: theme => `0 0 0 ${selectedColors.includes(color.hex) ? '2px var(--glow-color)' : '1px rgba(0, 0, 0, 0.1)'}`,
-                            transition: 'transform 0.2s, box-shadow 0.2s',
-                            '&:hover': {
-                              transform: 'scale(1.1)',
-                              boxShadow: '0 0 0 2px var(--glow-color)',
-                            }
-                          }}
-                          onClick={() => handleColorSelect(color.hex)}
-                        />
-                      </Tooltip>
-                    ))}
-                  </Box>
                 </Box>
               )}
             </Box>
           </Box>
-
-          {/* HEXTRA Color System */}
-          <HCS 
-            catalog={catalogColors}
-            onColorApply={updateSingleColor}
-          />
         </Box>
       </Box>
     </Box>
