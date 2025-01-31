@@ -8,10 +8,17 @@ import KindeAuth from './components/KindeAuth';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 themeManager.init();
 
+// Conditionally wrap with KindeAuth based on environment
+const isDev = process.env.NODE_ENV === 'development';
+
 root.render(
   <React.StrictMode>
-    <KindeAuth>
+    {isDev ? (
       <App />
-    </KindeAuth>
+    ) : (
+      <KindeAuth>
+        <App />
+      </KindeAuth>
+    )}
   </React.StrictMode>
 );

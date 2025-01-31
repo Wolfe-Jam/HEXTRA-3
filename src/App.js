@@ -187,26 +187,15 @@ function App() {
   };
 
   const handleColorChange = (color) => {
-    setSelectedColor(color);
-    setHexInput(color);
-    const newRgb = hexToRgb(color);
-    setRgbColor(newRgb);
-    // Update grayscale value based on RGB average
-    setGrayscaleValue(Math.round((newRgb.r + newRgb.g + newRgb.b) / 3));
+    // Color wheel returns an object, get the hex string
+    const hex = color.hex || DEFAULT_COLOR;
+    setSelectedColor(hex);
+    setHexInput(hex);
+    setRgbColor(hexToRgb(hex));
     
-    if (workingImageUrl) {
-      setIsTestingJimp(true);
-      replaceColor(workingImageUrl, newRgb)
-        .then(processedUrl => {
-          setWorkingProcessedUrl(processedUrl);
-          setCanDownload(true);
-          setIsTestingJimp(false);
-        })
-        .catch(error => {
-          console.error('Error applying color:', error);
-          setIsTestingJimp(false);
-        });
-    }
+    // Update last click tracking
+    setLastClickColor(hex);
+    setLastClickTime(Date.now());
   };
 
   const applyColor = async () => {
