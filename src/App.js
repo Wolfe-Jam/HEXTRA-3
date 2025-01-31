@@ -24,6 +24,8 @@ import DefaultTshirt from './components/DefaultTshirt';
 import { hexToRgb, processImage } from './utils/image-processing';
 import { testJimp, replaceColor } from './utils/jimp-test';
 import { LUMINANCE_METHODS } from './constants/luminance';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
+import KindeAuthButtons from './components/KindeAuthButtons';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -76,6 +78,7 @@ function rgbToHsv(r, g, b) {
 }
 
 function App() {
+  const { isLoading, isAuthenticated } = useKindeAuth();
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImage, setWorkingImage] = useState(null);
@@ -1101,6 +1104,7 @@ function App() {
             {theme === 'dark' ? '🌙' : '☀️'}
           </GlowButton>
         </Tooltip>
+        <KindeAuthButtons />
       </Box>
       {/* Section A: Banner */}
       <Banner 
@@ -1644,162 +1648,177 @@ function App() {
             </Box>
 
             {/* Batch Processing Controls */}
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              alignItems: 'center',
-              p: 3,
-              borderRadius: '8px',
-              bgcolor: 'var(--bg-secondary)',
-              border: '1px solid var(--border-subtle)'
-            }}>
-              <Typography variant="h6" sx={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: 500,
-                color: 'var(--text-primary)'
-              }}>
-                Batch Processing
-              </Typography>
-
-              {/* Main Action Buttons */}
-              <Box sx={{ 
-                display: 'flex', 
+            {isAuthenticated ? (
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 2,
-                mb: 2
+                alignItems: 'center',
+                p: 3,
+                borderRadius: '8px',
+                bgcolor: 'var(--bg-secondary)',
+                border: '1px solid var(--border-subtle)'
               }}>
+                <Typography variant="h6" sx={{ 
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 500,
+                  color: 'var(--text-primary)'
+                }}>
+                  Batch Processing
+                </Typography>
+
+                {/* Main Action Buttons */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 2,
+                  mb: 2
+                }}>
+                  <GlowTextButton
+                    variant="contained"
+                    onClick={handleGenerateAll}
+                    disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded}
+                    sx={{ 
+                      width: '140px',
+                      position: 'relative'
+                    }}
+                  >
+                    {batchStatus === 'processing' || batchStatus === 'saving' ? (
+                      <>
+                        <CircularProgress
+                          size={16}
+                          sx={{
+                            color: 'var(--text-primary)',
+                            position: 'absolute',
+                            left: '50%',
+                            marginLeft: '-8px'
+                          }}
+                        />
+                        <span style={{ visibility: 'hidden' }}>GENERATE ALL</span>
+                      </>
+                    ) : (
+                      'GENERATE ALL'
+                    )}
+                  </GlowTextButton>
+                  <GlowTextButton
+                    variant="contained"
+                    onClick={handleGenerateSelected}
+                    disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded || !selectedColors.length}
+                    sx={{ width: '140px' }}
+                  >
+                    SELECTED
+                  </GlowTextButton>
+                </Box>
+
+                {/* CSV Upload Button */}
                 <GlowTextButton
+                  component="label"
                   variant="contained"
-                  onClick={handleGenerateAll}
-                  disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded}
-                  sx={{ 
-                    width: '140px',
-                    position: 'relative'
-                  }}
-                >
-                  {batchStatus === 'processing' || batchStatus === 'saving' ? (
-                    <>
-                      <CircularProgress
-                        size={16}
-                        sx={{
-                          color: 'var(--text-primary)',
-                          position: 'absolute',
-                          left: '50%',
-                          marginLeft: '-8px'
-                        }}
-                      />
-                      <span style={{ visibility: 'hidden' }}>GENERATE ALL</span>
-                    </>
-                  ) : (
-                    'GENERATE ALL'
-                  )}
-                </GlowTextButton>
-                <GlowTextButton
-                  variant="contained"
-                  onClick={handleGenerateSelected}
-                  disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded || !selectedColors.length}
+                  disabled={isProcessing || batchStatus === 'processing'}
                   sx={{ width: '140px' }}
                 >
-                  SELECTED
-                </GlowTextButton>
-              </Box>
-
-              {/* CSV Upload Button */}
-              <GlowTextButton
-                component="label"
-                variant="contained"
-                disabled={isProcessing || batchStatus === 'processing'}
-                sx={{ width: '140px' }}
-              >
-                UPLOAD CSV
-                <input
-                  type="file"
-                  hidden
-                  accept=".csv"
-                  onChange={handleCSVUpload}
-                />
-              </GlowTextButton>
-
-              {/* Progress Indicator */}
-              {(batchStatus === 'processing' || batchStatus === 'saving') && (
-                <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
-                  <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
-                    {batchStatus === 'processing' ? (
-                      `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
-                    ) : (
-                      'Creating ZIP file...'
-                    )}
-                  </Typography>
-                  <LinearProgress 
-                    variant={batchStatus === 'saving' ? 'indeterminate' : 'determinate'}
-                    value={batchProgress} 
-                    sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: 'var(--border-subtle)',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: 'var(--glow-color)',
-                        borderRadius: 4
-                      }
-                    }}
+                  UPLOAD CSV
+                  <input
+                    type="file"
+                    hidden
+                    accept=".csv"
+                    onChange={handleCSVUpload}
                   />
-                </Box>
-              )}
+                </GlowTextButton>
 
-              {/* Color Results */}
-              {batchResults && batchResults.length > 0 && (
-                <Box sx={{ 
-                  width: '100%',
-                  maxWidth: '800px',
-                  mt: 3
-                }}>
-                  <Typography variant="subtitle2" sx={{ 
-                    mb: 2,  
-                    textAlign: 'center',
-                    color: 'var(--text-secondary)',
-                    letterSpacing: '0.1em'
-                  }}>
-                    Available Colors
-                  </Typography>
-                  <Box sx={{ 
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 1.5,
-                    justifyContent: 'center',
-                    maxWidth: '100%',
-                    p: 2
-                  }}>
-                    {batchResults.map((color, index) => (
-                      <Tooltip 
-                        key={index} 
-                        title={color.name || color.hex}
-                        arrow
-                        placement="top"
-                      >
-                        <Box
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            aspectRatio: '1/1',
-                            backgroundColor: color.hex,
-                            borderRadius: '50%',
-                            cursor: 'pointer',
-                            border: '1px solid var(--border-color)',
-                            boxShadow: theme => `0 0 0 ${selectedColors.includes(color.hex) ? '2px var(--glow-color)' : '1px rgba(0, 0, 0, 0.1)'}`,
-                            transition: 'transform 0.2s, box-shadow 0.2s',
-                            '&:hover': {
-                              transform: 'scale(1.1)',
-                              boxShadow: '0 0 0 2px var(--glow-color)',
-                            }
-                          }}
-                          onClick={() => handleColorSelect(color.hex)}
-                        />
-                      </Tooltip>
-                    ))}
+                {/* Progress Indicator */}
+                {(batchStatus === 'processing' || batchStatus === 'saving') && (
+                  <Box sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
+                    <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
+                      {batchStatus === 'processing' ? (
+                        `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
+                      ) : (
+                        'Creating ZIP file...'
+                      )}
+                    </Typography>
+                    <LinearProgress 
+                      variant={batchStatus === 'saving' ? 'indeterminate' : 'determinate'}
+                      value={batchProgress} 
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: 'var(--border-subtle)',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: 'var(--glow-color)',
+                          borderRadius: 4
+                        }
+                      }}
+                    />
                   </Box>
-                </Box>
-              )}
-            </Box>
+                )}
+
+                {/* Color Results */}
+                {batchResults && batchResults.length > 0 && (
+                  <Box sx={{ 
+                    width: '100%',
+                    maxWidth: '800px',
+                    mt: 3
+                  }}>
+                    <Typography variant="subtitle2" sx={{ 
+                      mb: 2,  
+                      textAlign: 'center',
+                      color: 'var(--text-secondary)',
+                      letterSpacing: '0.1em'
+                    }}>
+                      Available Colors
+                    </Typography>
+                    <Box sx={{ 
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 1.5,
+                      justifyContent: 'center',
+                      maxWidth: '100%',
+                      p: 2
+                    }}>
+                      {batchResults.map((color, index) => (
+                        <Tooltip 
+                          key={index} 
+                          title={color.name || color.hex}
+                          arrow
+                          placement="top"
+                        >
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              aspectRatio: '1/1',
+                              backgroundColor: color.hex,
+                              borderRadius: '50%',
+                              cursor: 'pointer',
+                              border: '1px solid var(--border-color)',
+                              boxShadow: theme => `0 0 0 ${selectedColors.includes(color.hex) ? '2px var(--glow-color)' : '1px rgba(0, 0, 0, 0.1)'}`,
+                              transition: 'transform 0.2s, box-shadow 0.2s',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                                boxShadow: '0 0 0 2px var(--glow-color)',
+                              }
+                            }}
+                            onClick={() => handleColorSelect(color.hex)}
+                          />
+                        </Tooltip>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+            ) : (
+              <Box sx={{ 
+                mt: 4,
+                p: 3,
+                border: '1px dashed',
+                borderColor: 'divider',
+                borderRadius: 2
+              }}>
+                <Typography variant="h6" sx={{ mb: 1 }}>Batch Processing</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Sign in to access batch processing features
+                </Typography>
+              </Box>
+            )}
           </Box>
 
           <Box sx={{ my: 5 }}>
