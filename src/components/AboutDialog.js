@@ -86,8 +86,8 @@ const AboutDialog = ({ open, onClose, version }) => {
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
               Version
             </Typography>
-            <Typography variant="body2">
-              {version}
+            <Typography variant="body2" sx={{ mb: 1, color: 'var(--text-secondary)' }}>
+              Version 2.1.5 - Core Benchmark Release
             </Typography>
           </Box>
           

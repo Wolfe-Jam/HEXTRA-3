@@ -135,10 +135,15 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
                 variant="contained" 
                 color="primary"
                 onClick={() => login()}
+                disabled
                 sx={{ 
-                  backgroundColor: '#2196f3',
+                  backgroundColor: 'rgba(128, 128, 128, 0.3)',
                   '&:hover': {
-                    backgroundColor: '#1976d2'
+                    backgroundColor: 'rgba(128, 128, 128, 0.3)'
+                  },
+                  '&.Mui-disabled': {
+                    backgroundColor: 'rgba(128, 128, 128, 0.3)',
+                    color: 'rgba(255, 255, 255, 0.3)'
                   }
                 }}
               >
