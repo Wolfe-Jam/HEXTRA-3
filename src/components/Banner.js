@@ -152,7 +152,8 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
               width: '42px',
               height: '42px',
               color: isDarkMode ? '#000000' : COLORS.textDark,
-              padding: '8px',
+              padding: '4px', // Adjusted padding
+              marginLeft: '16px', // Added specific left margin
               border: '1px solid transparent',
               transition: 'all 0.2s ease-in-out',
               '&:hover': {
