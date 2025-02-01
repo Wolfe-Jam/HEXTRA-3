@@ -1093,7 +1093,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated && window.location.pathname === '/') {
+    if (isAuthenticated) {
       navigate('/batch');
     }
   }, [isAuthenticated, navigate]);

@@ -26,18 +26,13 @@ const Banner = ({
 
   // Calculate user initials and color once
   const userInitial = useMemo(() => {
-    if (user?.given_name) {
-      return user.given_name[0].toUpperCase();
-    }
-    return '?';
-  }, [user]);
+    return user?.given_name ? user.given_name[0].toUpperCase() : '?';
+  }, [user?.given_name]);
 
   const userColor = useMemo(() => {
-    if (user?.email) {
-      const index = user.email.length % BRAND_COLORS.length;
-      return BRAND_COLORS[index];
-    }
-    return BRAND_COLORS[0];
+    if (!user?.email) return BRAND_COLORS[0];
+    const index = user.email.length % BRAND_COLORS.length;
+    return BRAND_COLORS[index];
   }, [user?.email]);
 
   // Handle scroll effect
