@@ -31,6 +31,7 @@ export default function KindeAuth({ children }) {
       domain={config.domain}
       redirectUri={config.redirectUri}
       logoutUri={config.logoutUri}
+      loginButtonPosition="none"
     >
       {children}
     </KindeProvider>

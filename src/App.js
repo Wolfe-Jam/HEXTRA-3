@@ -1855,9 +1855,152 @@ function App() {
     </Box>
   );
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/batch');
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated && window.location.pathname === '/') {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
+        }}
+      >
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Wht.svg"
+          alt="HEXTRA"
+          sx={{
+            height: '120px',
+            width: 'auto',
+            marginBottom: 4
+          }}
+        />
+        <Button
+          variant="contained"
+          onClick={() => login()}
+          sx={{
+            backgroundColor: '#00805E',
+            color: '#FFFFFF',
+            '&:hover': {
+              backgroundColor: '#006f52'
+            }
+          }}
+        >
+          Sign In
+        </Button>
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated && window.location.pathname === '/batch') {
+    navigate('/');
+    return null;
+  }
+
+  const handleBatchModeToggle = () => {
+    setIsBatchMode(!isBatchMode);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/batch');
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated && window.location.pathname === '/') {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
+        }}
+      >
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Wht.svg"
+          alt="HEXTRA"
+          sx={{
+            height: '120px',
+            width: 'auto',
+            marginBottom: 4
+          }}
+        />
+        <Button
+          variant="contained"
+          onClick={() => login()}
+          sx={{
+            backgroundColor: '#00805E',
+            color: '#FFFFFF',
+            '&:hover': {
+              backgroundColor: '#006f52'
+            }
+          }}
+        >
+          Sign In
+        </Button>
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated && window.location.pathname === '/batch') {
+    navigate('/');
+    return null;
+  }
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/batch" />} />
+      <Route path="/" element={
+        !isAuthenticated ? (
+          <Box
+            sx={{
+              height: '100vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
+            }}
+          >
+            <Box
+              component="img"
+              src="/images/HEXTRA-3-logo-Wht.svg"
+              alt="HEXTRA"
+              sx={{
+                height: '120px',
+                width: 'auto',
+                marginBottom: 4
+              }}
+            />
+            <Button
+              variant="contained"
+              onClick={() => login()}
+              sx={{
+                backgroundColor: '#00805E',
+                color: '#FFFFFF',
+                '&:hover': {
+                  backgroundColor: '#006f52'
+                }
+              }}
+            >
+              Sign In
+            </Button>
+          </Box>
+        ) : (
+          <Navigate to="/batch" replace />
+        )
+      } />
       <Route path="/batch" element={
         <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
           <Banner 
