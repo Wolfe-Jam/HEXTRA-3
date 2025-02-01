@@ -1917,7 +1917,7 @@ function App() {
           !isAuthenticated ? (
             <Navigate to="/" replace />
           ) : (
-            <Box>
+            <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
               <Banner
                 version={VERSION}
                 isDarkMode={theme === 'dark'}
@@ -1926,8 +1926,50 @@ function App() {
                 setIsBatchMode={setIsBatchMode}
                 setShowSubscriptionTest={setShowSubscriptionTest}
               />
-              {/* Rest of your batch page content */}
-              {mainContent}
+              {/* Add Subscription Test Dialog */}
+              {showSubscriptionTest && (
+                <SubscriptionTest onClose={() => setShowSubscriptionTest(false)} />
+              )}
+              <Box 
+                className="batch-processing-section"
+                id="batch-section"
+                sx={{ 
+                  width: '100%', 
+                  minHeight: 'calc(100vh - 62px)', // Account for banner height
+                  bgcolor: 'var(--bg-primary)', 
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  pt: 6, // Increased top padding for logo overlap
+                  px: 3,
+                  pb: 4,
+                  position: 'relative',
+                  overflow: 'visible'
+                }}
+              >
+                {/* Main Content */}
+                <Box sx={{ 
+                  width: '100%', 
+                  maxWidth: '800px', 
+                  mx: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 4
+                }}>
+                  {/* Color Section */}
+                  <Box sx={{ 
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 2
+                  }}>
+                    {mainContent}
+                  </Box>
+                </Box>
+              </Box>
             </Box>
           )
         } 
