@@ -7,7 +7,14 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { VERSION } from '../version';
 import GlowTextButton from './GlowTextButton'; // Assuming GlowTextButton is defined in this file
 
-const Banner = ({ version, isDarkMode, onThemeToggle }) => {
+const Banner = ({
+  version,
+  isDarkMode,
+  onThemeToggle,
+  isBatchMode,
+  setIsBatchMode,
+  setShowSubscriptionTest
+}) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
 
