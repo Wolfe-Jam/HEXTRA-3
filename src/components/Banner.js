@@ -5,20 +5,37 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import AboutDialog from './AboutDialog';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { VERSION } from '../version';
+import GlowTextButton from './GlowTextButton'; // Assuming GlowTextButton is defined in this file
 
 const Banner = ({ version, isDarkMode, onThemeToggle }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
 
   const handleLogout = () => {
-    logout({
-      post_logout_redirect_uri: process.env.REACT_APP_KINDE_DOMAIN
-    });
+    // First scroll to batch section
+    const batchSection = document.querySelector('.batch-processing-section');
+    if (batchSection) {
+      batchSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // After scroll animation, do the logout
+    setTimeout(() => {
+      logout({
+        post_logout_redirect_uri: `${window.location.origin}/#batch-section`
+      });
+    }, 800); // Wait for scroll animation
+  };
+
+  const scrollToBatch = () => {
+    const batchSection = document.querySelector('.batch-processing-section');
+    if (batchSection) {
+      batchSection.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const COLORS = {
-    textDark: '#E8E8E8',
-    textLight: '#F8F8F8'
+    textDark: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+    textLight: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)'
   };
 
   return (
@@ -70,7 +87,7 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
           <Typography
             sx={{
               fontSize: '0.875rem',
-              color: isDarkMode ? '#000000' : COLORS.textDark,
+              color: COLORS.textDark,
               opacity: 0.7
             }}
           >
@@ -111,7 +128,7 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {isAuthenticated ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography sx={{ color: '#666' }}>
+                <Typography sx={{ color: COLORS.textDark }}>
                   {user?.email}
                 </Typography>
                 <Button 
@@ -120,7 +137,7 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
                   onClick={handleLogout}
                   sx={{ 
                     borderColor: '#333',
-                    color: '#666',
+                    color: COLORS.textDark,
                     '&:hover': {
                       borderColor: '#444',
                       backgroundColor: 'rgba(255,255,255,0.05)'
@@ -132,18 +149,13 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
               </Box>
             ) : (
               <Button 
-                variant="contained" 
-                color="primary"
-                onClick={() => login()}
-                disabled
+                variant="text" 
+                onClick={scrollToBatch}
                 sx={{ 
-                  backgroundColor: 'rgba(128, 128, 128, 0.3)',
+                  color: 'rgba(128, 128, 128, 0.5)',
                   '&:hover': {
-                    backgroundColor: 'rgba(128, 128, 128, 0.3)'
-                  },
-                  '&.Mui-disabled': {
-                    backgroundColor: 'rgba(128, 128, 128, 0.3)',
-                    color: 'rgba(255, 255, 255, 0.3)'
+                    backgroundColor: 'transparent',
+                    color: 'rgba(128, 128, 128, 0.7)'
                   }
                 }}
               >
@@ -156,7 +168,7 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
             sx={{
               width: '42px',
               height: '42px',
-              color: isDarkMode ? '#000000' : COLORS.textDark,
+              color: COLORS.textDark,
               padding: '4px', // Adjusted padding
               marginLeft: '16px', // Added specific left margin
               border: '1px solid transparent',

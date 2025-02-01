@@ -78,7 +78,7 @@ function rgbToHsv(r, g, b) {
 }
 
 function App() {
-  const { isLoading, isAuthenticated } = useKindeAuth();
+  const { isLoading, isAuthenticated, login } = useKindeAuth();
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImage, setWorkingImage] = useState(null);
@@ -1075,6 +1075,16 @@ function App() {
     return true;
   };
 
+  useEffect(() => {
+    // Handle hash navigation
+    if (window.location.hash === '#batch-section') {
+      const batchSection = document.getElementById('batch-section');
+      if (batchSection) {
+        batchSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, []);
+
   return (
     <Box
       sx={{
@@ -1094,6 +1104,13 @@ function App() {
           HEXTRA
         </Typography>
         
+        {/* Section A: Banner */}
+        <Banner 
+          version={VERSION}
+          isDarkMode={theme === 'dark'}
+          onThemeToggle={toggleTheme}
+        />
+        
         {/* Theme Toggle */}
         <Tooltip title="Dark/Light Mode">
           <GlowButton
@@ -1104,14 +1121,7 @@ function App() {
             {theme === 'dark' ? '🌙' : '☀️'}
           </GlowButton>
         </Tooltip>
-        <KindeAuthButtons />
       </Box>
-      {/* Section A: Banner */}
-      <Banner 
-        version={VERSION}
-        isDarkMode={theme === 'dark'}
-        onThemeToggle={toggleTheme}
-      />
       
       <Box sx={{ 
         display: 'flex',
@@ -1607,166 +1617,211 @@ function App() {
               Create BULK T-Shirt blanks in True Color
             </Typography>
 
-            {/* Catalog selector */}
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 2, 
-              justifyContent: 'center', 
-              mt: 2,
-              mb: 3
-            }}>
-              <GlowTextButton
-                variant="contained"
-                onClick={() => handleCatalogSwitch('GILDAN_6400')}
-                sx={{
-                  width: '140px',
-                  height: '36px',
-                  fontSize: '0.8rem',
-                  letterSpacing: '0.05em',
-                  whiteSpace: 'nowrap',
-                  opacity: activeCatalog === 'GILDAN_6400' ? 1 : 0.7,
-                  p: 1
-                }}
-              >
-                GILDAN 6400
-              </GlowTextButton>
-              <GlowTextButton
-                variant="contained"
-                onClick={() => handleCatalogSwitch('HEXTRA_21')}
-                sx={{
-                  width: '140px',
-                  height: '36px',
-                  fontSize: '0.8rem',
-                  letterSpacing: '0.05em',
-                  whiteSpace: 'nowrap',
-                  opacity: activeCatalog === 'HEXTRA_21' ? 1 : 0.7,
-                  p: 1
-                }}
-              >
-                HEXTRA 21
-              </GlowTextButton>
-            </Box>
-
-            {/* Batch Processing Controls */}
-            {isAuthenticated ? (
-              <Box sx={{
+            {/* Batch Processing Section */}
+            <Box 
+              id="batch-section"
+              className="batch-processing-section"
+              sx={{
                 mt: 4,
                 p: 3,
                 borderRadius: '8px',
                 bgcolor: 'var(--bg-secondary)',
                 border: '1px solid var(--border-subtle)',
-                width: '100%'
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                position: 'relative',  
+                transition: 'box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out',
+                '&:hover': {
+                  boxShadow: !isAuthenticated ? 
+                    '0 0 30px rgba(255, 214, 0, 0.15)' : 
+                    'none',
+                  borderColor: !isAuthenticated ? 
+                    'rgba(255, 214, 0, 0.3)' : 
+                    'var(--border-subtle)'
+                }
+              }}
+            >
+              <Typography variant="h6" sx={{ 
+                fontFamily: "'League Spartan', sans-serif",
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                mb: 3,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
               }}>
-                <Typography variant="h6" sx={{ 
-                  fontFamily: "'Inter', sans-serif",
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  mb: 3
-                }}>
-                  Batch Processing
-                </Typography>
+                Batch Processing
+              </Typography>
 
-                {/* Main Action Buttons */}
+              {isAuthenticated ? (
+                <>
+                  {/* Catalog selector */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: 2, 
+                    justifyContent: 'center', 
+                    mt: 2,
+                    mb: 3
+                  }}>
+                    <GlowTextButton
+                      variant="contained"
+                      onClick={() => handleCatalogSwitch('GILDAN_6400')}
+                      sx={{
+                        width: '140px',
+                        height: '36px',
+                        fontSize: '0.8rem',
+                        letterSpacing: '0.05em',
+                        whiteSpace: 'nowrap',
+                        opacity: activeCatalog === 'GILDAN_6400' ? 1 : 0.7,
+                        p: 1
+                      }}
+                    >
+                      GILDAN 6400
+                    </GlowTextButton>
+                    <GlowTextButton
+                      variant="contained"
+                      onClick={() => handleCatalogSwitch('HEXTRA_21')}
+                      sx={{
+                        width: '140px',
+                        height: '36px',
+                        fontSize: '0.8rem',
+                        letterSpacing: '0.05em',
+                        whiteSpace: 'nowrap',
+                        opacity: activeCatalog === 'HEXTRA_21' ? 1 : 0.7,
+                        p: 1
+                      }}
+                    >
+                      HEXTRA 21
+                    </GlowTextButton>
+                  </Box>
+
+                  {/* Main Action Buttons */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: 2,
+                    mb: 3,
+                    justifyContent: 'center'
+                  }}>
+                    <GlowTextButton
+                      variant="contained"
+                      onClick={handleGenerateAll}
+                      disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded}
+                      sx={{ 
+                        width: '140px',
+                        position: 'relative'
+                      }}
+                    >
+                      {batchStatus === 'processing' || batchStatus === 'saving' ? (
+                        <>
+                          <CircularProgress
+                            size={16}
+                            sx={{
+                              color: 'var(--text-primary)',
+                              position: 'absolute',
+                              left: '50%',
+                              marginLeft: '-8px'
+                            }}
+                          />
+                          <span style={{ visibility: 'hidden' }}>GENERATE ALL</span>
+                        </>
+                      ) : (
+                        'GENERATE ALL'
+                      )}
+                    </GlowTextButton>
+                    <GlowTextButton
+                      variant="contained"
+                      onClick={handleGenerateSelected}
+                      disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded || !selectedColors.length}
+                      sx={{ width: '140px' }}
+                    >
+                      SELECTED
+                    </GlowTextButton>
+                  </Box>
+
+                  {/* CSV Upload Button */}
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                    <GlowTextButton
+                      component="label"
+                      variant="contained"
+                      disabled={isProcessing || batchStatus === 'processing'}
+                      sx={{ width: '140px' }}
+                    >
+                      UPLOAD CSV
+                      <input
+                        type="file"
+                        hidden
+                        accept=".csv"
+                        onChange={handleCSVUpload}
+                      />
+                    </GlowTextButton>
+                  </Box>
+
+                  {/* Progress Indicator */}
+                  {(batchStatus === 'processing' || batchStatus === 'saving') && (
+                    <Box sx={{ width: '100%', maxWidth: 400, mt: 2, mx: 'auto' }}>
+                      <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
+                        {batchStatus === 'processing' ? (
+                          `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
+                        ) : (
+                          'Creating ZIP file...'
+                        )}
+                      </Typography>
+                      <LinearProgress 
+                        variant={batchStatus === 'saving' ? 'indeterminate' : 'determinate'}
+                        value={batchProgress} 
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: 'var(--border-subtle)',
+                          '& .MuiLinearProgress-bar': {
+                            backgroundColor: 'var(--glow-color)',
+                            borderRadius: 4
+                          }
+                        }}
+                      />
+                    </Box>
+                  )}
+                </>
+              ) : (
                 <Box sx={{ 
                   display: 'flex', 
-                  gap: 2,
-                  mb: 3,
-                  justifyContent: 'center'
+                  flexDirection: 'column', 
+                  alignItems: 'center',
+                  gap: 3,
+                  p: 4,
+                  width: '100%',
+                  textAlign: 'center'
                 }}>
-                  <GlowTextButton
-                    variant="contained"
-                    onClick={handleGenerateAll}
-                    disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded}
+                  <Typography 
+                    variant="h5" 
                     sx={{ 
-                      width: '140px',
-                      position: 'relative'
+                      fontFamily: "'League Spartan', sans-serif",
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
                     }}
                   >
-                    {batchStatus === 'processing' || batchStatus === 'saving' ? (
-                      <>
-                        <CircularProgress
-                          size={16}
-                          sx={{
-                            color: 'var(--text-primary)',
-                            position: 'absolute',
-                            left: '50%',
-                            marginLeft: '-8px'
-                          }}
-                        />
-                        <span style={{ visibility: 'hidden' }}>GENERATE ALL</span>
-                      </>
-                    ) : (
-                      'GENERATE ALL'
-                    )}
-                  </GlowTextButton>
+                    UNLOCK BULK GARMENT GENERATION
+                  </Typography>
                   <GlowTextButton
                     variant="contained"
-                    onClick={handleGenerateSelected}
-                    disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded || !selectedColors.length}
-                    sx={{ width: '140px' }}
+                    onClick={login}
+                    sx={{ 
+                      width: '200px',
+                      height: '48px',
+                      fontSize: '1rem',
+                      fontFamily: "'League Spartan', sans-serif",
+                      fontWeight: 600,
+                      letterSpacing: '0.05em'
+                    }}
                   >
-                    SELECTED
+                    SIGN IN
                   </GlowTextButton>
                 </Box>
-
-                {/* CSV Upload Button */}
-                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-                  <GlowTextButton
-                    component="label"
-                    variant="contained"
-                    disabled={isProcessing || batchStatus === 'processing'}
-                    sx={{ width: '140px' }}
-                  >
-                    UPLOAD CSV
-                    <input
-                      type="file"
-                      hidden
-                      accept=".csv"
-                      onChange={handleCSVUpload}
-                    />
-                  </GlowTextButton>
-                </Box>
-
-                {/* Progress Indicator */}
-                {(batchStatus === 'processing' || batchStatus === 'saving') && (
-                  <Box sx={{ width: '100%', maxWidth: 400, mt: 2, mx: 'auto' }}>
-                    <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
-                      {batchStatus === 'processing' ? (
-                        `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
-                      ) : (
-                        'Creating ZIP file...'
-                      )}
-                    </Typography>
-                    <LinearProgress 
-                      variant={batchStatus === 'saving' ? 'indeterminate' : 'determinate'}
-                      value={batchProgress} 
-                      sx={{
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: 'var(--border-subtle)',
-                        '& .MuiLinearProgress-bar': {
-                          backgroundColor: 'var(--glow-color)',
-                          borderRadius: 4
-                        }
-                      }}
-                    />
-                  </Box>
-                )}
-              </Box>
-            ) : (
-              <Box sx={{ 
-                mt: 4,
-                p: 3,
-                border: '1px dashed',
-                borderColor: 'divider',
-                borderRadius: 2
-              }}>
-                <Typography variant="h6" sx={{ mb: 1 }}>Batch Processing</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Sign in to access batch processing features
-                </Typography>
-              </Box>
-            )}
+              )}
+            </Box>
           </Box>
 
           <Box sx={{ my: 5 }}>
