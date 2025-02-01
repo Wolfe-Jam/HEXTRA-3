@@ -1144,13 +1144,7 @@ function App() {
       }}>
         {showSubscriptionTest ? (
           <Box sx={{ p: 4 }}>
-            <SubscriptionTest />
-            <GlowTextButton
-              onClick={() => setShowSubscriptionTest(false)}
-              sx={{ mt: 4, display: 'block', mx: 'auto' }}
-            >
-              Back to Editor
-            </GlowTextButton>
+            <SubscriptionTest onClose={() => setShowSubscriptionTest(false)} />
           </Box>
         ) : (
           <>
