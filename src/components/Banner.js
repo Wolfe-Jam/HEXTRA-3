@@ -134,7 +134,7 @@ const Banner = ({
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {isAuthenticated && (
-              <>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <GlowTextButton
                   onClick={() => setIsBatchMode(!isBatchMode)}
                   active={isBatchMode}
@@ -143,11 +143,11 @@ const Banner = ({
                 </GlowTextButton>
 
                 <GlowTextButton
-                  onClick={() => setShowSubscriptionTest(prev => !prev)}
+                  onClick={() => setShowSubscriptionTest(true)}
                 >
                   Subscription Test
                 </GlowTextButton>
-              </>
+              </Box>
             )}
             {isAuthenticated ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

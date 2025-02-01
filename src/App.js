@@ -1142,796 +1142,694 @@ function App() {
         color: 'var(--text-primary)',
         transition: 'background-color 0.3s, color 0.3s'
       }}>
-        <Typography 
-          variant="h2" 
-          sx={{ 
-            textAlign: 'center',
-            fontFamily: "'League Spartan', sans-serif",
-            fontSize: '0.75rem',
-            letterSpacing: '0.25em',
-            textTransform: 'uppercase',
-            color: 'var(--text-secondary)',
-            mb: 5,  
-            '@media (max-width: 532px)': {
-              fontSize: '0.7rem'
-            }
-          }}
-        >
-          <Box component="span">COLORIZE</Box> | <Box component="span">VISUALIZE</Box> | <Box component="span">MESMERIZE</Box>
-        </Typography>
-
-        {/* Main content in vertical layout */}
-        <Box sx={{ 
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          width: '100%',
-          maxWidth: '800px',  
-          mx: 'auto',
-          p: 3,
-          alignItems: 'center',
-          '@media (max-width: 832px)': { 
-            maxWidth: 'calc(100% - 32px)', 
-            p: 2
-          }
-        }}>
-          {/* Color Section */}
-          <Box sx={{ mb: 1 }}>
-            {/* Section B: RGB Color Disc */}
-            <Typography 
-              variant="h2" 
-              sx={{ 
-                mb: 2,
-                textAlign: 'center',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                '@media (max-width: 532px)': {
-                  fontSize: '1.1rem'
-                }
-              }}
+        {showSubscriptionTest ? (
+          <Box sx={{ p: 4 }}>
+            <SubscriptionTest />
+            <GlowTextButton
+              onClick={() => setShowSubscriptionTest(false)}
+              sx={{ mt: 4, display: 'block', mx: 'auto' }}
             >
-              Pick a color or Enter a HEX code
-            </Typography>
-            <Box sx={{ 
-              display: 'flex',
-              justifyContent: 'center',
-              mb: 2
-            }}>
-              <Wheel
-                ref={wheelRef}
-                color={selectedColor}
-                onChange={handleColorChange}
-                onClick={handleWheelClick}
-                onDoubleClick={() => applyColor()}
-                width={240}
-                height={240}
-              />
-            </Box>
-
-            {/* Section C: Grayscale Tool Bar */}
-            <Box sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              width: '100%',
-              mb: 2,
-              pl: '40px'  
-            }}>
-              {/* GRAY Value Display */}
-              <Typography sx={{ 
-                fontFamily: "'Inter', sans-serif",
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                width: '120px'
-              }}>
-                <Box component="span" sx={{ flexShrink: 0 }}>GRAY Value:</Box>
-                <Box component="span" sx={{ 
-                  fontFamily: 'monospace',
-                  textAlign: 'left'
-                }}>
-                  {`${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}`.padStart(3, ' ')}
-                </Box>
-              </Typography>
-
-              {/* Gray Swatch */}
-              <Box
-                onClick={handleGraySwatchClick}
-                sx={{
-                  width: '36px',
-                  height: '36px',
-                  flexShrink: 0,
-                  backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-color)',
-                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                  cursor: 'pointer',
-                  transition: 'box-shadow 0.2s',
-                  '&:hover': {
-                    boxShadow: '0 0 0 2px var(--glow-color)',
-                  }
-                }}
-              />
-
-              {/* Slider */}
-              <Box sx={{
-                position: 'relative',
-                width: '200px',
-                height: '24px',
-                backgroundColor: 'transparent',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)',
-                background: 'linear-gradient(to right, #000000, #FFFFFF)',
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                px: 1
-              }}>
-                <Slider
-                  value={grayscaleValue}
-                  onChange={handleGrayscaleChange}
-                  min={0}
-                  max={255}
-                  sx={{
-                    width: '100%',
-                    '& .MuiSlider-thumb': {
-                      width: 20,
-                      height: 20,
-                      backgroundColor: 'transparent',
-                      border: '2px solid var(--glow-color)',
-                      outline: '1px solid rgba(0, 0, 0, 0.3)',
-                      boxShadow: 'inset 0 0 4px var(--glow-color), 0 0 4px var(--glow-color)',
-                      '&:before': {
-                        content: '""',
-                        position: 'absolute',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        backgroundColor: 'transparent',
-                      },
-                      '&:hover, &.Mui-focusVisible': {
-                        outline: '1px solid rgba(0, 0, 0, 0.4)',
-                        boxShadow: 'inset 0 0 6px var(--glow-color), 0 0 8px var(--glow-color)',
-                      }
-                    },
-                    '& .MuiSlider-track': {
-                      display: 'none'
-                    },
-                    '& .MuiSlider-rail': {
-                      opacity: 0
-                    }
-                  }}
-                />
-              </Box>
-            </Box>
-
-            {/* Section D: HEX Input Bar */}
-            <Box sx={{ 
-              display: 'flex',
-              flexWrap: 'wrap',  
-              gap: 2,
-              alignItems: 'center',
-              width: '100%',
-              pl: '40px',  
-              '@media (max-width: 532px)': {
-                justifyContent: 'center',
-                pl: 2,  
-                '& #apply-button': {
-                  width: '100%',  
-                  maxWidth: '200px',
-                  marginTop: '8px'
-                }
-              }
-            }}>
-              {/* RGB Display */}
-              <Typography sx={{ 
-                fontFamily: "'Inter', sans-serif",
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                whiteSpace: 'nowrap',
-                width: '140px',  
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}>
-                <Box component="span" sx={{ flexShrink: 0 }}>RGB:</Box>
-                <Box component="span" sx={{ 
-                  fontFamily: 'monospace',
-                  width: '85px',  
-                  textAlign: 'left'
-                }}>
-                  {rgbColor.r},{rgbColor.g},{rgbColor.b}
-                </Box>
-              </Typography>
-
-              {/* Color Swatch */}
-              <Box
-                sx={{
-                  width: '48px',
-                  height: '48px',
-                  backgroundColor: selectedColor,
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-color)',
-                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
-                  flexShrink: 0
-                }}
-              />
-
-              {/* HEX Input with Reset Icon */}
-              <SwatchDropdownField
-                value={hexInput}
-                onChange={(e) => setHexInput(e.target.value)}
-                onKeyDown={handleHexKeyPress}
-                placeholder="#FED141"
-                startIcon={<TagIcon />}
-                hasReset
-                onReset={resetColor}
-                options={[
-                  '#FED141',
-                  '#D50032',
-                  '#00805E',
-                  '#224D8F',
-                  '#FF4400',
-                  '#CABFAD'
-                ]}
-                onSelectionChange={handleDropdownSelection}
+              Back to Editor
+            </GlowTextButton>
+          </Box>
+        ) : (
+          <>
+            {/* Color Section */}
+            <Box sx={{ mb: 1 }}>
+              {/* Section B: RGB Color Disc */}
+              <Typography 
+                variant="h2" 
                 sx={{ 
-                  width: '180px',  
-                  '& .MuiOutlinedInput-root': {
-                    paddingLeft: '8px'  
-                  }
-                }}
-              />
-              {/* Apply Button */}
-              <GlowTextButton
-                id="apply-button"
-                variant="contained"
-                onClick={applyColor}
-                disabled={isProcessing || !imageLoaded}
-                sx={{
-                  width: '110px',
+                  mb: 2,
+                  textAlign: 'center',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
                   '@media (max-width: 532px)': {
-                    width: '110px',
-                    marginTop: '8px'
+                    fontSize: '1.1rem'
                   }
                 }}
               >
-                APPLY
-              </GlowTextButton>
-            </Box>
-          </Box>
-
-          <Box sx={{ my: 2 }}>
-            <Box
-              sx={{
-                width: '100%',
-                height: '4px',
-                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-                my: 2  
-              }}
-            />
-          </Box>
-
-          {/* Section D: Main Image Window Title */}
-          <Typography 
-            variant="h2" 
-            sx={{ 
-              mb: 2,  
-              textAlign: 'center',
-              fontFamily: "'Inter', sans-serif",
-              fontSize: '1.25rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              '@media (max-width: 532px)': {
-                fontSize: '1.1rem'
-              }
-            }}
-          >
-            Upload your T-shirt or other Image
-          </Typography>
-
-          {/* Section E: Image Loading */}
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 2,
-            alignItems: 'center',
-            justifyContent: 'center', 
-            mt: 1,
-            mb: 2,
-            width: '100%',
-            '@media (max-width: 600px)': {
-              flexDirection: 'column',
-              alignItems: 'center', 
-              '& > button': {
-                width: '110px', 
-                alignSelf: 'center'
-              }
-            }
-          }}>
-            <GlowTextButton
-              component="label"
-              variant="contained"
-              disabled={isProcessing}
-              sx={{ 
-                width: '110px',
-                flexShrink: 0
-              }}
-            >
-              UPLOAD
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e.target.files[0])}
-                disabled={false}
-              />
-            </GlowTextButton>
-
-            <Box sx={{ 
-              flex: 1,
-              minWidth: 0, 
-              maxWidth: '600px',  
-              '@media (max-width: 600px)': {
-                width: '100%',
-                maxWidth: '300px',
-                alignSelf: 'center'
-              }
-            }}>
-              <IconTextField
-                placeholder="Paste image URL here..."
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                onKeyDown={handleUrlKeyPress}
-                startIcon={<LinkIcon />}
-                hasReset
-                onReset={() => setUrlInput('')}
-                sx={{ width: '100%' }}
-              />
-            </Box>
-
-            <GlowTextButton
-              variant="contained"
-              onClick={handleLoadUrl}
-              sx={{ 
-                width: '110px',
-                flexShrink: 0
-              }}
-            >
-              USE URL
-            </GlowTextButton>
-          </Box>
-
-          {/* Section F: Main Image (with integrated download button) */}
-          <Box sx={{
-            position: 'relative',
-            zIndex: 1,
-            mt: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '200px',
-            width: '100%',
-            maxWidth: '800px', 
-            overflow: 'hidden'
-          }}>
-            {!imageLoaded && <DefaultTshirt onLoad={handleDefaultImageLoad} />}
-            {imageLoaded && (
-              <img
-                src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
-                alt="Working"
-                style={{
-                  maxWidth: '100%',
-                  height: 'auto',
-                  display: 'block' 
-                }}
-              />
-            )}
-            {/* Download button using GlowButton */}
-            <GlowButton
-              onClick={handleQuickDownload}
-              disabled={!canDownload}
-              sx={{
-                position: 'absolute',
-                right: '12px',
-                bottom: '12px',
-                minWidth: 'auto',
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <FileDownloadIcon />
-            </GlowButton>
-          </Box>
-
-          {/* Section G: Image Processing */}
-          <Box sx={{ 
-            width: '100%', 
-            mt: 1,
-            position: 'relative',
-            zIndex: 2  
-          }}>
-            {/* Advanced Settings Toggle Section */}
-            <Box sx={{ 
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center'
-            }}>
+                Pick a color or Enter a HEX code
+              </Typography>
               <Box sx={{ 
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center'
-              }}>
-                <GlowSwitch
-                  checked={showAdvanced}
-                  onChange={(e) => setShowAdvanced(e.target.checked)}
-                  size="small"
-                />
-                <Typography sx={{ 
-                  fontSize: '0.75rem',
-                  color: 'var(--text-secondary)',
-                  mt: 0.5
-                }}>
-                  Advanced
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Image Processing Section */}
-            {showAdvanced && (
-              <Typography sx={{ 
-                color: 'var(--text-secondary)',
-                fontSize: '0.85rem',
-                textAlign: 'center',
+                justifyContent: 'center',
                 mb: 2
               }}>
-                Enhanced image processing features coming soon - Stay tuned!
-              </Typography>
-            )}
-          </Box>
+                <Wheel
+                  ref={wheelRef}
+                  color={selectedColor}
+                  onChange={handleColorChange}
+                  onClick={handleWheelClick}
+                  onDoubleClick={() => applyColor()}
+                  width={240}
+                  height={240}
+                />
+              </Box>
 
-          {/* Section H: MESMERIZE */}
-          <Box sx={{ 
-            width: '100%',
-            maxWidth: '800px',
-            mt: 2
-          }}>
-            {/* MESMERIZE Section Title */}
-            <Typography 
-              variant="h2" 
-              sx={{ 
-                textAlign: 'center',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                mb: 3,  // Added margin bottom
-                '@media (max-width: 532px)': {
-                  fontSize: '1.1rem'
-                }
-              }}
-            >
-              Create BULK T-Shirt blanks in True Color
-            </Typography>
-
-            {/* Batch Processing Section */}
-            <Box 
-              id="batch-section"
-              className="batch-processing-section"
-              sx={{
-                mt: 4,
-                p: 3,
-                borderRadius: '8px',
-                bgcolor: 'var(--bg-secondary)',
-                border: '1px solid var(--border-subtle)',
-                width: '100%',
+              {/* Section C: Grayscale Tool Bar */}
+              <Box sx={{ 
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
-                position: 'relative',  
-                transition: 'box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out',
-                '&:hover': {
-                  boxShadow: !isAuthenticated ? 
-                    '0 0 30px rgba(255, 214, 0, 0.15)' : 
-                    'none',
-                  borderColor: !isAuthenticated ? 
-                    'rgba(255, 214, 0, 0.3)' : 
-                    'var(--border-subtle)'
-                }
-              }}
-            >
-              <Typography variant="h6" sx={{ 
-                fontFamily: "'League Spartan', sans-serif",
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                mb: 3,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Batch Processing
-              </Typography>
-
-              {isAuthenticated ? (
-                <>
-                  {/* Catalog selector */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 2, 
-                    justifyContent: 'center', 
-                    mt: 2,
-                    mb: 3
-                  }}>
-                    <GlowTextButton
-                      variant="contained"
-                      onClick={() => handleCatalogSwitch('GILDAN_6400')}
-                      sx={{
-                        width: '140px',
-                        height: '36px',
-                        fontSize: '0.8rem',
-                        letterSpacing: '0.05em',
-                        whiteSpace: 'nowrap',
-                        opacity: activeCatalog === 'GILDAN_6400' ? 1 : 0.7,
-                        p: 1
-                      }}
-                    >
-                      GILDAN 6400
-                    </GlowTextButton>
-                    <GlowTextButton
-                      variant="contained"
-                      onClick={() => handleCatalogSwitch('HEXTRA_21')}
-                      sx={{
-                        width: '140px',
-                        height: '36px',
-                        fontSize: '0.8rem',
-                        letterSpacing: '0.05em',
-                        whiteSpace: 'nowrap',
-                        opacity: activeCatalog === 'HEXTRA_21' ? 1 : 0.7,
-                        p: 1
-                      }}
-                    >
-                      HEXTRA 21
-                    </GlowTextButton>
-                  </Box>
-
-                  {/* Main Action Buttons */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 2,
-                    mb: 3,
-                    justifyContent: 'center'
-                  }}>
-                    <GlowTextButton
-                      variant="contained"
-                      onClick={handleGenerateAll}
-                      disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded}
-                      sx={{ 
-                        width: '140px',
-                        position: 'relative'
-                      }}
-                    >
-                      {batchStatus === 'processing' || batchStatus === 'saving' ? (
-                        <>
-                          <CircularProgress
-                            size={16}
-                            sx={{
-                              color: 'var(--text-primary)',
-                              position: 'absolute',
-                              left: '50%',
-                              marginLeft: '-8px'
-                            }}
-                          />
-                          <span style={{ visibility: 'hidden' }}>GENERATE ALL</span>
-                        </>
-                      ) : (
-                        'GENERATE ALL'
-                      )}
-                    </GlowTextButton>
-                    <GlowTextButton
-                      variant="contained"
-                      onClick={handleGenerateSelected}
-                      disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded || !selectedColors.length}
-                      sx={{ width: '140px' }}
-                    >
-                      SELECTED
-                    </GlowTextButton>
-                  </Box>
-
-                  {/* CSV Upload Button */}
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-                    <GlowTextButton
-                      component="label"
-                      variant="contained"
-                      disabled={isProcessing || batchStatus === 'processing'}
-                      sx={{ width: '140px' }}
-                    >
-                      UPLOAD CSV
-                      <input
-                        type="file"
-                        hidden
-                        accept=".csv"
-                        onChange={handleCSVUpload}
-                      />
-                    </GlowTextButton>
-                  </Box>
-
-                  {/* Progress Indicator */}
-                  {(batchStatus === 'processing' || batchStatus === 'saving') && (
-                    <Box sx={{ width: '100%', maxWidth: 400, mt: 2, mx: 'auto' }}>
-                      <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
-                        {batchStatus === 'processing' ? (
-                          `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
-                        ) : (
-                          'Creating ZIP file...'
-                        )}
-                      </Typography>
-                      <LinearProgress 
-                        variant={batchStatus === 'saving' ? 'indeterminate' : 'determinate'}
-                        value={batchProgress} 
-                        sx={{
-                          height: 8,
-                          borderRadius: 4,
-                          backgroundColor: 'var(--border-subtle)',
-                          '& .MuiLinearProgress-bar': {
-                            backgroundColor: 'var(--glow-color)',
-                            borderRadius: 4
-                          }
-                        }}
-                      />
-                    </Box>
-                  )}
-                </>
-              ) : (
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center',
-                  gap: 3,
-                  p: 4,
-                  width: '100%',
-                  textAlign: 'center'
-                }}>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
-                      fontFamily: "'League Spartan', sans-serif",
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em'
-                    }}
-                  >
-                    UNLOCK BULK GARMENT GENERATION
-                  </Typography>
-                  <GlowTextButton
-                    variant="contained"
-                    onClick={login}
-                    sx={{ 
-                      width: '200px',
-                      height: '48px',
-                      fontSize: '1rem',
-                      fontFamily: "'League Spartan', sans-serif",
-                      fontWeight: 600,
-                      letterSpacing: '0.05em'
-                    }}
-                  >
-                    SIGN IN
-                  </GlowTextButton>
-                </Box>
-              )}
-            </Box>
-          </Box>
-
-          <Box sx={{ my: 5 }}>
-            <Box
-              sx={{
+                gap: 2,
                 width: '100%',
-                height: '4px',
-                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-              }}
-            />
-          </Box>
+                mb: 2,
+                justifyContent: 'center'  // Center the grayscale controls
+              }}>
+                {/* GRAY Value Display */}
+                <Typography sx={{ 
+                  fontFamily: "'Inter', sans-serif",
+                  color: 'var(--text-primary)',
+                  fontSize: '0.875rem',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  width: '120px'
+                }}>
+                  <Box component="span" sx={{ flexShrink: 0 }}>GRAY Value:</Box>
+                  <Box component="span" sx={{ 
+                    fontFamily: 'monospace',
+                    textAlign: 'left'
+                  }}>
+                    {`${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}`.padStart(3, ' ')}
+                  </Box>
+                </Typography>
 
-          {showSubscriptionTest ? (
-            <SubscriptionTest />
-          ) : (
-            <ColorDemo catalog={catalogColors} />
-          )}
+                {/* Gray Swatch */}
+                <Box
+                  onClick={handleGraySwatchClick}
+                  sx={{
+                    width: '36px',
+                    height: '36px',
+                    flexShrink: 0,
+                    backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
+                    borderRadius: '50%',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
+                    cursor: 'pointer',
+                    transition: 'box-shadow 0.2s',
+                    '&:hover': {
+                      boxShadow: '0 0 0 2px var(--glow-color)',
+                    }
+                  }}
+                />
 
-          {/* Footer */}
-          <Box 
-            component="footer" 
-            sx={{
-              width: '100%',
-              borderTop: '1px solid var(--border-color)',
-              bgcolor: 'var(--background-paper)',
-              p: 2,
-              mt: 'auto'
-            }}
-          >
-            <Typography 
-              variant="body2" 
-              sx={{
-                textAlign: 'center',
-                color: theme === 'dark' ? '#E8E8E8' : '#1A1A1A',
-                opacity: 0.8
-              }}
-            >
-              {'\u00A9'} 2025 HEXTRA Color System v{VERSION}. All rights reserved.
-            </Typography>
-          </Box>
-
-          {isProcessing && (
-            <Box
-              position="fixed"
-              top={0}
-              left={0}
-              right={0}
-              bottom={0}
-              bgcolor="rgba(0, 0, 0, 0.7)"
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              zIndex={9999}
-            >
-              <CircularProgress size={60} thickness={4} />
-              <Typography variant="h6" color="white" mt={2}>
-                {batchStatus === 'processing' ? 'Processing Images...' : 'Preparing Download...'}
-              </Typography>
-              {batchProgress > 0 && (
-                <Box sx={{ width: '200px', mt: 2 }}>
-                  <Typography variant="body2" color="white" align="center" mt={1}>
-                    Processing: {batchProgress}%
-                  </Typography>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={batchProgress} 
+                {/* Slider */}
+                <Box sx={{
+                  position: 'relative',
+                  width: '200px',
+                  height: '24px',
+                  backgroundColor: 'transparent',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-color)',
+                  background: 'linear-gradient(to right, #000000, #FFFFFF)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 1
+                }}>
+                  <Slider
+                    value={grayscaleValue}
+                    onChange={handleGrayscaleChange}
+                    min={0}
+                    max={255}
                     sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: 'rgba(255,255,255,0.2)',
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 4,
+                      width: '100%',
+                      '& .MuiSlider-thumb': {
+                        width: 20,
+                        height: 20,
+                        backgroundColor: 'transparent',
+                        border: '2px solid var(--glow-color)',
+                        outline: '1px solid rgba(0, 0, 0, 0.3)',
+                        boxShadow: 'inset 0 0 4px var(--glow-color), 0 0 4px var(--glow-color)',
+                        '&:before': {
+                          content: '""',
+                          position: 'absolute',
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          backgroundColor: 'transparent',
+                        },
+                        '&:hover, &.Mui-focusVisible': {
+                          outline: '1px solid rgba(0, 0, 0, 0.4)',
+                          boxShadow: 'inset 0 0 6px var(--glow-color), 0 0 8px var(--glow-color)',
+                        }
+                      },
+                      '& .MuiSlider-track': {
+                        display: 'none'
+                      },
+                      '& .MuiSlider-rail': {
+                        opacity: 0
                       }
                     }}
                   />
                 </Box>
+              </Box>
+
+              {/* Section D: HEX Input Bar */}
+              <Box sx={{ 
+                display: 'flex',
+                flexWrap: 'wrap',  
+                gap: 2,
+                alignItems: 'center',
+                width: '100%',
+                justifyContent: 'center',  // Center the hex input bar
+                '@media (max-width: 532px)': {
+                  justifyContent: 'center',
+                  '& #apply-button': {
+                    width: '100%',  
+                    maxWidth: '200px',
+                    marginTop: '8px'
+                  }
+                }
+              }}>
+                {/* RGB Display */}
+                <Typography sx={{ 
+                  fontFamily: "'Inter', sans-serif",
+                  color: 'var(--text-primary)',
+                  fontSize: '0.875rem',
+                  whiteSpace: 'nowrap',
+                  width: '140px',  
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  <Box component="span" sx={{ flexShrink: 0 }}>RGB:</Box>
+                  <Box component="span" sx={{ 
+                    fontFamily: 'monospace',
+                    width: '85px',  
+                    textAlign: 'left'
+                  }}>
+                    {rgbColor.r},{rgbColor.g},{rgbColor.b}
+                  </Box>
+                </Typography>
+
+                {/* Color Swatch */}
+                <Box
+                  sx={{
+                    width: '48px',
+                    height: '48px',
+                    backgroundColor: selectedColor,
+                    borderRadius: '50%',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1)',
+                    flexShrink: 0
+                  }}
+                />
+
+                {/* HEX Input with Reset Icon */}
+                <SwatchDropdownField
+                  value={hexInput}
+                  onChange={(e) => setHexInput(e.target.value)}
+                  onKeyDown={handleHexKeyPress}
+                  placeholder="#FED141"
+                  startIcon={<TagIcon />}
+                  hasReset
+                  onReset={resetColor}
+                  options={[
+                    '#FED141',
+                    '#D50032',
+                    '#00805E',
+                    '#224D8F',
+                    '#FF4400',
+                    '#CABFAD'
+                  ]}
+                  onSelectionChange={handleDropdownSelection}
+                  sx={{ 
+                    width: '180px',  
+                    '& .MuiOutlinedInput-root': {
+                      paddingLeft: '8px'  
+                    }
+                  }}
+                />
+                {/* Apply Button */}
+                <GlowTextButton
+                  id="apply-button"
+                  variant="contained"
+                  onClick={applyColor}
+                  disabled={isProcessing || !imageLoaded}
+                  sx={{
+                    width: '110px',
+                    '@media (max-width: 532px)': {
+                      width: '110px',
+                      marginTop: '8px'
+                    }
+                  }}
+                >
+                  APPLY
+                </GlowTextButton>
+              </Box>
+            </Box>
+
+            <Box sx={{ my: 2 }}>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '4px',
+                  backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+                  my: 2  
+                }}
+              />
+            </Box>
+
+            {/* Section D: Main Image Window Title */}
+            <Typography 
+              variant="h2" 
+              sx={{ 
+                mb: 2,  
+                textAlign: 'center',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                '@media (max-width: 532px)': {
+                  fontSize: '1.1rem'
+                }
+              }}
+            >
+              Upload your T-shirt or other Image
+            </Typography>
+
+            {/* Section E: Image Loading */}
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 2,
+              alignItems: 'center',
+              justifyContent: 'center', 
+              mt: 1,
+              mb: 2,
+              width: '100%',
+              '@media (max-width: 600px)': {
+                flexDirection: 'column',
+                alignItems: 'center', 
+                '& > button': {
+                  width: '110px', 
+                  alignSelf: 'center'
+                }
+              }
+            }}>
+              <GlowTextButton
+                component="label"
+                variant="contained"
+                disabled={isProcessing}
+                sx={{ 
+                  width: '110px',
+                  flexShrink: 0
+                }}
+              >
+                UPLOAD
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e.target.files[0])}
+                  disabled={false}
+                />
+              </GlowTextButton>
+
+              <Box sx={{ 
+                flex: 1,
+                minWidth: 0, 
+                maxWidth: '600px',  
+                '@media (max-width: 600px)': {
+                  width: '100%',
+                  maxWidth: '300px',
+                  alignSelf: 'center'
+                }
+              }}>
+                <IconTextField
+                  placeholder="Paste image URL here..."
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={handleUrlKeyPress}
+                  startIcon={<LinkIcon />}
+                  hasReset
+                  onReset={() => setUrlInput('')}
+                  sx={{ width: '100%' }}
+                />
+              </Box>
+
+              <GlowTextButton
+                variant="contained"
+                onClick={handleLoadUrl}
+                sx={{ 
+                  width: '110px',
+                  flexShrink: 0
+                }}
+              >
+                USE URL
+              </GlowTextButton>
+            </Box>
+
+            {/* Section F: Main Image (with integrated download button) */}
+            <Box sx={{
+              position: 'relative',
+              zIndex: 1,
+              mt: 1,
+              display: 'flex',
+              flexDirection: 'column',  // Stack children vertically
+              alignItems: 'center',     // Center children horizontally
+              width: '100%',
+              maxWidth: '800px',
+              mx: 'auto',              // Center the box itself
+              overflow: 'hidden'
+            }}>
+              {!imageLoaded && <DefaultTshirt onLoad={handleDefaultImageLoad} />}
+              {imageLoaded && (
+                <img
+                  src={useTestImage ? (testProcessedUrl || testImageUrl) : (workingProcessedUrl || workingImageUrl)}
+                  alt="Working"
+                  style={{
+                    maxWidth: '100%',
+                    height: 'auto',
+                    display: 'block' 
+                  }}
+                />
+              )}
+              {/* Download button using GlowButton */}
+              <GlowButton
+                onClick={handleQuickDownload}
+                disabled={!canDownload}
+                sx={{
+                  position: 'absolute',
+                  right: '12px',
+                  bottom: '12px',
+                  minWidth: 'auto',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <FileDownloadIcon />
+              </GlowButton>
+            </Box>
+
+            {/* Section G: Image Processing */}
+            <Box sx={{ 
+              width: '100%', 
+              mt: 1,
+              position: 'relative',
+              zIndex: 2  
+            }}>
+              {/* Advanced Settings Toggle Section */}
+              <Box sx={{ 
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center'
+              }}>
+                <Box sx={{ 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}>
+                  <GlowSwitch
+                    checked={showAdvanced}
+                    onChange={(e) => setShowAdvanced(e.target.checked)}
+                    size="small"
+                  />
+                  <Typography sx={{ 
+                    fontSize: '0.75rem',
+                    color: 'var(--text-secondary)',
+                    mt: 0.5
+                  }}>
+                    Advanced
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Image Processing Section */}
+              {showAdvanced && (
+                <Typography sx={{ 
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.85rem',
+                  textAlign: 'center',
+                  mb: 2
+                }}>
+                  Enhanced image processing features coming soon - Stay tuned!
+                </Typography>
               )}
             </Box>
-          )}
-          {isTestingJimp && (
-            <Box
-              position="fixed"
-              top={0}
-              left={0}
-              right={0}
-              bottom={0}
-              bgcolor="rgba(0, 0, 0, 0.7)"
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              zIndex={9999}
-            >
-              <CircularProgress size={60} thickness={4} />
-              <Typography variant="h6" color="white" mt={2}>
-                Testing Jimp color processing...
+
+            {/* Section H: MESMERIZE */}
+            <Box sx={{ 
+              width: '100%',
+              maxWidth: '800px',
+              mt: 2,
+              mx: 'auto',              // Center the box
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'      // Center children
+            }}>
+              {/* MESMERIZE Section Title */}
+              <Typography 
+                variant="h2" 
+                sx={{ 
+                  textAlign: 'center',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  mb: 3,  // Added margin bottom
+                  '@media (max-width: 532px)': {
+                    fontSize: '1.1rem'
+                  }
+                }}
+              >
+                Create BULK T-Shirt blanks in True Color
               </Typography>
+
+              {/* Batch Processing Section */}
+              <Box 
+                id="batch-section"
+                className="batch-processing-section"
+                sx={{
+                  mt: 4,
+                  p: 3,
+                  borderRadius: '8px',
+                  bgcolor: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-subtle)',
+                  width: '100%',
+                  maxWidth: '800px',    // Match other sections
+                  mx: 'auto',           // Center the box
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  position: 'relative',
+                  transition: 'box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out',
+                  '&:hover': {
+                    boxShadow: !isAuthenticated ? 
+                      '0 0 30px rgba(255, 214, 0, 0.15)' : 
+                      'none',
+                    borderColor: !isAuthenticated ? 
+                      'rgba(255, 214, 0, 0.3)' : 
+                      'var(--border-subtle)'
+                  }
+                }}
+              >
+                <Typography variant="h6" sx={{ 
+                  fontFamily: "'League Spartan', sans-serif",
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  mb: 3,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Batch Processing
+                </Typography>
+
+                {isAuthenticated ? (
+                  <>
+                    {/* Catalog selector */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      gap: 2, 
+                      justifyContent: 'center', 
+                      mt: 2,
+                      mb: 3
+                    }}>
+                      <GlowTextButton
+                        variant="contained"
+                        onClick={() => handleCatalogSwitch('GILDAN_6400')}
+                        sx={{
+                          width: '140px',
+                          height: '36px',
+                          fontSize: '0.8rem',
+                          letterSpacing: '0.05em',
+                          whiteSpace: 'nowrap',
+                          opacity: activeCatalog === 'GILDAN_6400' ? 1 : 0.7,
+                          p: 1
+                        }}
+                      >
+                        GILDAN 6400
+                      </GlowTextButton>
+                      <GlowTextButton
+                        variant="contained"
+                        onClick={() => handleCatalogSwitch('HEXTRA_21')}
+                        sx={{
+                          width: '140px',
+                          height: '36px',
+                          fontSize: '0.8rem',
+                          letterSpacing: '0.05em',
+                          whiteSpace: 'nowrap',
+                          opacity: activeCatalog === 'HEXTRA_21' ? 1 : 0.7,
+                          p: 1
+                        }}
+                      >
+                        HEXTRA 21
+                      </GlowTextButton>
+                    </Box>
+
+                    {/* Main Action Buttons */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      gap: 2,
+                      mb: 3,
+                      justifyContent: 'center'
+                    }}>
+                      <GlowTextButton
+                        variant="contained"
+                        onClick={handleGenerateAll}
+                        disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded}
+                        sx={{ 
+                          width: '140px',
+                          position: 'relative'
+                        }}
+                      >
+                        {batchStatus === 'processing' || batchStatus === 'saving' ? (
+                          <>
+                            <CircularProgress
+                              size={16}
+                              sx={{
+                                color: 'var(--text-primary)',
+                                position: 'absolute',
+                                left: '50%',
+                                marginLeft: '-8px'
+                              }}
+                            />
+                            <span style={{ visibility: 'hidden' }}>GENERATE ALL</span>
+                          </>
+                        ) : (
+                          'GENERATE ALL'
+                        )}
+                      </GlowTextButton>
+                      <GlowTextButton
+                        variant="contained"
+                        onClick={handleGenerateSelected}
+                        disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded || !selectedColors.length}
+                        sx={{ width: '140px' }}
+                      >
+                        SELECTED
+                      </GlowTextButton>
+                    </Box>
+
+                    {/* CSV Upload Button */}
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                      <GlowTextButton
+                        component="label"
+                        variant="contained"
+                        disabled={isProcessing || batchStatus === 'processing'}
+                        sx={{ width: '140px' }}
+                      >
+                        UPLOAD CSV
+                        <input
+                          type="file"
+                          hidden
+                          accept=".csv"
+                          onChange={handleCSVUpload}
+                        />
+                      </GlowTextButton>
+                    </Box>
+
+                    {/* Progress Indicator */}
+                    {(batchStatus === 'processing' || batchStatus === 'saving') && (
+                      <Box sx={{ width: '100%', maxWidth: 400, mt: 2, mx: 'auto' }}>
+                        <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
+                          {batchStatus === 'processing' ? (
+                            `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
+                          ) : (
+                            'Creating ZIP file...'
+                          )}
+                        </Typography>
+                        <LinearProgress 
+                          variant={batchStatus === 'saving' ? 'indeterminate' : 'determinate'}
+                          value={batchProgress} 
+                          sx={{
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: 'var(--border-subtle)',
+                            '& .MuiLinearProgress-bar': {
+                              backgroundColor: 'var(--glow-color)',
+                              borderRadius: 4
+                            }
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </>
+                ) : (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    gap: 3,
+                    p: 4,
+                    width: '100%',
+                    textAlign: 'center'
+                  }}>
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        fontFamily: "'League Spartan', sans-serif",
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
+                      }}
+                    >
+                      UNLOCK BULK GARMENT GENERATION
+                    </Typography>
+                    <GlowTextButton
+                      variant="contained"
+                      onClick={login}
+                      sx={{ 
+                        width: '200px',
+                        height: '48px',
+                        fontSize: '1rem',
+                        fontFamily: "'League Spartan', sans-serif",
+                        fontWeight: 600,
+                        letterSpacing: '0.05em'
+                      }}
+                    >
+                      SIGN IN
+                    </GlowTextButton>
+                  </Box>
+                )}
+              </Box>
             </Box>
-          )}
-        </Box>
+
+            <Box sx={{ my: 5 }}>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '4px',
+                  backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
+                }}
+              />
+            </Box>
+
+            <ColorDemo catalog={catalogColors} />
+          </>
+        )}
       </Box>
     </Box>
   );
