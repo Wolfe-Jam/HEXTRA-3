@@ -1,28 +1,38 @@
-import { useKindeAuth } from '@kinde-oss/kinde-auth-nextjs';
-import { useEffect, useState } from 'react';
+import React from 'react';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { loadStripe } from '@stripe/stripe-js';
+
+// Import your existing components for consistent styling
+import GlowButton from '../components/GlowButton';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 export default function SubscriptionTest() {
-  const { isAuthenticated, user } = useKindeAuth();
-  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, user, login } = useKindeAuth();
+  const [subscriptionStatus, setSubscriptionStatus] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
+    console.log('Subscription test mounted');
+    console.log('Auth state:', { isAuthenticated, user });
+    
     if (isAuthenticated && user?.id) {
       checkSubscription();
+    } else {
+      setLoading(false);
     }
   }, [isAuthenticated, user]);
 
   const checkSubscription = async () => {
     try {
+      console.log('Checking subscription for user:', user.id);
       const response = await fetch('/api/check-subscription', {
         headers: {
           'x-kinde-user-id': user.id
         }
       });
       const data = await response.json();
+      console.log('Subscription data:', data);
       setSubscriptionStatus(data);
       setLoading(false);
     } catch (error) {
@@ -32,7 +42,13 @@ export default function SubscriptionTest() {
   };
 
   const handleSubscribe = async () => {
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
+
     try {
+      console.log('Starting subscription process');
       const stripe = await stripePromise;
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -43,49 +59,69 @@ export default function SubscriptionTest() {
       });
       
       const { sessionId } = await response.json();
+      console.log('Got session ID:', sessionId);
       const { error } = await stripe.redirectToCheckout({ sessionId });
       
       if (error) {
-        console.error('Error:', error);
+        console.error('Stripe error:', error);
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Subscription error:', error);
     }
   };
 
-  if (!isAuthenticated) {
-    return <div>Please sign in to manage your subscription</div>;
-  }
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  // Debug render
+  console.log('Render state:', { isAuthenticated, loading, subscriptionStatus });
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Subscription Test Page</h1>
+    <div style={{ 
+      padding: '20px',
+      maxWidth: '800px',
+      margin: '0 auto',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
+    }}>
+      <h1 style={{ marginBottom: '30px' }}>HEXTRA Subscription Test</h1>
       
-      <div style={{ marginBottom: '20px' }}>
-        <h2>User Info:</h2>
-        <pre>{JSON.stringify(user, null, 2)}</pre>
-      </div>
+      {!isAuthenticated ? (
+        <div style={{ textAlign: 'center', marginTop: '40px' }}>
+          <GlowButton onClick={login}>
+            Sign In to Manage Subscription
+          </GlowButton>
+        </div>
+      ) : loading ? (
+        <div>Loading subscription status...</div>
+      ) : (
+        <>
+          <div style={{ marginBottom: '30px' }}>
+            <h2>User Info</h2>
+            <pre style={{ 
+              background: '#f5f5f5', 
+              padding: '15px',
+              borderRadius: '8px'
+            }}>
+              {JSON.stringify(user, null, 2)}
+            </pre>
+          </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <h2>Subscription Status:</h2>
-        <pre>{JSON.stringify(subscriptionStatus, null, 2)}</pre>
-      </div>
+          <div style={{ marginBottom: '30px' }}>
+            <h2>Subscription Status</h2>
+            <pre style={{ 
+              background: '#f5f5f5', 
+              padding: '15px',
+              borderRadius: '8px'
+            }}>
+              {JSON.stringify(subscriptionStatus, null, 2)}
+            </pre>
+          </div>
 
-      {!subscriptionStatus?.isSubscribed && (
-        <button 
-          onClick={handleSubscribe}
-          style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            cursor: 'pointer'
-          }}
-        >
-          Subscribe to Early-Bird Plan
-        </button>
+          {!subscriptionStatus?.isSubscribed && (
+            <div style={{ textAlign: 'center', marginTop: '30px' }}>
+              <GlowButton onClick={handleSubscribe}>
+                Subscribe to Early-Bird Plan ($5/month)
+              </GlowButton>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
