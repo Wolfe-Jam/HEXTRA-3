@@ -1,6 +1,7 @@
 import './polyfills';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import themeManager from './theme';
 import KindeAuth from './components/KindeAuth';
@@ -10,8 +11,10 @@ themeManager.init();
 
 root.render(
   <React.StrictMode>
-    <KindeAuth>
-      <App />
-    </KindeAuth>
+    <BrowserRouter>
+      <KindeAuth>
+        <App />
+      </KindeAuth>
+    </BrowserRouter>
   </React.StrictMode>
 );

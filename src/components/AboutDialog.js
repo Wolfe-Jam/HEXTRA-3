@@ -117,7 +117,7 @@ const AboutDialog = ({ open, onClose, version }) => {
         }}>
           {/* COLORIZE Column */}
           <Box>
-            <Typography variant="body2" sx={{ color: '#D50032', ...leagueSpartanStyle, mb: 1 }}>
+            <Typography variant="body2" sx={{ color: '#FF3B30', ...leagueSpartanStyle, mb: 1 }}>
               COLORIZE
             </Typography>
             <Typography variant="body2" component="div" sx={{ pl: 1 }}>
@@ -129,7 +129,7 @@ const AboutDialog = ({ open, onClose, version }) => {
 
           {/* VISUALIZE Column */}
           <Box>
-            <Typography variant="body2" sx={{ color: '#D50032', ...leagueSpartanStyle, mb: 1 }}>
+            <Typography variant="body2" sx={{ color: '#34C759', ...leagueSpartanStyle, mb: 1 }}>
               VISUALIZE
             </Typography>
             <Typography variant="body2" component="div" sx={{ pl: 1 }}>
@@ -141,7 +141,7 @@ const AboutDialog = ({ open, onClose, version }) => {
 
           {/* MESMERIZE Column */}
           <Box>
-            <Typography variant="body2" sx={{ color: '#D50032', ...leagueSpartanStyle, mb: 1 }}>
+            <Typography variant="body2" sx={{ color: '#007AFF', ...leagueSpartanStyle, mb: 1 }}>
               MESMERIZE
             </Typography>
             <Typography variant="body2" component="div" sx={{ pl: 1 }}>

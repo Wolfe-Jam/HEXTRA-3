@@ -14,6 +14,8 @@ import GlowTextButton from './GlowTextButton';
 import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import GroupsIcon from '@mui/icons-material/Groups';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { createCheckoutSession } from '../api/stripe-api';
 
 const PLANS = {
   EARLY_BIRD: {
@@ -26,7 +28,8 @@ const PLANS = {
       'Brand Catalogs',
       'PNG Support',
       'Priority Support'
-    ]
+    ],
+    priceId: 'price_1Qmnv12KJ00ahaMqNsdpkluL'
   },
   PRO: {
     name: 'PRO',
@@ -39,7 +42,8 @@ const PLANS = {
       'Custom Shirts',
       'PNG Support',
       'Expert Export Settings'
-    ]
+    ],
+    priceId: process.env.REACT_APP_STRIPE_PRO_PRICE_ID
   },
   TEAM: {
     name: 'TEAM',
@@ -71,29 +75,36 @@ const formatDate = (dateString) => {
 };
 
 const SubscriptionTest = ({ onClose }) => {
-  const { user } = useKindeAuth();
+  const { user, logout } = useKindeAuth();
   const { status, loading } = useSubscriptionStatus();
 
   const userInitial = user?.given_name?.[0] || user?.email?.[0] || 'H';
 
-  const handleSubscribe = async (priceId) => {
+  const handleSubscribe = async (key) => {
     try {
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          priceId,
-          email: user.email
-        }),
-      });
+      console.log('Starting subscription process for:', key);
+      console.log('User:', user);
+      console.log('Price ID:', PLANS[key].priceId);
+
+      const { url } = await createCheckoutSession(
+        user.id,
+        PLANS[key].priceId,
+        user.email
+      );
       
-      const { url } = await response.json();
-      window.location.href = url;
+      if (url) {
+        console.log('Redirecting to:', url);
+        window.location.href = url;
+      } else {
+        console.error('No checkout URL received');
+      }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Subscription error:', error);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
   };
 
   console.log('onClose function:', onClose);
@@ -201,6 +212,15 @@ const SubscriptionTest = ({ onClose }) => {
           </Box>
         </CardContent>
       </Card>
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Button onClick={onClose} startIcon={<ArrowBackIcon />}>
+          Back to Image Generation
+        </Button>
+        <Button onClick={handleLogout} color="secondary">
+          Logout
+        </Button>
+      </Box>
 
       {/* Subscription Plans */}
       <Stack 
@@ -312,6 +332,7 @@ const SubscriptionTest = ({ onClose }) => {
                 fullWidth
                 variant="contained"
                 onClick={() => key === 'TEAM' ? window.location.href = 'mailto:support@hextra.com' : handleSubscribe(key)}
+                disabled={loading || (status && status.includes(plan.name))}
                 sx={{
                   mt: 3,
                   backgroundColor: plan.color,
@@ -324,10 +345,15 @@ const SubscriptionTest = ({ onClose }) => {
                     opacity: 0.9,
                     transform: 'translateY(-2px)',
                     boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                  },
+                  '&:disabled': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                    color: 'rgba(0, 0, 0, 0.26)'
                   }
                 }}
               >
-                {key === 'TEAM' ? 'Contact Us' : 'Subscribe'}
+                {key === 'TEAM' ? 'Contact Us' : 
+                 status && status.includes(plan.name) ? 'Current Plan' : 'Subscribe'}
               </Button>
             </CardContent>
           </Card>

@@ -1372,6 +1372,96 @@ function App() {
         />
       </Box>
 
+      {/* Section D: Main Image Window Title */}
+      <Typography 
+        variant="h2" 
+        sx={{ 
+          marginTop: '10px',
+          mb: 2,  
+          textAlign: 'center',
+          fontFamily: "'Inter', sans-serif",
+          fontSize: '1.25rem',
+          fontWeight: 600,
+          color: 'var(--text-primary)',
+          '@media (max-width: 532px)': {
+            fontSize: '1.1rem'
+          }
+        }}
+      >
+        Upload your T-shirt or other Image
+      </Typography>
+
+      {/* Section E: Image Loading */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2,
+        alignItems: 'center',
+        justifyContent: 'center', 
+        mt: 1,
+        mb: 2,
+        width: '100%',
+        '@media (max-width: 600px)': {
+          flexDirection: 'column',
+          alignItems: 'center', 
+          '& > button': {
+            width: '110px', 
+            alignSelf: 'center'
+          }
+        }
+      }}>
+        <GlowTextButton
+          component="label"
+          variant="contained"
+          disabled={isProcessing}
+          sx={{ 
+            width: '110px',
+            flexShrink: 0
+          }}
+        >
+          UPLOAD
+          <input
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={(e) => handleImageUpload(e.target.files[0])}
+            disabled={false}
+          />
+        </GlowTextButton>
+
+        <Box sx={{ 
+          flex: 1,
+          minWidth: 0, 
+          maxWidth: '600px',  
+          '@media (max-width: 600px)': {
+            width: '100%',
+            maxWidth: '300px',
+            alignSelf: 'center'
+          }
+        }}>
+          <IconTextField
+            placeholder="Paste image URL here..."
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyDown={handleUrlKeyPress}
+            startIcon={<LinkIcon />}
+            hasReset
+            onReset={() => setUrlInput('')}
+            sx={{ width: '100%' }}
+          />
+        </Box>
+
+        <GlowTextButton
+          variant="contained"
+          onClick={handleLoadUrl}
+          sx={{ 
+            width: '110px',
+            flexShrink: 0
+          }}
+        >
+          USE URL
+        </GlowTextButton>
+      </Box>
+
       {/* Section F: Main Image */}
       <Box sx={{
         position: 'relative',
