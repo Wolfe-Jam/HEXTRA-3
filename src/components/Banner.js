@@ -126,6 +126,22 @@ const Banner = ({ version, isDarkMode, onThemeToggle }) => {
           marginRight: '24px'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {isAuthenticated && (
+              <>
+                <GlowTextButton
+                  onClick={() => setIsBatchMode(!isBatchMode)}
+                  active={isBatchMode}
+                >
+                  {isBatchMode ? 'Single Mode' : 'Batch Mode'}
+                </GlowTextButton>
+
+                <GlowTextButton
+                  onClick={() => setShowSubscriptionTest(prev => !prev)}
+                >
+                  Subscription Test
+                </GlowTextButton>
+              </>
+            )}
             {isAuthenticated ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Typography sx={{ color: COLORS.textDark }}>

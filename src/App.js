@@ -26,6 +26,7 @@ import { testJimp, replaceColor } from './utils/jimp-test';
 import { LUMINANCE_METHODS } from './constants/luminance';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import KindeAuthButtons from './components/KindeAuthButtons';
+import SubscriptionTest from './components/SubscriptionTest';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -126,6 +127,9 @@ function App() {
 
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Add state for subscription test
+  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -1109,6 +1113,11 @@ function App() {
           version={VERSION}
           isDarkMode={theme === 'dark'}
           onThemeToggle={toggleTheme}
+          showTooltips={showTooltips}
+          setShowTooltips={setShowTooltips}
+          isBatchMode={isBatchMode}
+          setIsBatchMode={setIsBatchMode}
+          setShowSubscriptionTest={setShowSubscriptionTest}
         />
         
         {/* Theme Toggle */}
@@ -1834,7 +1843,11 @@ function App() {
             />
           </Box>
 
-          <ColorDemo catalog={catalogColors} />
+          {showSubscriptionTest ? (
+            <SubscriptionTest />
+          ) : (
+            <ColorDemo catalog={catalogColors} />
+          )}
 
           {/* Footer */}
           <Box 
