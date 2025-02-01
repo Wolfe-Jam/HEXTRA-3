@@ -1092,6 +1092,16 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated && window.location.pathname === '/') {
+      navigate('/batch');
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleBatchModeToggle = () => {
+    setIsBatchMode(!isBatchMode);
+  };
+
   const PrivateRoute = ({ children }) => {
     if (!isAuthenticated) {
       return <Navigate to="/batch" />;
@@ -1904,10 +1914,6 @@ function App() {
     navigate('/');
     return null;
   }
-
-  const handleBatchModeToggle = () => {
-    setIsBatchMode(!isBatchMode);
-  };
 
   useEffect(() => {
     if (isAuthenticated) {

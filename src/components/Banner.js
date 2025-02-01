@@ -24,6 +24,35 @@ const Banner = ({
   const { isAuthenticated, user, login, logout } = useKindeAuth();
   const navigate = useNavigate();
 
+  // Calculate user initials and color once
+  const userInitial = useMemo(() => {
+    if (user?.given_name) {
+      return user.given_name[0].toUpperCase();
+    }
+    return '?';
+  }, [user]);
+
+  const userColor = useMemo(() => {
+    if (user?.email) {
+      const index = user.email.length % BRAND_COLORS.length;
+      return BRAND_COLORS[index];
+    }
+    return BRAND_COLORS[0];
+  }, [user?.email]);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 0;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [scrolled]);
+
   // Don't show login button on root path
   if (window.location.pathname === '/') {
     return (
@@ -316,29 +345,6 @@ const Banner = ({
     textDark: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
     textLight: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)'
   };
-
-  // Generate a consistent color based on user's email
-  const userColor = useMemo(() => {
-    if (!user?.email) return BRAND_COLORS[0];
-    const index = user.email.length % BRAND_COLORS.length;
-    return BRAND_COLORS[index];
-  }, [user?.email]);
-
-  // Get user's initial
-  const userInitial = useMemo(() => {
-    if (!user?.given_name) return '?';
-    return user.given_name.charAt(0).toUpperCase();
-  }, [user?.given_name]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const offset = window.scrollY;
-      setScrolled(offset > 0);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <Box 
