@@ -87,7 +87,7 @@ const AboutDialog = ({ open, onClose, version }) => {
               Version
             </Typography>
             <Typography variant="body2" sx={{ mb: 1, color: 'var(--text-secondary)' }}>
-              Version 2.2.0 - Kinde Authentication Release
+              Version {version} - Kinde Authentication Release
             </Typography>
           </Box>
           
