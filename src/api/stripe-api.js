@@ -1,5 +1,5 @@
 // Stripe API endpoints
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'https://hextra-3.vercel.app';
 
 export const createCheckoutSession = async (userId, priceId, email) => {
   const response = await fetch(`${BASE_URL}/api/create-checkout-session`, {

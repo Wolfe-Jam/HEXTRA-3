@@ -1868,6 +1868,10 @@ function App() {
             setIsBatchMode={setIsBatchMode}
             setShowSubscriptionTest={setShowSubscriptionTest}
           />
+          {/* Add Subscription Test Dialog */}
+          {showSubscriptionTest && (
+            <SubscriptionTest onClose={() => setShowSubscriptionTest(false)} />
+          )}
           {isAuthenticated ? (
             <Box 
               className="batch-processing-section"
