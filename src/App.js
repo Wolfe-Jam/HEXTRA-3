@@ -1093,8 +1093,11 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    const path = window.location.pathname;
+    if (isAuthenticated && path === '/') {
       navigate('/batch');
+    } else if (!isAuthenticated && path === '/batch') {
+      navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
@@ -1865,216 +1868,70 @@ function App() {
     </Box>
   );
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/batch');
-    }
-  }, [isAuthenticated, navigate]);
-
-  if (!isAuthenticated && window.location.pathname === '/') {
-    return (
+  const renderLoginPage = () => (
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
+      }}
+    >
       <Box
+        component="img"
+        src="/images/HEXTRA-3-logo-Wht.svg"
+        alt="HEXTRA"
         sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
+          height: '120px',
+          width: 'auto',
+          marginBottom: 4
+        }}
+      />
+      <Button
+        variant="contained"
+        onClick={() => login()}
+        sx={{
+          backgroundColor: '#00805E',
+          color: '#FFFFFF',
+          '&:hover': {
+            backgroundColor: '#006f52'
+          }
         }}
       >
-        <Box
-          component="img"
-          src="/images/HEXTRA-3-logo-Wht.svg"
-          alt="HEXTRA"
-          sx={{
-            height: '120px',
-            width: 'auto',
-            marginBottom: 4
-          }}
-        />
-        <Button
-          variant="contained"
-          onClick={() => login()}
-          sx={{
-            backgroundColor: '#00805E',
-            color: '#FFFFFF',
-            '&:hover': {
-              backgroundColor: '#006f52'
-            }
-          }}
-        >
-          Sign In
-        </Button>
-      </Box>
-    );
-  }
-
-  if (!isAuthenticated && window.location.pathname === '/batch') {
-    navigate('/');
-    return null;
-  }
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/batch');
-    }
-  }, [isAuthenticated, navigate]);
-
-  if (!isAuthenticated && window.location.pathname === '/') {
-    return (
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
-        }}
-      >
-        <Box
-          component="img"
-          src="/images/HEXTRA-3-logo-Wht.svg"
-          alt="HEXTRA"
-          sx={{
-            height: '120px',
-            width: 'auto',
-            marginBottom: 4
-          }}
-        />
-        <Button
-          variant="contained"
-          onClick={() => login()}
-          sx={{
-            backgroundColor: '#00805E',
-            color: '#FFFFFF',
-            '&:hover': {
-              backgroundColor: '#006f52'
-            }
-          }}
-        >
-          Sign In
-        </Button>
-      </Box>
-    );
-  }
-
-  if (!isAuthenticated && window.location.pathname === '/batch') {
-    navigate('/');
-    return null;
-  }
+        Sign In
+      </Button>
+    </Box>
+  );
 
   return (
     <Routes>
-      <Route path="/" element={
-        !isAuthenticated ? (
-          <Box
-            sx={{
-              height: '100vh',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
-            }}
-          >
-            <Box
-              component="img"
-              src="/images/HEXTRA-3-logo-Wht.svg"
-              alt="HEXTRA"
-              sx={{
-                height: '120px',
-                width: 'auto',
-                marginBottom: 4
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={() => login()}
-              sx={{
-                backgroundColor: '#00805E',
-                color: '#FFFFFF',
-                '&:hover': {
-                  backgroundColor: '#006f52'
-                }
-              }}
-            >
-              Sign In
-            </Button>
-          </Box>
-        ) : (
-          <Navigate to="/batch" replace />
-        )
-      } />
-      <Route path="/batch" element={
-        <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-          <Banner 
-            version={VERSION}
-            isDarkMode={theme === 'dark'}
-            onThemeToggle={toggleTheme}
-            isBatchMode={isBatchMode}
-            setIsBatchMode={setIsBatchMode}
-            setShowSubscriptionTest={setShowSubscriptionTest}
-          />
-          {/* Add Subscription Test Dialog */}
-          {showSubscriptionTest && (
-            <SubscriptionTest onClose={() => setShowSubscriptionTest(false)} />
-          )}
-          {isAuthenticated ? (
-            <Box 
-              className="batch-processing-section"
-              id="batch-section"
-              sx={{ 
-                width: '100%', 
-                minHeight: 'calc(100vh - 62px)', // Account for new banner height
-                bgcolor: 'var(--bg-primary)', 
-                color: 'var(--text-primary)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                pt: 6, // Increased top padding to account for logo overlap
-                px: 3,
-                pb: 4,
-                position: 'relative',
-                overflow: 'visible'
-              }}
-            >
-              {/* Main Content */}
-              <Box sx={{ 
-                width: '100%', 
-                maxWidth: '800px', 
-                mx: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 4
-              }}>
-                {/* Color Section */}
-                <Box sx={{ 
-                  width: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 2
-                }}>
-                  {mainContent}
-                </Box>
-              </Box>
-            </Box>
+      <Route 
+        path="/" 
+        element={!isAuthenticated ? renderLoginPage() : <Navigate to="/batch" replace />} 
+      />
+      <Route 
+        path="/batch" 
+        element={
+          !isAuthenticated ? (
+            <Navigate to="/" replace />
           ) : (
-            <Box sx={{ 
-              pt: 6, 
-              display: 'flex', 
-              justifyContent: 'center',
-              minHeight: 'calc(100vh - 62px)', // Account for new banner height
-              bgcolor: 'var(--bg-primary)'
-            }}>
-              <KindeAuthButtons />
+            <Box>
+              <Banner
+                version={VERSION}
+                isDarkMode={theme === 'dark'}
+                onThemeToggle={toggleTheme}
+                isBatchMode={isBatchMode}
+                setIsBatchMode={setIsBatchMode}
+                setShowSubscriptionTest={setShowSubscriptionTest}
+              />
+              {/* Rest of your batch page content */}
+              {mainContent}
             </Box>
-          )}
-        </Box>
-      } />
+          )
+        } 
+      />
       <Route path="/subscription" element={
         <PrivateRoute>
           <SubscriptionTest onClose={() => navigate('/batch')} />
