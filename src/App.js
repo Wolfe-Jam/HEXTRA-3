@@ -1910,12 +1910,24 @@ function App() {
       <Route path="/api/auth/kinde/callback" element={<Navigate to="/batch" replace />} />
       <Route 
         path="/" 
-        element={!isAuthenticated ? renderLoginPage() : <Navigate to="/batch" replace />} 
+        element={isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <CircularProgress />
+          </Box>
+        ) : !isAuthenticated ? (
+          renderLoginPage()
+        ) : (
+          <Navigate to="/batch" replace />
+        )} 
       />
       <Route 
         path="/batch" 
         element={
-          !isAuthenticated ? (
+          isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+              <CircularProgress />
+            </Box>
+          ) : !isAuthenticated ? (
             <Navigate to="/" replace />
           ) : (
             <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
