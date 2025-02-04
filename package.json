@@ -78,7 +78,7 @@
     "test:color": "jest color-application.test.js --watch",
     "eject": "react-scripts eject",
     "generate-icons": "node scripts/generate-icons.js",
-    "vercel-build": "cross-env CI=false REACT_APP_KINDE_REDIRECT_URI=https://hextra.io/api/auth/kinde/callback REACT_APP_KINDE_LOGOUT_URI=https://hextra.io react-scripts build"
+    "vercel-build": "cross-env CI=false REACT_APP_KINDE_CLIENT_ID=29b231bd96ab409c89f5c5575c3892c3 REACT_APP_KINDE_REDIRECT_URI=https://hextra.io/api/auth/kinde/callback REACT_APP_KINDE_LOGOUT_URI=https://hextra.io react-scripts build"
   },
   "eslintConfig": {
     "extends": [
