@@ -19,11 +19,19 @@ export default function KindeAuth({ children }) {
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
     redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
-    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI
+    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
+    audience: 'https://hextra.io',
+    scope: 'openid profile email offline'
   };
 
   // Debug: Log final config
   console.log('Kinde config:', config);
+
+  // Add auth flow debugging
+  React.useEffect(() => {
+    console.log('Current URL:', window.location.href);
+    console.log('Authentication flow started');
+  }, []);
 
   return (
     <KindeProvider
