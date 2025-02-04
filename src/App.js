@@ -1907,6 +1907,7 @@ function App() {
 
   return (
     <Routes>
+      <Route path="/api/auth/kinde/callback" element={<Navigate to="/batch" replace />} />
       <Route 
         path="/" 
         element={!isAuthenticated ? renderLoginPage() : <Navigate to="/batch" replace />} 
