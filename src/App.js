@@ -1083,30 +1083,14 @@ function App() {
   };
 
   useEffect(() => {
-    // Handle hash navigation
-    if (window.location.hash === '#batch-section') {
-      const batchSection = document.getElementById('batch-section');
-      if (batchSection) {
-        batchSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  }, []);
-
-  useEffect(() => {
     const path = window.location.pathname;
-    if (isAuthenticated && path === '/') {
-      navigate('/batch');
-    } else if (!isAuthenticated && path === '/batch') {
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate]);
-
-  useEffect(() => {
     if (isAuthenticated) {
-      // If we're on the login page, redirect to batch
-      if (window.location.pathname === '/') {
+      // After successful authentication, redirect to batch section
+      if (path === '/' || path === '/api/auth/kinde/callback') {
         navigate('/#batch-section');
       }
+    } else if (path === '/batch') {
+      navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
