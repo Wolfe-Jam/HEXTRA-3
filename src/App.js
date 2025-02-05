@@ -83,6 +83,7 @@ function rgbToHsv(r, g, b) {
 function App() {
   const { isLoading, isAuthenticated, login } = useKindeAuth();
   const navigate = useNavigate();
+  const [authChecked, setAuthChecked] = useState(false);
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImage, setWorkingImage] = useState(null);
@@ -1104,6 +1105,38 @@ function App() {
     }
     return children;
   };
+
+  useEffect(() => {
+    if (!isLoading) {
+      const path = window.location.pathname;
+      
+      if (isAuthenticated) {
+        // After successful authentication, redirect to batch section
+        if (path === '/' || path === '/api/auth/kinde/callback') {
+          window.location.href = 'https://www.hextra.io/#batch-section';
+        }
+      } else if (path === '/batch') {
+        window.location.href = 'https://www.hextra.io';
+      }
+      
+      setAuthChecked(true);
+    }
+  }, [isLoading, isAuthenticated]);
+
+  // Show loading state while checking auth
+  if (!authChecked) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        bgcolor: 'var(--bg-primary)'
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   const mainContent = (
     <Box sx={{ 
