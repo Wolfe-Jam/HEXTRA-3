@@ -82,21 +82,76 @@ function rgbToHsv(r, g, b) {
 
 function App() {
   const { isLoading, isAuthenticated, login } = useKindeAuth();
+  const navigate = useNavigate();
+
   const [authChecked, setAuthChecked] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
+  const [workingImage, setWorkingImage] = useState(null);
+  const [workingImageUrl, setWorkingImageUrl] = useState(null);
+  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
+  const [testImage, setTestImage] = useState(null);
+  const [testImageUrl, setTestImageUrl] = useState(null);
+  const [testProcessedUrl, setTestProcessedUrl] = useState(null);
+  const [originalImage, setOriginalImage] = useState(null);
+  const [processedImage, setProcessedImage] = useState(null);
+  const [error, setError] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [canDownload, setCanDownload] = useState(false);
+  const [hexInput, setHexInput] = useState(DEFAULT_COLOR);
+  const [urlInput, setUrlInput] = useState('');
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme || 'dark';
+  });
+  const [isDropdownSelection, setIsDropdownSelection] = useState(false);
+  const [lastClickColor, setLastClickColor] = useState(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const [enhanceEffect, setEnhanceEffect] = useState(true);  // Default to enhanced
+  const [showTooltips, setShowTooltips] = useState(true);  // Default tooltips on
+  const [useTestImage, setUseTestImage] = useState(false);
+  const [lastWorkingImage, setLastWorkingImage] = useState(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
+  const [matteValue, setMatteValue] = useState(50);
+  const [textureValue, setTextureValue] = useState(50);
+  const [isTestingJimp, setIsTestingJimp] = useState(false);
+
+  // MEZMERIZE States
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [batchResults, setBatchResults] = useState([]);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchStatus, setBatchStatus] = useState('idle'); // idle, processing, complete, error
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
+
+  // Add state for catalog colors
+  const [activeCatalog, setActiveCatalog] = useState('GILDAN_6400');
+  const [catalogColors, setCatalogColors] = useState(GILDAN_6400);
+
+  // Add state for advanced settings toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Add state for subscription test
+  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
 
   useEffect(() => {
-    console.log('Auth State:', {
-      isLoading,
-      isAuthenticated,
-      authChecked,
-      pathname: window.location.pathname,
-      hash: window.location.hash
-    });
-
     if (!isLoading) {
+      const path = window.location.pathname;
+      
+      if (isAuthenticated) {
+        // After successful authentication, redirect to batch section
+        if (path === '/' || path === '/api/auth/kinde/callback') {
+          navigate('/batch', { replace: true });
+        }
+      } else if (path === '/batch') {
+        navigate('/', { replace: true });
+      }
+      
       setAuthChecked(true);
     }
-  }, [isLoading, isAuthenticated, authChecked]);
+  }, [isLoading, isAuthenticated, navigate]);
 
   const handleLogin = () => {
     console.log('Login clicked, redirecting to:', 'https://www.hextra.io/#batch-section');
@@ -108,7 +163,6 @@ function App() {
   };
 
   if (isLoading || !authChecked) {
-    console.log('Showing loading state');
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -123,7 +177,6 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    console.log('Not authenticated, showing login page');
     return (
       <Box
         sx={{
@@ -164,61 +217,10 @@ function App() {
     );
   }
 
-  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
-  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
-  const [workingImage, setWorkingImage] = useState(null);
-  const [workingImageUrl, setWorkingImageUrl] = useState(null);
-  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
-  const [testImage, setTestImage] = useState(null);
-  const [testImageUrl, setTestImageUrl] = useState(null);
-  const [testProcessedUrl, setTestProcessedUrl] = useState(null);
-  const [originalImage, setOriginalImage] = useState(null);
-  const [processedImage, setProcessedImage] = useState(null);
-  const [error, setError] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [canDownload, setCanDownload] = useState(false);
-  const [hexInput, setHexInput] = useState(DEFAULT_COLOR);
-  const [urlInput, setUrlInput] = useState('');
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('hextraTheme');
-    return savedTheme || 'dark';
-  });
-  const [isDropdownSelection, setIsDropdownSelection] = useState(false);
-  const [lastClickColor, setLastClickColor] = useState(null);
-  const [lastClickTime, setLastClickTime] = useState(0);
-  const [enhanceEffect, setEnhanceEffect] = useState(true);  // Default to enhanced
-  const [showTooltips, setShowTooltips] = useState(true);  // Default tooltips on
-  const [useTestImage, setUseTestImage] = useState(false);
-  const [lastWorkingImage, setLastWorkingImage] = useState(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
-  const [matteValue, setMatteValue] = useState(50);
-  const [textureValue, setTextureValue] = useState(50);
-  const [isTestingJimp, setIsTestingJimp] = useState(false);
-
-  // MEZMERIZE States
-  const [isBatchMode, setIsBatchMode] = useState(false);
-  const [batchResults, setBatchResults] = useState([]);
-  const [batchProgress, setBatchProgress] = useState(0);
-  const [batchStatus, setBatchStatus] = useState('idle'); // idle, processing, complete, error
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [processedCount, setProcessedCount] = useState(0);
-
-  // Add state for catalog colors
-  const [activeCatalog, setActiveCatalog] = useState('GILDAN_6400');
-  const [catalogColors, setCatalogColors] = useState(GILDAN_6400);
-
-  // Add state for advanced settings toggle
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // Add state for subscription test
-  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
-
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    localStorage.setItem('hextraTheme', newTheme);
+    localStorage.setItem('theme', newTheme);
   };
 
   const handleHexInputChange = (e) => {
@@ -1163,8 +1165,6 @@ function App() {
     return true;
   };
 
-  const navigate = useNavigate();
-
   useEffect(() => {
     const path = window.location.pathname;
     if (isAuthenticated) {
@@ -1175,7 +1175,7 @@ function App() {
     } else if (path === '/batch') {
       navigate('/', { replace: true });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
 
   const handleBatchModeToggle = () => {
     setIsBatchMode(!isBatchMode);
@@ -1203,7 +1203,7 @@ function App() {
       
       setAuthChecked(true);
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, navigate]);
 
   const mainContent = (
     <Box sx={{ 
