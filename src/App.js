@@ -82,8 +82,77 @@ function rgbToHsv(r, g, b) {
 
 function App() {
   const { isLoading, isAuthenticated, login } = useKindeAuth();
-  const navigate = useNavigate();
   const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setAuthChecked(true);
+    }
+  }, [isLoading]);
+
+  const handleLogin = () => {
+    login({
+      appState: {
+        redirectUrl: 'https://www.hextra.io/#batch-section'
+      }
+    });
+  };
+
+  if (isLoading || !authChecked) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        bgcolor: 'var(--bg-primary)'
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
+        }}
+      >
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Wht.svg"
+          alt="HEXTRA"
+          sx={{
+            height: '120px',
+            width: 'auto',
+            marginBottom: 4
+          }}
+        />
+        <Button
+          variant="contained"
+          onClick={handleLogin}
+          sx={{
+            backgroundColor: '#00805E',
+            color: '#FFFFFF',
+            padding: '12px 24px',
+            fontSize: '1.1rem',
+            '&:hover': {
+              backgroundColor: '#006f52'
+            }
+          }}
+        >
+          Sign In
+        </Button>
+      </Box>
+    );
+  }
+
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImage, setWorkingImage] = useState(null);
@@ -1083,15 +1152,17 @@ function App() {
     return true;
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const path = window.location.pathname;
     if (isAuthenticated) {
       // After successful authentication, redirect to batch section
       if (path === '/' || path === '/api/auth/kinde/callback') {
-        window.location.href = 'https://www.hextra.io/#batch-section';
+        navigate('/batch', { replace: true });
       }
     } else if (path === '/batch') {
-      window.location.href = 'https://www.hextra.io';
+      navigate('/', { replace: true });
     }
   }, [isAuthenticated]);
 
@@ -1113,30 +1184,15 @@ function App() {
       if (isAuthenticated) {
         // After successful authentication, redirect to batch section
         if (path === '/' || path === '/api/auth/kinde/callback') {
-          window.location.href = 'https://www.hextra.io/#batch-section';
+          navigate('/batch', { replace: true });
         }
       } else if (path === '/batch') {
-        window.location.href = 'https://www.hextra.io';
+        navigate('/', { replace: true });
       }
       
       setAuthChecked(true);
     }
   }, [isLoading, isAuthenticated]);
-
-  // Show loading state while checking auth
-  if (!authChecked) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        bgcolor: 'var(--bg-primary)'
-      }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   const mainContent = (
     <Box sx={{ 
