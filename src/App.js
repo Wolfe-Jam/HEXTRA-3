@@ -141,20 +141,17 @@ function App() {
   // Add state for subscription test
   const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
 
-  // All useEffect hooks
+  // All useEffect hooks must be at the top level
   useEffect(() => {
     if (!isLoading) {
       const path = window.location.pathname;
-      
       if (isAuthenticated) {
-        // After successful authentication, redirect to batch section
         if (path === '/' || path === '/api/auth/kinde/callback') {
           navigate('/batch', { replace: true });
         }
       } else if (path === '/batch') {
         navigate('/', { replace: true });
       }
-      
       setAuthChecked(true);
     }
   }, [isLoading, isAuthenticated, navigate]);
@@ -194,7 +191,7 @@ function App() {
     `;
     document.head.appendChild(style);
     return () => document.head.removeChild(style);
-  }, [theme]);
+  }, []);
 
   useEffect(() => {
     if (isDropdownSelection) {
@@ -204,35 +201,20 @@ function App() {
   }, [isDropdownSelection]);  
 
   useEffect(() => {
-    const path = window.location.pathname;
-    if (isAuthenticated) {
-      // After successful authentication, redirect to batch section
-      if (path === '/' || path === '/api/auth/kinde/callback') {
-        navigate('/batch', { replace: true });
-      }
-    } else if (path === '/batch') {
-      navigate('/', { replace: true });
-    }
-    
-    setAuthChecked(true);
-  }, [isLoading, isAuthenticated, navigate]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      const path = window.location.pathname;
-      
-      if (isAuthenticated) {
-        // After successful authentication, redirect to batch section
-        if (path === '/' || path === '/api/auth/kinde/callback') {
-          navigate('/batch', { replace: true });
+    const handleUrlChange = () => {
+      if (window.location.hash === '#batch-section' && isAuthenticated) {
+        const batchSection = document.querySelector('.batch-processing-section');
+        if (batchSection) {
+          batchSection.scrollIntoView({ behavior: 'smooth' });
         }
-      } else if (path === '/batch') {
-        navigate('/', { replace: true });
       }
-      
-      setAuthChecked(true);
-    }
-  }, [isLoading, isAuthenticated, navigate]);
+    };
+    
+    window.addEventListener('hashchange', handleUrlChange);
+    handleUrlChange();
+    
+    return () => window.removeEventListener('hashchange', handleUrlChange);
+  }, [isAuthenticated]);
 
   const handleLogin = () => {
     console.log('Login clicked, redirecting to:', 'https://www.hextra.io/#batch-section');
