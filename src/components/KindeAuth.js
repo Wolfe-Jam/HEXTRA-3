@@ -30,18 +30,37 @@ export default function KindeAuth({ children }) {
 
   // Add auth flow debugging
   React.useEffect(() => {
-    console.log('Current URL:', window.location.href);
+    const currentUrl = window.location.href;
+    console.log('Current URL:', currentUrl);
     console.log('Authentication flow started');
+    
+    // Check for error parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    
+    if (error) {
+      console.error('Auth Error:', error, errorDescription);
+    }
   }, []);
 
   return (
     <KindeProvider
       {...config}
-      onRedirectCallback={(appState) => {
-        console.log('Redirect callback:', appState);
+      onRedirectCallback={(appState, user) => {
+        console.log('Redirect callback:', { appState, user });
+        // Check if we have a valid return URL
         if (appState?.returnTo) {
+          console.log('Redirecting to:', appState.returnTo);
           window.location.href = appState.returnTo;
+        } else {
+          console.log('No return URL found in appState');
+          // Fallback to batch section
+          window.location.href = 'https://www.hextra.io/#batch-section';
         }
+      }}
+      onError={(error) => {
+        console.error('Kinde Auth Error:', error);
       }}
     >
       {children}
