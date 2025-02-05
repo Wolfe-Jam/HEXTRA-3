@@ -83,63 +83,55 @@ function rgbToHsv(r, g, b) {
 function App() {
   const { isLoading, isAuthenticated, login } = useKindeAuth();
   const navigate = useNavigate();
-
+  
   // All useRef hooks at the top
   const wheelRef = useRef(null);
   const grayValueRef = useRef(null);
-
+  
   // All useState hooks
   const [authChecked, setAuthChecked] = useState(false);
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImage, setWorkingImage] = useState(null);
-  const [workingImageUrl, setWorkingImageUrl] = useState(null);
-  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
-  const [testImage, setTestImage] = useState(null);
-  const [testImageUrl, setTestImageUrl] = useState(null);
-  const [testProcessedUrl, setTestProcessedUrl] = useState(null);
-  const [originalImage, setOriginalImage] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);
-  const [error, setError] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [canDownload, setCanDownload] = useState(false);
-  const [hexInput, setHexInput] = useState(DEFAULT_COLOR);
-  const [urlInput, setUrlInput] = useState('');
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [batchStatus, setBatchStatus] = useState('idle');
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     return savedTheme || 'dark';
   });
-  const [isDropdownSelection, setIsDropdownSelection] = useState(false);
+  const [workingImageUrl, setWorkingImageUrl] = useState('');
+  const [workingProcessedUrl, setWorkingProcessedUrl] = useState('');
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [canDownload, setCanDownload] = useState(false);
+  const [error, setError] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [originalImage, setOriginalImage] = useState(null);
+  const [hexInput, setHexInput] = useState(DEFAULT_COLOR);
+  const [urlInput, setUrlInput] = useState('');
   const [lastClickColor, setLastClickColor] = useState(null);
   const [lastClickTime, setLastClickTime] = useState(0);
   const [enhanceEffect, setEnhanceEffect] = useState(true);  // Default to enhanced
   const [showTooltips, setShowTooltips] = useState(true);  // Default tooltips on
   const [useTestImage, setUseTestImage] = useState(false);
   const [lastWorkingImage, setLastWorkingImage] = useState(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [grayscaleValue, setGrayscaleValue] = useState(128); // Add state for grayscale value
   const [matteValue, setMatteValue] = useState(50);
   const [textureValue, setTextureValue] = useState(50);
   const [isTestingJimp, setIsTestingJimp] = useState(false);
-
-  // MEZMERIZE States
-  const [isBatchMode, setIsBatchMode] = useState(false);
-  const [batchResults, setBatchResults] = useState([]);
-  const [batchProgress, setBatchProgress] = useState(0);
-  const [batchStatus, setBatchStatus] = useState('idle'); // idle, processing, complete, error
   const [selectedColors, setSelectedColors] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [processedCount, setProcessedCount] = useState(0);
-
-  // Add state for catalog colors
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_6400');
   const [catalogColors, setCatalogColors] = useState(GILDAN_6400);
-
-  // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // Add state for subscription test
-  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
+  const [isDropdownSelection, setIsDropdownSelection] = useState(false);
+  const [testImage, setTestImage] = useState(null);
+  const [testImageUrl, setTestImageUrl] = useState(null);
+  const [testProcessedUrl, setTestProcessedUrl] = useState(null);
+  const [batchResults, setBatchResults] = useState([]);
 
   // All useEffect hooks must be at the top level
   useEffect(() => {
@@ -156,6 +148,7 @@ function App() {
     }
   }, [isLoading, isAuthenticated, navigate]);
 
+  // Theme effect
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.style.setProperty('--text-primary', theme === 'light' ? '#141414' : '#F8F8F8');
@@ -174,6 +167,7 @@ function App() {
     document.documentElement.style.setProperty('--accent-color-subtle', theme === 'light' ? 'rgba(255, 68, 0, 0.15)' : 'rgba(255, 68, 0, 0.25)');
   }, [theme]);
 
+  // Style effect
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -193,13 +187,15 @@ function App() {
     return () => document.head.removeChild(style);
   }, []);
 
+  // Dropdown selection effect
   useEffect(() => {
     if (isDropdownSelection) {
       applyColor();
-      setIsDropdownSelection(false);  // Reset the flag after applying
+      setIsDropdownSelection(false);
     }
-  }, [isDropdownSelection]);  
+  }, [isDropdownSelection]);
 
+  // URL hash change effect
   useEffect(() => {
     const handleUrlChange = () => {
       if (window.location.hash === '#batch-section' && isAuthenticated) {
@@ -215,6 +211,75 @@ function App() {
     
     return () => window.removeEventListener('hashchange', handleUrlChange);
   }, [isAuthenticated]);
+
+  // Working image URL effect
+  useEffect(() => {
+    if (!workingImageUrl) return;
+    if (workingImageUrl.startsWith('data:')) return;
+    
+    setError('');
+    setIsProcessing(true);
+    
+    const loadImage = async () => {
+      try {
+        console.log('Loading image from:', workingImageUrl);
+        
+        // Load image as HTMLImageElement first
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        
+        await new Promise((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error('Failed to load image'));
+          img.src = workingImageUrl;
+        });
+
+        // Create a canvas to get pixel data
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // Create image from raw data
+        const image = {
+          width: imageData.width,
+          height: imageData.height,
+          bitmap: {
+            data: new Uint8ClampedArray(imageData.data),
+            width: imageData.width,
+            height: imageData.height
+          }
+        };
+        
+        console.log('Image loaded successfully');
+        
+        setOriginalImage(image);
+        setImageLoaded(true);
+        setProcessedImage(image);
+        setWorkingProcessedUrl(workingImageUrl);
+        setCanDownload(true);
+      } catch (error) {
+        console.error('Error loading image:', error);
+        setImageLoaded(false);
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    loadImage();
+  }, [workingImageUrl]);
+
+  // Default color effect
+  useEffect(() => {
+    // Set initial color states
+    setSelectedColor(DEFAULT_COLOR);
+    setHexInput(DEFAULT_COLOR);
+    setRgbColor(hexToRgb(DEFAULT_COLOR));
+  }, []);
 
   const handleLogin = () => {
     console.log('Login clicked, redirecting to:', 'https://www.hextra.io/#batch-section');
@@ -522,14 +587,6 @@ function App() {
     }
   };
 
-  // Load default image on mount
-  useEffect(() => {
-    // Set initial color states
-    setSelectedColor(DEFAULT_COLOR);
-    setHexInput(DEFAULT_COLOR);
-    setRgbColor(hexToRgb(DEFAULT_COLOR));
-  }, []);
-
   const handleDefaultImageLoad = async (imageUrl) => {
     try {
       console.log('Loading default WebP image from:', imageUrl);
@@ -580,68 +637,6 @@ function App() {
       setCanDownload(false);
     }
   };
-
-  useEffect(() => {
-    if (!workingImageUrl) return;
-    
-    // Skip if this is just a processed URL update
-    if (workingImageUrl.startsWith('data:')) return;
-    
-    setError('');
-    setIsProcessing(true);
-    
-    const loadImage = async () => {
-      try {
-        console.log('Loading image from:', workingImageUrl);
-        
-        // Load image as HTMLImageElement first
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        
-        await new Promise((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = () => reject(new Error('Failed to load image'));
-          img.src = workingImageUrl;
-        });
-
-        // Create a canvas to get pixel data
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        
-        // Get image data
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        
-        // Create image from raw data
-        const image = {
-          width: imageData.width,
-          height: imageData.height,
-          bitmap: {
-            data: new Uint8ClampedArray(imageData.data),
-            width: imageData.width,
-            height: imageData.height
-          }
-        };
-        
-        console.log('Image loaded successfully');
-        
-        setOriginalImage(image);
-        setImageLoaded(true);
-        setProcessedImage(image);
-        setWorkingProcessedUrl(workingImageUrl);
-        setCanDownload(true);
-      } catch (error) {
-        console.error('Error loading image:', error);
-        setImageLoaded(false);
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-
-    loadImage();
-  }, [workingImageUrl]);
 
   const isValidHex = (hex) => {
     // Remove hash if present
@@ -916,6 +911,8 @@ function App() {
         canvas.width = imageData.width;
         canvas.height = imageData.height;
         const ctx = canvas.getContext('2d');
+        
+        // Create ImageData and put on canvas
         const newImageData = new ImageData(
           imageData.bitmap.data,
           imageData.width,
@@ -956,7 +953,7 @@ function App() {
       const url = URL.createObjectURL(content);
       const link = document.createElement('a');
       link.href = url;
-      const date = new Date().toISOString().split('T')[0];
+      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       link.download = `HEXTRA-${date}-${activeCatalog}_${catalogColors.length}`;
       document.body.appendChild(link);
       link.click();
