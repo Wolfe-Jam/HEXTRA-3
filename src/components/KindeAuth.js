@@ -1,8 +1,11 @@
 // KindeAuth Provider - Updated 2025-02-05
 import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function KindeAuth({ children }) {
+  const navigate = useNavigate();
+  
   // Debug: Log all process.env
   console.log('All process.env:', process.env);
   
@@ -51,11 +54,11 @@ export default function KindeAuth({ children }) {
         // Check if we have a valid return URL
         if (appState?.returnTo) {
           console.log('Redirecting to:', appState.returnTo);
-          window.location.href = appState.returnTo;
+          navigate(appState.returnTo.replace('https://www.hextra.io', ''), { replace: true });
         } else {
           console.log('No return URL found in appState');
           // Fallback to batch section
-          window.location.href = 'https://www.hextra.io/#batch-section';
+          navigate('/batch', { replace: true });
         }
       }}
       onError={(error) => {

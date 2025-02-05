@@ -138,11 +138,15 @@ function App() {
     if (!isLoading) {
       const path = window.location.pathname;
       if (isAuthenticated) {
+        // Only redirect if we're on the login page or callback
         if (path === '/' || path === '/api/auth/kinde/callback') {
           navigate('/batch', { replace: true });
         }
-      } else if (path === '/batch') {
-        navigate('/', { replace: true });
+      } else {
+        // If not authenticated and trying to access protected routes
+        if (path !== '/' && path !== '/api/auth/kinde/callback') {
+          navigate('/', { replace: true });
+        }
       }
       setAuthChecked(true);
     }
