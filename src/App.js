@@ -1087,12 +1087,12 @@ function App() {
     if (isAuthenticated) {
       // After successful authentication, redirect to batch section
       if (path === '/' || path === '/api/auth/kinde/callback') {
-        navigate('/#batch-section');
+        window.location.href = 'https://www.hextra.io/#batch-section';
       }
     } else if (path === '/batch') {
-      navigate('/');
+      window.location.href = 'https://www.hextra.io';
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated]);
 
   const handleBatchModeToggle = () => {
     setIsBatchMode(!isBatchMode);
