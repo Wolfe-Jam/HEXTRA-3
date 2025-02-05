@@ -85,20 +85,30 @@ function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
+    console.log('Auth State:', {
+      isLoading,
+      isAuthenticated,
+      authChecked,
+      pathname: window.location.pathname,
+      hash: window.location.hash
+    });
+
     if (!isLoading) {
       setAuthChecked(true);
     }
-  }, [isLoading]);
+  }, [isLoading, isAuthenticated, authChecked]);
 
   const handleLogin = () => {
+    console.log('Login clicked, redirecting to:', 'https://www.hextra.io/#batch-section');
     login({
       appState: {
-        redirectUrl: 'https://www.hextra.io/#batch-section'
+        returnTo: 'https://www.hextra.io/#batch-section'
       }
     });
   };
 
   if (isLoading || !authChecked) {
+    console.log('Showing loading state');
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -113,6 +123,7 @@ function App() {
   }
 
   if (!isAuthenticated) {
+    console.log('Not authenticated, showing login page');
     return (
       <Box
         sx={{

@@ -19,9 +19,9 @@ export default function KindeAuth({ children }) {
   const config = {
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
-    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
-    audience: 'https://hextra.io',
+    redirectUri: 'https://www.hextra.io/api/auth/kinde/callback',
+    logoutUri: 'https://www.hextra.io',
+    audience: 'https://www.hextra.io',
     scope: 'openid profile email offline'
   };
 
@@ -36,11 +36,13 @@ export default function KindeAuth({ children }) {
 
   return (
     <KindeProvider
-      clientId={config.clientId}
-      domain={config.domain}
-      redirectUri={config.redirectUri}
-      logoutUri={config.logoutUri}
-      loginButtonPosition="none"
+      {...config}
+      onRedirectCallback={(appState) => {
+        console.log('Redirect callback:', appState);
+        if (appState?.returnTo) {
+          window.location.href = appState.returnTo;
+        }
+      }}
     >
       {children}
     </KindeProvider>
