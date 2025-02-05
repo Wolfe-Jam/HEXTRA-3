@@ -1101,6 +1101,15 @@ function App() {
     }
   }, [isAuthenticated, navigate]);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      // If we're on the login page, redirect to batch
+      if (window.location.pathname === '/') {
+        navigate('/#batch-section');
+      }
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleBatchModeToggle = () => {
     setIsBatchMode(!isBatchMode);
   };
