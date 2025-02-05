@@ -84,6 +84,11 @@ function App() {
   const { isLoading, isAuthenticated, login } = useKindeAuth();
   const navigate = useNavigate();
 
+  // All useRef hooks at the top
+  const wheelRef = useRef(null);
+  const grayValueRef = useRef(null);
+
+  // All useState hooks
   const [authChecked, setAuthChecked] = useState(false);
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
@@ -135,6 +140,82 @@ function App() {
 
   // Add state for subscription test
   const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
+
+  // All useEffect hooks
+  useEffect(() => {
+    if (!isLoading) {
+      const path = window.location.pathname;
+      
+      if (isAuthenticated) {
+        // After successful authentication, redirect to batch section
+        if (path === '/' || path === '/api/auth/kinde/callback') {
+          navigate('/batch', { replace: true });
+        }
+      } else if (path === '/batch') {
+        navigate('/', { replace: true });
+      }
+      
+      setAuthChecked(true);
+    }
+  }, [isLoading, isAuthenticated, navigate]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.style.setProperty('--text-primary', theme === 'light' ? '#141414' : '#F8F8F8');
+    document.documentElement.style.setProperty('--text-secondary', theme === 'light' ? '#666666' : '#A0A0A0');
+    document.documentElement.style.setProperty('--text-disabled', theme === 'light' ? 'rgba(20, 20, 20, 0.26)' : 'rgba(248, 248, 248, 0.3)');
+    document.documentElement.style.setProperty('--bg-primary', theme === 'light' ? '#F8F8F8' : '#141414');
+    document.documentElement.style.setProperty('--bg-secondary', theme === 'light' ? '#F0F0F0' : '#1E1E1E');
+    document.documentElement.style.setProperty('--element-bg', theme === 'light' ? '#FFFFFF' : '#000000');
+    document.documentElement.style.setProperty('--border-color', theme === 'light' ? '#E0E0E0' : '#2A2A2A');
+    document.documentElement.style.setProperty('--border-subtle', theme === 'light' ? 'rgba(20, 20, 20, 0.1)' : 'rgba(248, 248, 248, 0.15)');
+    document.documentElement.style.setProperty('--input-border', theme === 'light' ? '#E0E0E0' : '#333333');
+    document.documentElement.style.setProperty('--glow-color', '#FF9900');
+    document.documentElement.style.setProperty('--glow-subtle', theme === 'light' ? 'rgba(255, 153, 0, 0.2)' : 'rgba(255, 153, 0, 0.25)');
+    document.documentElement.style.setProperty('--accent-color', '#FF4400');
+    document.documentElement.style.setProperty('--accent-color-hover', '#FF5500');
+    document.documentElement.style.setProperty('--accent-color-subtle', theme === 'light' ? 'rgba(255, 68, 0, 0.15)' : 'rgba(255, 68, 0, 0.25)');
+  }, [theme]);
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      input:hover {
+        border-color: var(--glow-color) !important;
+        box-shadow: 0 0 0 3px var(--glow-subtle) !important;
+      }
+      input:focus {
+        border-color: var(--glow-color) !important;
+        box-shadow: 0 0 0 3px var(--glow-subtle) !important;
+      }
+      input::placeholder {
+        color: var(--text-secondary);
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, [theme]);
+
+  useEffect(() => {
+    if (isDropdownSelection) {
+      applyColor();
+      setIsDropdownSelection(false);  // Reset the flag after applying
+    }
+  }, [isDropdownSelection]);  
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (isAuthenticated) {
+      // After successful authentication, redirect to batch section
+      if (path === '/' || path === '/api/auth/kinde/callback') {
+        navigate('/batch', { replace: true });
+      }
+    } else if (path === '/batch') {
+      navigate('/', { replace: true });
+    }
+    
+    setAuthChecked(true);
+  }, [isLoading, isAuthenticated, navigate]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -402,10 +483,6 @@ function App() {
   const resetUrl = () => {
     setUrlInput('');
   };
-
-  // Add refs
-  const wheelRef = useRef(null);
-  const grayValueRef = useRef(null);
 
   const handleGraySwatchClick = () => {
     const grayValue = Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3);
@@ -703,23 +780,15 @@ function App() {
       let colorColumn = 0;  // Default to first column
       let nameColumn = 1;   // Default to second column
       
-      // Common column names for colors
-      const colorKeywords = ['hex', 'color', 'code', 'rgb', 'value'];
-      const nameKeywords = ['name', 'description', 'label', 'title'];
-      
       console.log('Header columns:', header);
       
       // Only override defaults if we find matching columns
       header.forEach((col, index) => {
-        if (colorKeywords.some(keyword => col.includes(keyword))) {
-          if (col.includes('name')) {
-            // Skip if it's "color name" instead of just "color"
-            return;
-          }
+        if (col.includes('hex') || col.includes('color') || col.includes('code')) {
           colorColumn = index;
           console.log('Found color column:', index, col);
         }
-        if (nameKeywords.some(keyword => col.includes(keyword))) {
+        if (col.includes('name') || col.includes('description') || col.includes('label') || col.includes('title')) {
           nameColumn = index;
           console.log('Found name column:', index, col);
         }
@@ -1072,50 +1141,6 @@ function App() {
     // Removed this function
   };
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.style.setProperty('--text-primary', theme === 'light' ? '#141414' : '#F8F8F8');
-    document.documentElement.style.setProperty('--text-secondary', theme === 'light' ? '#666666' : '#A0A0A0');
-    document.documentElement.style.setProperty('--text-disabled', theme === 'light' ? 'rgba(20, 20, 20, 0.26)' : 'rgba(248, 248, 248, 0.3)');
-    document.documentElement.style.setProperty('--bg-primary', theme === 'light' ? '#F8F8F8' : '#141414');
-    document.documentElement.style.setProperty('--bg-secondary', theme === 'light' ? '#F0F0F0' : '#1E1E1E');
-    document.documentElement.style.setProperty('--element-bg', theme === 'light' ? '#FFFFFF' : '#000000');
-    document.documentElement.style.setProperty('--border-color', theme === 'light' ? '#E0E0E0' : '#2A2A2A');
-    document.documentElement.style.setProperty('--border-subtle', theme === 'light' ? 'rgba(20, 20, 20, 0.1)' : 'rgba(248, 248, 248, 0.15)');
-    document.documentElement.style.setProperty('--input-border', theme === 'light' ? '#E0E0E0' : '#333333');
-    document.documentElement.style.setProperty('--glow-color', '#FF9900');
-    document.documentElement.style.setProperty('--glow-subtle', theme === 'light' ? 'rgba(255, 153, 0, 0.2)' : 'rgba(255, 153, 0, 0.25)');
-    document.documentElement.style.setProperty('--accent-color', '#FF4400');
-    document.documentElement.style.setProperty('--accent-color-hover', '#FF5500');
-    document.documentElement.style.setProperty('--accent-color-subtle', theme === 'light' ? 'rgba(255, 68, 0, 0.15)' : 'rgba(255, 68, 0, 0.25)');
-  }, [theme]);
-
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      input:hover {
-        border-color: var(--glow-color) !important;
-        box-shadow: 0 0 0 3px var(--glow-subtle) !important;
-      }
-      input:focus {
-        border-color: var(--glow-color) !important;
-        box-shadow: 0 0 0 3px var(--glow-subtle) !important;
-      }
-      input::placeholder {
-        color: var(--text-secondary);
-      }
-    `;
-    document.head.appendChild(style);
-    return () => document.head.removeChild(style);
-  }, [theme]);
-
-  useEffect(() => {
-    if (isDropdownSelection) {
-      applyColor();
-      setIsDropdownSelection(false);  // Reset the flag after applying
-    }
-  }, [isDropdownSelection]);  
-
   const handleDropdownSelection = (color) => {
     const rgb = hexToRgb(color);
     if (rgb) {
@@ -1165,18 +1190,6 @@ function App() {
     return true;
   };
 
-  useEffect(() => {
-    const path = window.location.pathname;
-    if (isAuthenticated) {
-      // After successful authentication, redirect to batch section
-      if (path === '/' || path === '/api/auth/kinde/callback') {
-        navigate('/batch', { replace: true });
-      }
-    } else if (path === '/batch') {
-      navigate('/', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
-
   const handleBatchModeToggle = () => {
     setIsBatchMode(!isBatchMode);
   };
@@ -1187,23 +1200,6 @@ function App() {
     }
     return children;
   };
-
-  useEffect(() => {
-    if (!isLoading) {
-      const path = window.location.pathname;
-      
-      if (isAuthenticated) {
-        // After successful authentication, redirect to batch section
-        if (path === '/' || path === '/api/auth/kinde/callback') {
-          navigate('/batch', { replace: true });
-        }
-      } else if (path === '/batch') {
-        navigate('/', { replace: true });
-      }
-      
-      setAuthChecked(true);
-    }
-  }, [isLoading, isAuthenticated, navigate]);
 
   const mainContent = (
     <Box sx={{ 
