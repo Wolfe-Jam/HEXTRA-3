@@ -1,3 +1,4 @@
+// KindeAuth Provider - Updated 2025-02-05
 import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 
