@@ -1953,7 +1953,7 @@ function App() {
     >
       <Box
         component="img"
-        src="/images/HEXTRA-3-logo-Wht.svg"
+        src="/images/HEXTRA-3-logo-Blk.svg"
         alt="HEXTRA"
         sx={{
           height: '120px',
