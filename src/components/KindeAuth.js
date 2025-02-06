@@ -1,4 +1,4 @@
-// KindeAuth Provider - Updated 2025-02-05
+// KindeAuth Provider - Stable Version 2.1.6 - Updated 2025-02-06
 import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 import { useNavigate } from 'react-router-dom';
