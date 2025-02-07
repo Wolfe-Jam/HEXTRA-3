@@ -9,21 +9,35 @@ export default function KindeAuth({ children }) {
   // Debug: Log all process.env
   console.log('All process.env:', process.env);
   
-  // Log specific environment variables
+  // Get the current domain
+  const currentDomain = window.location.origin;
+  const isPreviewDeploy = currentDomain.includes('vercel.app');
+  
+  // Use preview URLs if on preview deployment
+  const redirectUri = isPreviewDeploy 
+    ? `${currentDomain}/api/auth/kinde/callback`
+    : process.env.REACT_APP_KINDE_REDIRECT_URI;
+    
+  const logoutUri = isPreviewDeploy
+    ? currentDomain
+    : process.env.REACT_APP_KINDE_LOGOUT_URI;
+
+  // Log environment info
   console.log('Environment:', {
     nodeEnv: process.env.REACT_APP_NODE_ENV,
     baseUrl: process.env.REACT_APP_BASE_URL,
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
-    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI
+    redirectUri,
+    logoutUri,
+    isPreviewDeploy
   });
 
   const config = {
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
-    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
+    redirectUri,
+    logoutUri,
     scope: 'openid profile email offline',
     isDangerouslyUseLocalStorage: true
   };

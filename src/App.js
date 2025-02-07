@@ -1907,20 +1907,6 @@ function App() {
               >
                 UNLOCK BULK GARMENT GENERATION
               </Typography>
-              <GlowTextButton
-                variant="contained"
-                onClick={login}
-                sx={{ 
-                  width: '200px',
-                  height: '48px',
-                  fontSize: '1rem',
-                  fontFamily: "'League Spartan', sans-serif",
-                  fontWeight: 600,
-                  letterSpacing: '0.05em'
-                }}
-              >
-                SIGN IN
-              </GlowTextButton>
             </Box>
           )}
         </Box>
