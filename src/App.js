@@ -317,7 +317,7 @@ function App() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
+          background: '#1a1a1a'
         }}
       >
         <Box
@@ -327,7 +327,8 @@ function App() {
           sx={{
             height: '120px',
             width: 'auto',
-            marginBottom: 4
+            marginBottom: 4,
+            backgroundColor: 'transparent'
           }}
         />
         <Button
@@ -1948,7 +1949,7 @@ function App() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)'
+        background: '#1a1a1a'
       }}
     >
       <Box
@@ -1958,7 +1959,8 @@ function App() {
         sx={{
           height: '120px',
           width: 'auto',
-          marginBottom: 4
+          marginBottom: 4,
+          backgroundColor: 'transparent'
         }}
       />
       <Button
