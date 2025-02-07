@@ -24,7 +24,8 @@ export default function KindeAuth({ children }) {
     domain: process.env.REACT_APP_KINDE_DOMAIN,
     redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
     logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
-    scope: 'openid profile email offline'
+    scope: 'openid profile email offline',
+    isDangerouslyUseLocalStorage: true // Enable local storage for state
   };
 
   // Debug: Log final config
@@ -40,9 +41,17 @@ export default function KindeAuth({ children }) {
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
     const errorDescription = urlParams.get('error_description');
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    
+    console.log('URL params:', { error, errorDescription, code, state });
+    console.log('Local storage state:', localStorage.getItem('kinde_auth_state'));
     
     if (error) {
       console.error('Auth Error:', error, errorDescription);
+    }
+    if (code) {
+      console.log('Auth code present, should redirect soon');
     }
   }, []);
 
@@ -50,13 +59,15 @@ export default function KindeAuth({ children }) {
     <KindeProvider
       {...config}
       onRedirectCallback={(appState, user) => {
-        console.log('Redirect callback:', { appState, user });
+        console.log('Redirect callback triggered:', { appState, user });
         // Always redirect to batch after auth
+        console.log('Redirecting to /batch');
         navigate('/batch', { replace: true });
       }}
       onError={(error) => {
         console.error('Kinde Auth Error:', error);
         // On error, redirect back to root
+        console.log('Error occurred, redirecting to /');
         navigate('/', { replace: true });
       }}
     >
