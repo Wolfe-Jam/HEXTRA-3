@@ -294,6 +294,45 @@ function App() {
     });
   };
 
+  const renderLoginPage = () => (
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#1a1a1a'
+      }}
+    >
+      <Box
+        component="img"
+        src="/images/HEXTRA-3-logo-Blk.svg"
+        alt="HEXTRA"
+        sx={{
+          height: '120px',
+          width: 'auto',
+          marginBottom: 4
+        }}
+      />
+      <Button
+        variant="contained"
+        onClick={() => login()}
+        sx={{
+          backgroundColor: '#00805E',
+          color: '#FFFFFF',
+          padding: '12px 24px',
+          fontSize: '1.1rem',
+          '&:hover': {
+            backgroundColor: '#006f52'
+          }
+        }}
+      >
+        Sign In
+      </Button>
+    </Box>
+  );
+
   if (isLoading) {
     return (
       <Box sx={{ 
@@ -1904,46 +1943,7 @@ function App() {
       <Route path="/api/auth/kinde/callback" element={<Navigate to="/batch" replace />} />
       <Route 
         path="/" 
-        element={!isAuthenticated ? (
-          <Box
-            sx={{
-              height: '100vh',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#1a1a1a'
-            }}
-          >
-            <Box
-              component="img"
-              src="/images/HEXTRA-3-logo-Blk.svg"
-              alt="HEXTRA"
-              sx={{
-                height: '120px',
-                width: 'auto',
-                marginBottom: 4
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleLogin}
-              sx={{
-                backgroundColor: '#00805E',
-                color: '#FFFFFF',
-                padding: '12px 24px',
-                fontSize: '1.1rem',
-                '&:hover': {
-                  backgroundColor: '#006f52'
-                }
-              }}
-            >
-              Sign In
-            </Button>
-          </Box>
-        ) : (
-          <Navigate to="/batch" replace />
-        )} 
+        element={!isAuthenticated ? renderLoginPage() : <Navigate to="/batch" replace />} 
       />
       <Route 
         path="/batch" 
