@@ -51,18 +51,13 @@ export default function KindeAuth({ children }) {
       {...config}
       onRedirectCallback={(appState, user) => {
         console.log('Redirect callback:', { appState, user });
-        // Check if we have a valid return URL
-        if (appState?.returnTo) {
-          console.log('Redirecting to:', appState.returnTo);
-          navigate(appState.returnTo.replace('https://www.hextra.io', ''), { replace: true });
-        } else {
-          console.log('No return URL found in appState');
-          // Fallback to batch section
-          navigate('/batch', { replace: true });
-        }
+        // Always redirect to batch after auth
+        navigate('/batch', { replace: true });
       }}
       onError={(error) => {
         console.error('Kinde Auth Error:', error);
+        // On error, redirect back to root
+        navigate('/', { replace: true });
       }}
     >
       {children}

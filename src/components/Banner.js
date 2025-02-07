@@ -70,12 +70,8 @@ const Banner = ({
         <Box
           className="banner-content"
           sx={{
-            background: isDarkMode 
-              ? 'linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%)'
-              : 'linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%)',
-            borderBottom: isDarkMode
-              ? '1px solid rgba(0, 0, 0, 0.12)'
-              : '1px solid rgba(255, 255, 255, 0.12)',
+            background: '#1a1a1a',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
             width: '100%',
             display: 'flex',
             height: '62px',
@@ -361,12 +357,8 @@ const Banner = ({
       <Box
         className="banner-content"
         sx={{
-          background: isDarkMode 
-            ? 'linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%)'
-            : 'linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%)',
-          borderBottom: isDarkMode
-            ? '1px solid rgba(0, 0, 0, 0.12)'
-            : '1px solid rgba(255, 255, 255, 0.12)',
+          background: '#1a1a1a',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
           width: '100%',
           display: 'flex',
           height: '62px',
