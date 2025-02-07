@@ -294,6 +294,18 @@ function App() {
     });
   };
 
+  const renderLoading = () => (
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      background: '#1a1a1a'
+    }}>
+      <CircularProgress sx={{ color: '#00805E' }} />
+    </Box>
+  );
+
   const renderLoginPage = () => (
     <Box
       sx={{
@@ -334,17 +346,7 @@ function App() {
   );
 
   if (isLoading) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        background: '#1a1a1a'
-      }}>
-        <CircularProgress sx={{ color: '#00805E' }} />
-      </Box>
-    );
+    return renderLoading();
   }
 
   const toggleTheme = () => {
@@ -1948,11 +1950,7 @@ function App() {
       <Route 
         path="/batch" 
         element={
-          isLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-              <CircularProgress />
-            </Box>
-          ) : !isAuthenticated ? (
+          isLoading ? renderLoading() : !isAuthenticated ? (
             <Navigate to="/" replace />
           ) : (
             <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
