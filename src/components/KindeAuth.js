@@ -54,7 +54,10 @@ export default function KindeAuth({ children }) {
         // Check if we have a valid return URL
         if (appState?.returnTo) {
           console.log('Redirecting to:', appState.returnTo);
-          navigate(appState.returnTo.replace('https://www.hextra.io', ''), { replace: true });
+          // Handle both production and preview URLs
+          const url = appState.returnTo;
+          const path = url.split('/').slice(3).join('/');  // Remove domain part
+          navigate('/' + path, { replace: true });
         } else {
           console.log('No return URL found in appState');
           // Fallback to batch section
