@@ -19,13 +19,18 @@ export default function KindeAuth({ children }) {
     logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI
   });
 
+  // Force redirectUri to match current URL
+  const currentOrigin = window.location.origin;
+  const redirectUri = `${currentOrigin}/api/auth/kinde/callback`;
+  const logoutUri = `${currentOrigin}`;
+
   const config = {
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
-    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
+    redirectUri,
+    logoutUri,
     scope: 'openid profile email offline',
-    isDangerouslyUseLocalStorage: true // Enable local storage for state
+    isDangerouslyUseLocalStorage: true
   };
 
   // Debug: Log final config
@@ -45,7 +50,6 @@ export default function KindeAuth({ children }) {
     const state = urlParams.get('state');
     
     console.log('URL params:', { error, errorDescription, code, state });
-    console.log('Local storage state:', localStorage.getItem('kinde_auth_state'));
     
     if (error) {
       console.error('Auth Error:', error, errorDescription);
