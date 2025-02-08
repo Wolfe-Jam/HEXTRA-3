@@ -24,8 +24,43 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 const DEFAULT_COLOR = '#FED141';
 
 function App() {
+  // All hooks must be at top
+  const navigate = useNavigate();
   const { login, isAuthenticated } = useKindeAuth();
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
+  const [workingImageUrl, setWorkingImageUrl] = useState(null);
+  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [canDownload, setCanDownload] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('hextraTheme');
+    return savedTheme || 'dark';
+  });
+  const [lastClickColor, setLastClickColor] = useState(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const [enhanceEffect, setEnhanceEffect] = useState(true);
+  const [showTooltips, setShowTooltips] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [grayscaleValue, setGrayscaleValue] = useState(128);
+  const [matteValue, setMatteValue] = useState(50);
+  const [textureValue, setTextureValue] = useState(50);
+  const [batchResults, setBatchResults] = useState([]);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchStatus, setBatchStatus] = useState('idle');
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Refs after hooks
+  const wheelRef = useRef(null);
+  const hexInputRef = useRef(null);
+  const isDragging = useRef(false);
+
+  // Now we can have conditionals
   if (!isAuthenticated) {
     return (
       <Box
@@ -59,46 +94,6 @@ function App() {
       </Box>
     );
   }
-
-  const navigate = useNavigate();
-
-  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
-  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
-  const [workingImageUrl, setWorkingImageUrl] = useState(null);
-  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [canDownload, setCanDownload] = useState(false);
-  const [urlInput, setUrlInput] = useState('');
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('hextraTheme');
-    return savedTheme || 'dark';
-  });
-  const [lastClickColor, setLastClickColor] = useState(null);
-  const [lastClickTime, setLastClickTime] = useState(0);
-  const [enhanceEffect, setEnhanceEffect] = useState(true);
-  const [showTooltips, setShowTooltips] = useState(true);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [grayscaleValue, setGrayscaleValue] = useState(128);
-  const [matteValue, setMatteValue] = useState(50);
-  const [textureValue, setTextureValue] = useState(50);
-  const [batchResults, setBatchResults] = useState([]);
-  const [batchProgress, setBatchProgress] = useState(0);
-  const [batchStatus, setBatchStatus] = useState('idle');
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [processedCount, setProcessedCount] = useState(0);
-  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const wheelRef = useRef(null);
-  const hexInputRef = useRef(null);
-  const isDragging = useRef(false);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/batch');
-    }
-  }, [isAuthenticated, navigate]);
 
   const debouncedProcessImage = useMemo(
     () => debounce(async (url, color) => {
