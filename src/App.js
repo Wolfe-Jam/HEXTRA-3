@@ -28,12 +28,41 @@ function App() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useKindeAuth();
 
-  // 2. Ref hooks
+  // 2. Refs
   const wheelRef = useRef(null);
   const hexInputRef = useRef(null);
   const isDragging = useRef(false);
 
-  // 3. Memo hooks - must be before callbacks that use it
+  // 3. State hooks (before callbacks that use them)
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
+  const [workingImageUrl, setWorkingImageUrl] = useState(null);
+  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [canDownload, setCanDownload] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('hextraTheme');
+    return savedTheme || 'dark';
+  });
+  const [lastClickColor, setLastClickColor] = useState(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const [enhanceEffect, setEnhanceEffect] = useState(true);
+  const [showTooltips, setShowTooltips] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [grayscaleValue, setGrayscaleValue] = useState(128);
+  const [matteValue, setMatteValue] = useState(50);
+  const [textureValue, setTextureValue] = useState(50);
+  const [batchResults, setBatchResults] = useState([]);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchStatus, setBatchStatus] = useState('idle');
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // 4. Memo hooks
   const debouncedProcessImage = useMemo(
     () => debounce(async (url, color) => {
       if (!url || !color) return;
@@ -49,7 +78,7 @@ function App() {
     []
   );
 
-  // 4. Callback hooks
+  // 5. Callback hooks (after state they use)
   const applyColor = useCallback(async (color) => {
     if (!workingImageUrl) return;
     
@@ -66,7 +95,6 @@ function App() {
 
   const handleColorChange = useCallback((color) => {
     setSelectedColor(color);
-    // Only process image if we're not dragging
     if (!isDragging.current) {
       applyColor(color);
     }
@@ -78,14 +106,12 @@ function App() {
 
   const handleDragEnd = useCallback(() => {
     isDragging.current = false;
-    // Process the final color
     debouncedProcessImage(workingImageUrl, selectedColor);
   }, [workingImageUrl, selectedColor, debouncedProcessImage]);
 
   const handleDropdownSelect = useCallback((color) => {
     setSelectedColor(color.hex);
     setRgbColor(hexToRgb(color.hex));
-    // Focus hex input as per workflow requirements
     if (hexInputRef.current) {
       hexInputRef.current.focus();
     }
@@ -99,7 +125,6 @@ function App() {
       setWorkingImageUrl(url);
       setImageLoaded(true);
       
-      // Process with current color
       if (selectedColor) {
         await applyColor(selectedColor);
       }
@@ -147,15 +172,12 @@ function App() {
 
   const handleHexInputChange = useCallback((e) => {
     const value = e.target.value;
-    // If empty and we have a selectedColor, use that
     if (!value && selectedColor) {
       e.target.value = selectedColor;
       return;
     }
 
-    // If we have a value, validate and update
     if (value) {
-      // Allow the default color to pass through
       if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
         setSelectedColor(value);
         setRgbColor(hexToRgb(value));
@@ -168,7 +190,6 @@ function App() {
     const defaultRgb = hexToRgb(DEFAULT_COLOR);
     setSelectedColor(DEFAULT_COLOR);
     setRgbColor(defaultRgb);
-    // Force update the color wheel
     if (wheelRef.current) {
       wheelRef.current.setColor(DEFAULT_COLOR);
     }
@@ -209,7 +230,6 @@ function App() {
       const lines = text.split('\n');
       const colors = [];
       
-      // Skip header row
       for (let i = 1; i < lines.length; i++) {
         const columns = lines[i].split(',');
         if (columns.length >= 2) {
@@ -261,43 +281,13 @@ function App() {
     }
   }, []);
 
-  // 5. State hooks
-  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
-  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
-  const [workingImageUrl, setWorkingImageUrl] = useState(null);
-  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [canDownload, setCanDownload] = useState(false);
-  const [urlInput, setUrlInput] = useState('');
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('hextraTheme');
-    return savedTheme || 'dark';
-  });
-  const [lastClickColor, setLastClickColor] = useState(null);
-  const [lastClickTime, setLastClickTime] = useState(0);
-  const [enhanceEffect, setEnhanceEffect] = useState(true);
-  const [showTooltips, setShowTooltips] = useState(true);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [grayscaleValue, setGrayscaleValue] = useState(128);
-  const [matteValue, setMatteValue] = useState(50);
-  const [textureValue, setTextureValue] = useState(50);
-  const [batchResults, setBatchResults] = useState([]);
-  const [batchProgress, setBatchProgress] = useState(0);
-  const [batchStatus, setBatchStatus] = useState('idle');
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [processedCount, setProcessedCount] = useState(0);
-  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // 6. Effect hooks
+  // 6. Effect hooks (last)
   useEffect(() => {
     if (selectedColor && imageLoaded) {
       applyColor(selectedColor);
     }
   }, [selectedColor, imageLoaded, applyColor]);
 
-  // Now we can have conditionals
   if (!isAuthenticated) {
     return (
       <Box
@@ -563,17 +553,14 @@ function App() {
                     e.stopPropagation(); // Stop event from bubbling up
                     
                     let value = e.target.value;
-                    // If no value, use the current selectedColor
                     if (!value && selectedColor) {
                       value = selectedColor;
                     }
-                    // Add # if missing
                     if (!value.startsWith('#')) {
                       value = '#' + value;
                     }
                     value = value.toUpperCase();
                     
-                    // Allow the default color to pass through
                     if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
                       setSelectedColor(value);
                       setRgbColor(hexToRgb(value));
@@ -1012,7 +999,6 @@ function App() {
                       const zip = new JSZip();
                       const folder = zip.folder("hextra-colors");
                       
-                      // Process in chunks to prevent UI freeze
                       const CHUNK_SIZE = 5;
                       const chunks = [];
                       for (let i = 0; i < colors.length; i += CHUNK_SIZE) {
@@ -1022,7 +1008,6 @@ function App() {
                       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
                         const chunk = chunks[chunkIndex];
                         
-                        // Process chunk
                         await Promise.all(chunk.map(async (color) => {
                           console.log(`Processing color: ${color.name} (${color.hex})`);
                           
@@ -1041,11 +1026,9 @@ function App() {
                           folder.file(filename, blob);
                         }));
                         
-                        // Update progress after each chunk
                         const progress = Math.round(((chunkIndex + 1) * CHUNK_SIZE / colors.length) * 100);
                         setBatchProgress(Math.min(progress, 100));
                         
-                        // Let UI update
                         await new Promise(resolve => setTimeout(resolve, 0));
                       }
                       
@@ -1062,7 +1045,6 @@ function App() {
                         setBatchProgress(Math.round(metadata.percent));
                       });
                       
-                      // Create download link
                       const url = window.URL.createObjectURL(content);
                       const link = document.createElement('a');
                       link.href = url;
@@ -1105,7 +1087,6 @@ function App() {
                         const response = await fetch(processedUrl);
                         const blob = await response.blob();
 
-                        // Add to zip with color code in filename
                         const colorCode = color.replace('#', '');
                         const filename = `color_${colorCode}.png`;
                         zip.file(filename, blob);
@@ -1115,7 +1096,6 @@ function App() {
                         setBatchProgress(Math.round(((i + 1) / colors.length) * 100));
                       }
                       
-                      // Generate and download zip
                       const content = await zip.generateAsync({type: "blob"});
                       const url = window.URL.createObjectURL(content);
                       const link = document.createElement('a');
