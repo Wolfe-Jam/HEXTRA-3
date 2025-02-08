@@ -18,14 +18,14 @@ import DefaultTshirt from './components/DefaultTshirt';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
 import { debounce } from 'lodash';
-import { useKindeAuth } from './utils/auth'; // Add this line
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react'; // Fix the Kinde auth import path
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
 
 function App() {
   const navigate = useNavigate();
-  const { login } = useKindeAuth(); // Add this line
+  const { login } = useKindeAuth(); // Fix the Kinde auth import path
   // State variables
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
