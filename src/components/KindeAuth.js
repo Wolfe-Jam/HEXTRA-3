@@ -11,11 +11,12 @@ export default function KindeAuth({ children }) {
   console.log('LOGOUT:', process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URI);
   console.log('----------------------------------------');
 
+  // Temporarily hardcode production values for testing
   const config = {
-    clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
-    domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
-    logoutUri: process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URI
+    clientId: "29b231bd96ab409c89f5c5575c3892c3", // Production ID hardcoded
+    domain: "https://hextra.kinde.com",
+    redirectUri: "https://hextra.io/api/auth/kinde/callback",
+    logoutUri: "https://hextra.io"
   };
 
   // Debug: Log final config
