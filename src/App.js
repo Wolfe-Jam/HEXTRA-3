@@ -26,7 +26,59 @@ const DEFAULT_COLOR = '#FED141';
 function App() {
   // 1. Basic hooks
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useKindeAuth();
+  const { login, isAuthenticated, isLoading } = useKindeAuth();
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#000000'
+        }}
+      >
+        <CircularProgress sx={{ color: 'white' }} />
+      </Box>
+    );
+  }
+
+  // Handle unauthenticated state
+  if (!isAuthenticated) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#000000'
+        }}
+      >
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Blk.svg"
+          alt="HEXTRA"
+          sx={{ width: 200, mb: 4 }}
+        />
+        <Button
+          variant="contained"
+          onClick={() => login()}
+          sx={{
+            bgcolor: '#4CAF50',
+            '&:hover': {
+              bgcolor: '#45a049'
+            }
+          }}
+        >
+          Sign In
+        </Button>
+      </Box>
+    );
+  }
 
   // 2. Refs
   const wheelRef = useRef(null);
@@ -287,40 +339,6 @@ function App() {
       applyColor(selectedColor);
     }
   }, [selectedColor, imageLoaded, applyColor]);
-
-  if (!isAuthenticated) {
-    return (
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#000000'
-        }}
-      >
-        <Box
-          component="img"
-          src="/images/HEXTRA-3-logo-Blk.svg"
-          alt="HEXTRA"
-          sx={{ width: 200, mb: 4 }}
-        />
-        <Button
-          variant="contained"
-          onClick={() => login()}
-          sx={{
-            bgcolor: '#4CAF50',
-            '&:hover': {
-              bgcolor: '#45a049'
-            }
-          }}
-        >
-          Sign In
-        </Button>
-      </Box>
-    );
-  }
 
   const mainContent = (
     <Box className={`app ${theme}`}>
