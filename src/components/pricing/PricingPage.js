@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button, Card, CardContent, CardActions } from '@mui/material';
+import { Box, Typography, Card, CardContent, CardActions } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import GlowText from '../GlowText';
 

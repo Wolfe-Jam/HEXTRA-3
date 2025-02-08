@@ -13,7 +13,7 @@ import GlowButton from './components/GlowButton';
 import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
 import Banner from './components/Banner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import DefaultTshirt from './components/DefaultTshirt';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
@@ -25,7 +25,7 @@ const DEFAULT_COLOR = '#FED141';
 
 function App() {
   const navigate = useNavigate();
-  const { login } = useKindeAuth(); // Fix the Kinde auth import path
+  const { login, isAuthenticated } = useKindeAuth(); // Fix the Kinde auth import path
   // State variables
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
@@ -332,7 +332,7 @@ function App() {
     </Box>
   );
 
-  return (
+  const mainContent = (
     <Box className={`app ${theme}`}>
       {/* Section A: Banner */}
       <Banner 
@@ -1324,6 +1324,13 @@ function App() {
         </Box>
       )}
     </Box>
+  );
+
+  return (
+    <Routes>
+      <Route path="/" element={!isAuthenticated ? renderLoginPage() : <Navigate to="/batch" replace />} />
+      <Route path="/batch" element={mainContent} />
+    </Routes>
   );
 }
 
