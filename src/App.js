@@ -24,8 +24,43 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 const DEFAULT_COLOR = '#FED141';
 
 function App() {
-  const navigate = useNavigate();
   const { login, isAuthenticated } = useKindeAuth();
+
+  if (!isAuthenticated) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#000000'
+        }}
+      >
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Blk.svg"
+          alt="HEXTRA"
+          sx={{ width: 200, mb: 4 }}
+        />
+        <Button
+          variant="contained"
+          onClick={() => login()}
+          sx={{
+            bgcolor: '#4CAF50',
+            '&:hover': {
+              bgcolor: '#45a049'
+            }
+          }}
+        >
+          Sign In
+        </Button>
+      </Box>
+    );
+  }
+
+  const navigate = useNavigate();
 
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
@@ -1292,44 +1327,7 @@ function App() {
     </Box>
   );
 
-  const content = isAuthenticated ? (
-    <Routes>
-      <Route path="/" element={<Navigate to="/batch" replace />} />
-      <Route path="/batch" element={mainContent} />
-    </Routes>
-  ) : (
-    <Box
-      sx={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#000000'
-      }}
-    >
-      <Box
-        component="img"
-        src="/images/HEXTRA-3-logo-Blk.svg"
-        alt="HEXTRA"
-        sx={{ width: 200, mb: 4 }}
-      />
-      <Button
-        variant="contained"
-        onClick={() => login()}
-        sx={{
-          bgcolor: '#4CAF50',
-          '&:hover': {
-            bgcolor: '#45a049'
-          }
-        }}
-      >
-        Sign In
-      </Button>
-    </Box>
-  );
-
-  return content;
+  return mainContent;
 }
 
 export default App;
