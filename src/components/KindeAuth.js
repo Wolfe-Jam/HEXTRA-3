@@ -1,4 +1,4 @@
-// KindeAuth Provider - Stable Version 2.1.6 - Updated 2025-02-06
+// KindeAuth Provider - Stable Version 2.1.6 - Updated 2025-02-08
 import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,19 +8,6 @@ export default function KindeAuth({ children }) {
   
   // Debug: Log all process.env
   console.log('All process.env:', process.env);
-  
-  // Get the current domain
-  const currentDomain = window.location.origin;
-  const isPreviewDeploy = currentDomain.includes('vercel.app');
-  
-  // Use preview URLs if on preview deployment
-  const redirectUri = isPreviewDeploy 
-    ? `${currentDomain}/api/auth/kinde/callback`
-    : process.env.REACT_APP_KINDE_REDIRECT_URI;
-    
-  const logoutUri = isPreviewDeploy
-    ? currentDomain
-    : process.env.REACT_APP_KINDE_LOGOUT_URI;
 
   // Log environment info
   console.log('Environment:', {
@@ -28,16 +15,15 @@ export default function KindeAuth({ children }) {
     baseUrl: process.env.REACT_APP_BASE_URL,
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri,
-    logoutUri,
-    isPreviewDeploy
+    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
+    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI
   });
 
   const config = {
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri,
-    logoutUri,
+    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
+    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
     scope: 'openid profile email offline',
     isDangerouslyUseLocalStorage: true
   };
