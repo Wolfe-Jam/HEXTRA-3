@@ -28,64 +28,12 @@ function App() {
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading } = useKindeAuth();
 
-  // Handle loading state
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#000000'
-        }}
-      >
-        <CircularProgress sx={{ color: 'white' }} />
-      </Box>
-    );
-  }
-
-  // Handle unauthenticated state
-  if (!isAuthenticated) {
-    return (
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#000000'
-        }}
-      >
-        <Box
-          component="img"
-          src="/images/HEXTRA-3-logo-Blk.svg"
-          alt="HEXTRA"
-          sx={{ width: 200, mb: 4 }}
-        />
-        <Button
-          variant="contained"
-          onClick={() => login()}
-          sx={{
-            bgcolor: '#4CAF50',
-            '&:hover': {
-              bgcolor: '#45a049'
-            }
-          }}
-        >
-          Sign In
-        </Button>
-      </Box>
-    );
-  }
-
   // 2. Refs
   const wheelRef = useRef(null);
   const hexInputRef = useRef(null);
   const isDragging = useRef(false);
 
-  // 3. State hooks (before callbacks that use them)
+  // 3. State hooks
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
@@ -130,7 +78,7 @@ function App() {
     []
   );
 
-  // 5. Callback hooks (after state they use)
+  // 5. Callback hooks
   const applyColor = useCallback(async (color) => {
     if (!workingImageUrl) return;
     
@@ -333,12 +281,63 @@ function App() {
     }
   }, []);
 
-  // 6. Effect hooks (last)
+  // 6. Effect hooks
   useEffect(() => {
     if (selectedColor && imageLoaded) {
       applyColor(selectedColor);
     }
   }, [selectedColor, imageLoaded, applyColor]);
+
+  // Now handle loading/auth states
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#000000'
+        }}
+      >
+        <CircularProgress sx={{ color: 'white' }} />
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#000000'
+        }}
+      >
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Blk.svg"
+          alt="HEXTRA"
+          sx={{ width: 200, mb: 4 }}
+        />
+        <Button
+          variant="contained"
+          onClick={() => login()}
+          sx={{
+            bgcolor: '#4CAF50',
+            '&:hover': {
+              bgcolor: '#45a049'
+            }
+          }}
+        >
+          Sign In
+        </Button>
+      </Box>
+    );
+  }
 
   const mainContent = (
     <Box className={`app ${theme}`}>
