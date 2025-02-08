@@ -301,7 +301,7 @@ function App() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#FFFFFF'
+        background: '#000000'
       }}
     >
       <Box
