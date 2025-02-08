@@ -13,12 +13,12 @@ import GlowButton from './components/GlowButton';
 import GlowSwitch from './components/GlowSwitch';
 import IconTextField from './components/IconTextField';
 import Banner from './components/Banner';
-import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import DefaultTshirt from './components/DefaultTshirt';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
 import { debounce } from 'lodash';
-import { useKindeAuth } from '@kinde-oss/kinde-auth-react'; 
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
@@ -28,71 +28,12 @@ function App() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useKindeAuth();
 
-  // 2. State hooks
-  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
-  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
-  const [workingImageUrl, setWorkingImageUrl] = useState(null);
-  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [canDownload, setCanDownload] = useState(false);
-  const [urlInput, setUrlInput] = useState('');
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('hextraTheme');
-    return savedTheme || 'dark';
-  });
-  const [lastClickColor, setLastClickColor] = useState(null);
-  const [lastClickTime, setLastClickTime] = useState(0);
-  const [enhanceEffect, setEnhanceEffect] = useState(true);
-  const [showTooltips, setShowTooltips] = useState(true);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [grayscaleValue, setGrayscaleValue] = useState(128);
-  const [matteValue, setMatteValue] = useState(50);
-  const [textureValue, setTextureValue] = useState(50);
-  const [batchResults, setBatchResults] = useState([]);
-  const [batchProgress, setBatchProgress] = useState(0);
-  const [batchStatus, setBatchStatus] = useState('idle');
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [processedCount, setProcessedCount] = useState(0);
-  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // 3. Ref hooks
+  // 2. Ref hooks
   const wheelRef = useRef(null);
   const hexInputRef = useRef(null);
   const isDragging = useRef(false);
 
-  // 4. Effect hooks
-  useEffect(() => {
-    if (selectedColor && imageLoaded) {
-      applyColor(selectedColor);
-    }
-  }, [selectedColor, imageLoaded, applyColor]);
-
-  // 5. Callback hooks
-  const handleColorChange = useCallback((color) => {
-    setSelectedColor(color);
-    // Only process image if we're not dragging
-    if (!isDragging.current) {
-      applyColor(color);
-    }
-  }, [applyColor]);
-
-  const applyColor = useCallback(async (color) => {
-    if (!workingImageUrl) return;
-    
-    try {
-      setIsProcessing(true);
-      await debouncedProcessImage(workingImageUrl, color);
-    } catch (err) {
-      console.error('Failed to process image:', err);
-      setCanDownload(false);
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [workingImageUrl, debouncedProcessImage]);
-
-  // 6. Memo hooks
+  // 3. Memo hooks - must be before callbacks that use it
   const debouncedProcessImage = useMemo(
     () => debounce(async (url, color) => {
       if (!url || !color) return;
@@ -107,6 +48,29 @@ function App() {
     }, 150),
     []
   );
+
+  // 4. Callback hooks
+  const applyColor = useCallback(async (color) => {
+    if (!workingImageUrl) return;
+    
+    try {
+      setIsProcessing(true);
+      await debouncedProcessImage(workingImageUrl, color);
+    } catch (err) {
+      console.error('Failed to process image:', err);
+      setCanDownload(false);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [workingImageUrl, debouncedProcessImage]);
+
+  const handleColorChange = useCallback((color) => {
+    setSelectedColor(color);
+    // Only process image if we're not dragging
+    if (!isDragging.current) {
+      applyColor(color);
+    }
+  }, [applyColor]);
 
   const handleDragStart = useCallback(() => {
     isDragging.current = true;
@@ -296,6 +260,42 @@ function App() {
         setActiveCatalog('GILDAN_64000');
     }
   }, []);
+
+  // 5. State hooks
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
+  const [workingImageUrl, setWorkingImageUrl] = useState(null);
+  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [canDownload, setCanDownload] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('hextraTheme');
+    return savedTheme || 'dark';
+  });
+  const [lastClickColor, setLastClickColor] = useState(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const [enhanceEffect, setEnhanceEffect] = useState(true);
+  const [showTooltips, setShowTooltips] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [grayscaleValue, setGrayscaleValue] = useState(128);
+  const [matteValue, setMatteValue] = useState(50);
+  const [textureValue, setTextureValue] = useState(50);
+  const [batchResults, setBatchResults] = useState([]);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchStatus, setBatchStatus] = useState('idle');
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // 6. Effect hooks
+  useEffect(() => {
+    if (selectedColor && imageLoaded) {
+      applyColor(selectedColor);
+    }
+  }, [selectedColor, imageLoaded, applyColor]);
 
   // Now we can have conditionals
   if (!isAuthenticated) {
