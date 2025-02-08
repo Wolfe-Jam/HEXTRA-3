@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Box, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
+import { Box, Button, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
 import { hexToRgb } from './utils/image-processing';
 import { processImage } from './utils/image-processing';
 import TagIcon from '@mui/icons-material/Tag';
@@ -18,12 +18,14 @@ import DefaultTshirt from './components/DefaultTshirt';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
 import { debounce } from 'lodash';
+import { useKindeAuth } from './utils/auth'; // Add this line
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
 
 function App() {
   const navigate = useNavigate();
+  const { login } = useKindeAuth(); // Add this line
   // State variables
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
