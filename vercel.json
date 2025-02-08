@@ -4,7 +4,7 @@
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "NODE_ENV": "production",
     "PUBLIC_URL": "https://hextra.io",
-    "REACT_APP_KINDE_CLIENT_ID": "0bd4c1c6f92d46f7b72290073d1806c7",
+    "REACT_APP_KINDE_CLIENT_ID": "29b231bd96ab409c89f5c5575c3892c3",
     "REACT_APP_KINDE_DOMAIN": "https://hextra.kinde.com",
     "REACT_APP_KINDE_REDIRECT_URI": "https://hextra.io/api/auth/kinde/callback",
     "REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URI": "https://hextra.io"
