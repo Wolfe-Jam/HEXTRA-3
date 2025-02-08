@@ -24,9 +24,11 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 const DEFAULT_COLOR = '#FED141';
 
 function App() {
-  // All hooks must be at top
+  // 1. Basic hooks
   const navigate = useNavigate();
   const { login, isAuthenticated } = useKindeAuth();
+
+  // 2. State hooks
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
@@ -55,60 +57,26 @@ function App() {
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Refs after hooks
+  // 3. Ref hooks
   const wheelRef = useRef(null);
   const hexInputRef = useRef(null);
   const isDragging = useRef(false);
 
-  // Now we can have conditionals
-  if (!isAuthenticated) {
-    return (
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#000000'
-        }}
-      >
-        <Box
-          component="img"
-          src="/images/HEXTRA-3-logo-Blk.svg"
-          alt="HEXTRA"
-          sx={{ width: 200, mb: 4 }}
-        />
-        <Button
-          variant="contained"
-          onClick={() => login()}
-          sx={{
-            bgcolor: '#4CAF50',
-            '&:hover': {
-              bgcolor: '#45a049'
-            }
-          }}
-        >
-          Sign In
-        </Button>
-      </Box>
-    );
-  }
+  // 4. Effect hooks
+  useEffect(() => {
+    if (selectedColor && imageLoaded) {
+      applyColor(selectedColor);
+    }
+  }, [selectedColor, imageLoaded, applyColor]);
 
-  const debouncedProcessImage = useMemo(
-    () => debounce(async (url, color) => {
-      if (!url || !color) return;
-      try {
-        const processedUrl = await processImage(url, color);
-        setWorkingProcessedUrl(processedUrl);
-        setCanDownload(true);
-      } catch (error) {
-        console.error('Error processing image:', error);
-        setCanDownload(false);
-      }
-    }, 150), // Increased debounce time for better performance
-    []
-  );
+  // 5. Callback hooks
+  const handleColorChange = useCallback((color) => {
+    setSelectedColor(color);
+    // Only process image if we're not dragging
+    if (!isDragging.current) {
+      applyColor(color);
+    }
+  }, [applyColor]);
 
   const applyColor = useCallback(async (color) => {
     if (!workingImageUrl) return;
@@ -124,19 +92,21 @@ function App() {
     }
   }, [workingImageUrl, debouncedProcessImage]);
 
-  useEffect(() => {
-    if (selectedColor && imageLoaded) {
-      applyColor(selectedColor);
-    }
-  }, [selectedColor, imageLoaded, applyColor]);
-
-  const handleColorChange = useCallback((color) => {
-    setSelectedColor(color);
-    // Only process image if we're not dragging
-    if (!isDragging.current) {
-      debouncedProcessImage(workingImageUrl, color);
-    }
-  }, [workingImageUrl, debouncedProcessImage]);
+  // 6. Memo hooks
+  const debouncedProcessImage = useMemo(
+    () => debounce(async (url, color) => {
+      if (!url || !color) return;
+      try {
+        const processedUrl = await processImage(url, color);
+        setWorkingProcessedUrl(processedUrl);
+        setCanDownload(true);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        setCanDownload(false);
+      }
+    }, 150),
+    []
+  );
 
   const handleDragStart = useCallback(() => {
     isDragging.current = true;
@@ -148,16 +118,16 @@ function App() {
     debouncedProcessImage(workingImageUrl, selectedColor);
   }, [workingImageUrl, selectedColor, debouncedProcessImage]);
 
-  const handleDropdownSelect = (color) => {
+  const handleDropdownSelect = useCallback((color) => {
     setSelectedColor(color.hex);
     setRgbColor(hexToRgb(color.hex));
     // Focus hex input as per workflow requirements
     if (hexInputRef.current) {
       hexInputRef.current.focus();
     }
-  };
+  }, []);
 
-  const handleImageUpload = async (file) => {
+  const handleImageUpload = useCallback(async (file) => {
     if (!file) return;
     
     try {
@@ -173,9 +143,9 @@ function App() {
       console.error('Failed to load image:', err);
       setImageLoaded(false);
     }
-  };
+  }, [applyColor, selectedColor]);
 
-  const handleLoadUrl = async () => {
+  const handleLoadUrl = useCallback(async () => {
     if (!urlInput.trim()) {
       window.open('https://www.google.com/search?q=blank+white+t-shirt&tbm=isch', '_blank');
       return;
@@ -190,16 +160,16 @@ function App() {
     } catch (err) {
       console.error('Failed to load image from URL:', err);
     }
-  };
+  }, [handleImageUpload, urlInput]);
 
-  const handleUrlKeyPress = (e) => {
+  const handleUrlKeyPress = useCallback((e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleLoadUrl();
     }
-  };
+  }, [handleLoadUrl]);
 
-  const handleWheelClick = (e) => {
+  const handleWheelClick = useCallback((e) => {
     const now = Date.now();
     const timeDiff = now - lastClickTime;
     
@@ -209,9 +179,9 @@ function App() {
     
     setLastClickColor(selectedColor);
     setLastClickTime(now);
-  };
+  }, [applyColor, lastClickColor, lastClickTime, selectedColor]);
 
-  const handleHexInputChange = (e) => {
+  const handleHexInputChange = useCallback((e) => {
     const value = e.target.value;
     // If empty and we have a selectedColor, use that
     if (!value && selectedColor) {
@@ -228,9 +198,9 @@ function App() {
         applyColor();
       }
     }
-  };
+  }, [applyColor, selectedColor]);
 
-  const resetColor = () => {
+  const resetColor = useCallback(() => {
     const defaultRgb = hexToRgb(DEFAULT_COLOR);
     setSelectedColor(DEFAULT_COLOR);
     setRgbColor(defaultRgb);
@@ -238,17 +208,17 @@ function App() {
     if (wheelRef.current) {
       wheelRef.current.setColor(DEFAULT_COLOR);
     }
-  };
+  }, []);
 
-  const handleGrayscaleChange = (event, newValue) => {
+  const handleGrayscaleChange = useCallback((event, newValue) => {
     const grayValue = newValue;
     const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
     setGrayscaleValue(grayValue);
     setSelectedColor(grayHex);
     setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
-  };
+  }, []);
 
-  const handleQuickDownload = () => {
+  const handleQuickDownload = useCallback(() => {
     if (!workingProcessedUrl || !canDownload) return;
     
     const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -261,9 +231,9 @@ function App() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(workingProcessedUrl);
-  };
+  }, [canDownload, selectedColor, workingProcessedUrl]);
 
-  const handleCSVUpload = async (e) => {
+  const handleCSVUpload = useCallback(async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -303,18 +273,18 @@ function App() {
       console.error('Error processing CSV:', err);
       setBatchStatus('error');
     }
-  };
+  }, []);
 
-  const handleDefaultImageLoad = (e) => {
+  const handleDefaultImageLoad = useCallback((e) => {
     if (e.target.src) {
       setWorkingImageUrl(e.target.src);
       setWorkingProcessedUrl(e.target.src);
       setImageLoaded(true);
       setCanDownload(true);
     }
-  };
+  }, []);
 
-  const handleCatalogSwitch = (catalogName) => {
+  const handleCatalogSwitch = useCallback((catalogName) => {
     switch(catalogName) {
       case 'GILDAN_64000':
         setActiveCatalog('GILDAN_64000');
@@ -325,7 +295,42 @@ function App() {
       default:
         setActiveCatalog('GILDAN_64000');
     }
-  };
+  }, []);
+
+  // Now we can have conditionals
+  if (!isAuthenticated) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#000000'
+        }}
+      >
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Blk.svg"
+          alt="HEXTRA"
+          sx={{ width: 200, mb: 4 }}
+        />
+        <Button
+          variant="contained"
+          onClick={() => login()}
+          sx={{
+            bgcolor: '#4CAF50',
+            '&:hover': {
+              bgcolor: '#45a049'
+            }
+          }}
+        >
+          Sign In
+        </Button>
+      </Box>
+    );
+  }
 
   const mainContent = (
     <Box className={`app ${theme}`}>
