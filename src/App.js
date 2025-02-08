@@ -18,14 +18,57 @@ import DefaultTshirt from './components/DefaultTshirt';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
 import { debounce } from 'lodash';
-import { useKindeAuth } from '@kinde-oss/kinde-auth-react'; // Fix the Kinde auth import path
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react'; 
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
 
 function App() {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useKindeAuth(); // Fix the Kinde auth import path
+  const { login, isAuthenticated } = useKindeAuth();
+
+  // Redirect to /batch if authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/batch');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#000000'
+        }}
+      >
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Blk.svg"
+          alt="HEXTRA"
+          sx={{ width: 200, mb: 4 }}
+        />
+        <Button
+          variant="contained"
+          onClick={() => login()}
+          sx={{
+            bgcolor: '#4CAF50',
+            '&:hover': {
+              bgcolor: '#45a049'
+            }
+          }}
+        >
+          Sign In
+        </Button>
+      </Box>
+    );
+  }
+
   // State variables
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
@@ -292,45 +335,6 @@ function App() {
         setActiveCatalog('GILDAN_64000');
     }
   };
-
-  const renderLoginPage = () => (
-    <Box
-      sx={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#000000'
-      }}
-    >
-      <Box
-        component="img"
-        src="/images/HEXTRA-3-logo-Blk.svg"
-        alt="HEXTRA"
-        sx={{
-          height: '120px',
-          width: 'auto',
-          marginBottom: 4
-        }}
-      />
-      <Button
-        variant="contained"
-        onClick={() => login()}
-        sx={{
-          backgroundColor: '#00805E',
-          color: '#FFFFFF',
-          padding: '12px 24px',
-          fontSize: '1.1rem',
-          '&:hover': {
-            backgroundColor: '#006f52'
-          }
-        }}
-      >
-        Sign In
-      </Button>
-    </Box>
-  );
 
   const mainContent = (
     <Box className={`app ${theme}`}>
@@ -1328,7 +1332,7 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={!isAuthenticated ? renderLoginPage() : <Navigate to="/batch" replace />} />
+      <Route path="/" element={<Navigate to="/batch" replace />} />
       <Route path="/batch" element={mainContent} />
     </Routes>
   );
