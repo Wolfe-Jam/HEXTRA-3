@@ -27,49 +27,6 @@ function App() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useKindeAuth();
 
-  // Redirect to /batch if authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/batch');
-    }
-  }, [isAuthenticated, navigate]);
-
-  // Show login page if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#000000'
-        }}
-      >
-        <Box
-          component="img"
-          src="/images/HEXTRA-3-logo-Blk.svg"
-          alt="HEXTRA"
-          sx={{ width: 200, mb: 4 }}
-        />
-        <Button
-          variant="contained"
-          onClick={() => login()}
-          sx={{
-            bgcolor: '#4CAF50',
-            '&:hover': {
-              bgcolor: '#45a049'
-            }
-          }}
-        >
-          Sign In
-        </Button>
-      </Box>
-    );
-  }
-
-  // State variables
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
@@ -98,12 +55,16 @@ function App() {
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Add refs
   const wheelRef = useRef(null);
   const hexInputRef = useRef(null);
   const isDragging = useRef(false);
 
-  // Debounce image processing
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/batch');
+    }
+  }, [isAuthenticated, navigate]);
+
   const debouncedProcessImage = useMemo(
     () => debounce(async (url, color) => {
       if (!url || !color) return;
@@ -435,14 +396,15 @@ function App() {
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
                 whiteSpace: 'nowrap',
+                width: '120px',  
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1,
-                width: '120px'
+                gap: 1
               }}>
                 <Box component="span" sx={{ flexShrink: 0 }}>GRAY Value:</Box>
                 <Box component="span" sx={{ 
                   fontFamily: 'monospace',
+                  width: '85px',  
                   textAlign: 'left'
                 }}>
                   {`${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}`.padStart(3, ' ')}
@@ -1330,12 +1292,44 @@ function App() {
     </Box>
   );
 
-  return (
+  const content = isAuthenticated ? (
     <Routes>
       <Route path="/" element={<Navigate to="/batch" replace />} />
       <Route path="/batch" element={mainContent} />
     </Routes>
+  ) : (
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#000000'
+      }}
+    >
+      <Box
+        component="img"
+        src="/images/HEXTRA-3-logo-Blk.svg"
+        alt="HEXTRA"
+        sx={{ width: 200, mb: 4 }}
+      />
+      <Button
+        variant="contained"
+        onClick={() => login()}
+        sx={{
+          bgcolor: '#4CAF50',
+          '&:hover': {
+            bgcolor: '#45a049'
+          }
+        }}
+      >
+        Sign In
+      </Button>
+    </Box>
   );
+
+  return content;
 }
 
 export default App;
