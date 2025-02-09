@@ -309,7 +309,13 @@ function App() {
           background: '#000000'
         }}
       >
-        <CircularProgress sx={{ color: 'white' }} />
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Blk.svg"
+          alt="HEXTRA"
+          sx={{ width: 200, mb: 4 }}
+        />
+        <CircularProgress sx={{ color: 'white', ml: 2 }} />
       </Box>
     );
   }

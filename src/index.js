@@ -5,6 +5,7 @@ import Router from './Router';
 import themeManager from './theme';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 
+console.log('App: Starting initialization...');
 const root = ReactDOM.createRoot(document.getElementById('root'));
 themeManager.init();
 
