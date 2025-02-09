@@ -14,8 +14,8 @@ root.render(
     <KindeProvider
       clientId={process.env.REACT_APP_KINDE_CLIENT_ID}
       domain={process.env.REACT_APP_KINDE_DOMAIN}
-      redirectUri="https://hextra.io/api/auth/kinde/callback"
-      logoutUri="https://hextra.io"
+      redirectUri="https://www.hextra.io/api/auth/kinde/callback"
+      logoutUri="https://www.hextra.io"
     >
       <Router />
     </KindeProvider>

@@ -13,7 +13,6 @@ const Router = () => {
         <Route path="/" element={<App />} />
         <Route path="/stripe-test" element={<KindeAuth><StripeTest /></KindeAuth>} />
         <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/api/auth/kinde/callback" element={null} />
       </Routes>
     </BrowserRouter>
   );
