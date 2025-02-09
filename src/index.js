@@ -15,6 +15,10 @@ root.render(
       domain={process.env.REACT_APP_KINDE_DOMAIN}
       redirectUri={process.env.REACT_APP_KINDE_REDIRECT_URI}
       logoutUri={process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URI}
+      onRedirectCallback={(user, appState) => {
+        // Handle the redirect after login
+        window.location.href = appState?.returnTo || '/';
+      }}
     >
       <Router />
     </KindeProvider>
