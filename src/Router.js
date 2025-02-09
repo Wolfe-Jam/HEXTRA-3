@@ -7,7 +7,7 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 
 // Callback handler component that actively processes the auth
 const CallbackHandler = () => {
-  const { isAuthenticated, isLoading } = useKindeAuth();
+  const { isLoading } = useKindeAuth();
 
   useEffect(() => {
     if (!isLoading) {
