@@ -13,13 +13,8 @@ root.render(
     <KindeProvider
       clientId={process.env.REACT_APP_KINDE_CLIENT_ID}
       domain={process.env.REACT_APP_KINDE_DOMAIN}
-      redirectUri={process.env.REACT_APP_KINDE_REDIRECT_URI}
-      logoutUri={process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URI}
-      onRedirectCallback={(appState) => {
-        console.log('Redirect callback with state:', appState);
-        // Use the saved hash or default to batch section
-        window.location.hash = appState?.returnTo || '#batch-section';
-      }}
+      redirectUri="https://hextra.io/api/auth/kinde/callback"
+      logoutUri="https://hextra.io"
     >
       <Router />
     </KindeProvider>

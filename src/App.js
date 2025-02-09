@@ -289,9 +289,11 @@ function App() {
   }, [selectedColor, imageLoaded, applyColor]);
 
   const handleLogin = () => {
-    console.log('Login clicked, redirecting to:', 'https://www.hextra.io/#batch-section');
+    console.log('Login clicked');
     login({
-      appState: { returnTo: window.location.hash }
+      authUrlParams: {
+        redirect_uri: 'https://hextra.io/api/auth/kinde/callback'
+      }
     });
   };
 
