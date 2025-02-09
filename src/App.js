@@ -288,11 +288,6 @@ function App() {
     }
   }, [selectedColor, imageLoaded, applyColor]);
 
-  const handleLogin = () => {
-    console.log('Login clicked');
-    login();
-  };
-
   // Handle loading state
   if (isLoading) {
     return (
