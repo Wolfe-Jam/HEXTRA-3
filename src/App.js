@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Box, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
+import { Box, Button, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
 import { hexToRgb } from './utils/image-processing';
 import { processImage } from './utils/image-processing';
 import TagIcon from '@mui/icons-material/Tag';
@@ -309,6 +309,13 @@ function App() {
     }
   }, [isLoading, authChecked]);
 
+  const handleLogin = () => {
+    console.log('Login clicked, redirecting to:', 'https://www.hextra.io/#batch-section');
+    login({
+      appState: { returnTo: window.location.hash }
+    });
+  };
+
   // Handle loading states
   if (isLoading || !authChecked) {
     return (
@@ -339,15 +346,24 @@ function App() {
           background: '#000000'
         }}
       >
-        <GlowButton 
-          onClick={() => {
-            console.log('Login clicked');
-            login();
-          }} 
+        <Box
+          component="img"
+          src="/images/HEXTRA-3-logo-Blk.svg"
+          alt="HEXTRA"
+          sx={{ width: 200, mb: 4 }}
+        />
+        <Button
           variant="contained"
+          onClick={handleLogin}
+          sx={{
+            bgcolor: '#4CAF50',
+            '&:hover': {
+              bgcolor: '#45a049'
+            }
+          }}
         >
-          SIGN IN
-        </GlowButton>
+          Sign In
+        </Button>
       </Box>
     );
   }
