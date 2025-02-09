@@ -310,9 +310,9 @@ function App() {
   }, [isLoading, authChecked]);
 
   const handleLogin = () => {
-    console.log('Login clicked, redirecting to:', 'https://www.hextra.io/#batch-section');
+    console.log('Login clicked');
     login({
-      appState: { returnTo: window.location.hash }
+      appState: { returnTo: window.location.pathname }
     });
   };
 

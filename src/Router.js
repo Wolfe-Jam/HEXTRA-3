@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
 import StripeTest from './components/StripeTest';
 import PricingPage from './components/pricing/PricingPage';
@@ -7,15 +7,17 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 
 // Callback handler component that actively processes the auth
 const CallbackHandler = () => {
-  const { isLoading } = useKindeAuth();
+  const { isLoading, isAuthenticated } = useKindeAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      window.location.replace('/');
+      // We're already on hextra.io, just need to ensure we're on the right path
+      const path = isAuthenticated ? '/#batch-section' : '/';
+      window.location.pathname = path;
     }
-  }, [isLoading]);
+  }, [isLoading, isAuthenticated]);
 
-  return <Navigate to="/" replace />;
+  return null;
 };
 
 const Router = () => {
