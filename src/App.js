@@ -288,6 +288,13 @@ function App() {
     }
   }, [selectedColor, imageLoaded, applyColor]);
 
+  const handleLogin = () => {
+    console.log('Login clicked, redirecting to:', 'https://www.hextra.io/#batch-section');
+    login({
+      appState: { returnTo: window.location.hash }
+    });
+  };
+
   // Handle loading state
   if (isLoading) {
     return (
@@ -326,7 +333,7 @@ function App() {
         />
         <Button
           variant="contained"
-          onClick={login}
+          onClick={handleLogin}
           sx={{
             bgcolor: '#4CAF50',
             '&:hover': {
