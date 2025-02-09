@@ -34,6 +34,7 @@ function App() {
   const isDragging = useRef(false);
 
   // 3. State hooks
+  const [authChecked, setAuthChecked] = useState(false);
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
@@ -282,6 +283,15 @@ function App() {
   }, []);
 
   // 6. Effect hooks
+  useEffect(() => {
+    if (!isLoading) {
+      setAuthChecked(true);
+      if (!isAuthenticated) {
+        navigate('/');
+      }
+    }
+  }, [isLoading, isAuthenticated, navigate]);
+
   useEffect(() => {
     if (selectedColor && imageLoaded) {
       applyColor(selectedColor);
