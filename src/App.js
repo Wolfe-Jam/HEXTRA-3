@@ -34,7 +34,6 @@ function App() {
   const isDragging = useRef(false);
 
   // 3. State hooks
-  const [authChecked, setAuthChecked] = useState(false);
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
@@ -284,40 +283,18 @@ function App() {
 
   // 6. Effect hooks
   useEffect(() => {
-    let timeoutId;
-    if (!isLoading) {
-      // Small delay to ensure auth state is stable
-      timeoutId = setTimeout(() => {
-        setAuthChecked(true);
-      }, 100);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [isLoading]);
-
-  useEffect(() => {
     if (selectedColor && imageLoaded) {
       applyColor(selectedColor);
     }
   }, [selectedColor, imageLoaded, applyColor]);
 
-  // Auth check effect - must be first effect
-  useEffect(() => {
-    if (!isLoading && !authChecked) {
-      setAuthChecked(true);
-    }
-  }, [isLoading, authChecked]);
-
   const handleLogin = () => {
     console.log('Login clicked');
-    login({
-      appState: { returnTo: window.location.pathname }
-    });
+    login();
   };
 
-  // Handle loading states
-  if (isLoading || !authChecked) {
+  // Handle loading state
+  if (isLoading) {
     return (
       <Box
         sx={{
@@ -354,7 +331,7 @@ function App() {
         />
         <Button
           variant="contained"
-          onClick={handleLogin}
+          onClick={login}
           sx={{
             bgcolor: '#4CAF50',
             '&:hover': {
