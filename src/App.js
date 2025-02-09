@@ -284,13 +284,17 @@ function App() {
 
   // 6. Effect hooks
   useEffect(() => {
+    let timeoutId;
     if (!isLoading) {
-      setAuthChecked(true);
-      if (!isAuthenticated) {
-        navigate('/');
-      }
+      // Small delay to ensure auth state is stable
+      timeoutId = setTimeout(() => {
+        setAuthChecked(true);
+      }, 100);
     }
-  }, [isLoading, isAuthenticated, navigate]);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isLoading]);
 
   useEffect(() => {
     if (selectedColor && imageLoaded) {
@@ -298,8 +302,15 @@ function App() {
     }
   }, [selectedColor, imageLoaded, applyColor]);
 
-  // Now handle loading/auth states
-  if (isLoading) {
+  // Auth check effect - must be first effect
+  useEffect(() => {
+    if (!isLoading && !authChecked) {
+      setAuthChecked(true);
+    }
+  }, [isLoading, authChecked]);
+
+  // Handle loading states
+  if (isLoading || !authChecked) {
     return (
       <Box
         sx={{
@@ -315,6 +326,7 @@ function App() {
     );
   }
 
+  // Show login if not authenticated
   if (!isAuthenticated) {
     return (
       <Box
@@ -327,24 +339,15 @@ function App() {
           background: '#000000'
         }}
       >
-        <Box
-          component="img"
-          src="/images/HEXTRA-3-logo-Blk.svg"
-          alt="HEXTRA"
-          sx={{ width: 200, mb: 4 }}
-        />
-        <Button
+        <GlowButton 
+          onClick={() => {
+            console.log('Login clicked');
+            login();
+          }} 
           variant="contained"
-          onClick={() => login()}
-          sx={{
-            bgcolor: '#4CAF50',
-            '&:hover': {
-              bgcolor: '#45a049'
-            }
-          }}
         >
-          Sign In
-        </Button>
+          SIGN IN
+        </GlowButton>
       </Box>
     );
   }
