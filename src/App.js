@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Box, Button, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
+import { Box, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
 import { hexToRgb } from './utils/image-processing';
 import { processImage } from './utils/image-processing';
 import TagIcon from '@mui/icons-material/Tag';
