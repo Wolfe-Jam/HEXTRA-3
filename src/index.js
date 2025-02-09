@@ -16,8 +16,12 @@ root.render(
       redirectUri={process.env.REACT_APP_KINDE_REDIRECT_URI}
       logoutUri={process.env.REACT_APP_KINDE_POST_LOGOUT_REDIRECT_URI}
       onRedirectCallback={(user, appState) => {
-        // Handle the redirect after login
-        window.location.href = appState?.returnTo || '/';
+        console.log('Kinde redirect callback', { user, appState });
+        // First let Kinde finish processing
+        setTimeout(() => {
+          // Then redirect to the app
+          window.location.replace('/');
+        }, 100);
       }}
     >
       <Router />
