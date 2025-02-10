@@ -1,5 +1,7 @@
 import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import CallbackPage from './CallbackPage';
 
 export default function KindeAuth({ children }) {
   // Debug: Log all process.env
@@ -26,13 +28,13 @@ export default function KindeAuth({ children }) {
   console.log('Kinde config:', config);
 
   return (
-    <KindeProvider
-      clientId={config.clientId}
-      domain={config.domain}
-      redirectUri={config.redirectUri}
-      logoutUri={config.logoutUri}
-    >
-      {children}
+    <KindeProvider {...config}>
+      <Router>
+        <Routes>
+          <Route path="/api/auth/kinde/callback" element={<CallbackPage />} />
+          <Route path="*" element={children} />
+        </Routes>
+      </Router>
     </KindeProvider>
   );
 }
