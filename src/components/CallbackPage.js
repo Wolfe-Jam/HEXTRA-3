@@ -7,72 +7,70 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 export default function CallbackPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, isLoading, login } = useKindeAuth();
-  const [authAttempts, setAuthAttempts] = useState(0);
+  const { isAuthenticated, isLoading, handleRedirectCallback } = useKindeAuth();
+  const [error, setError] = useState(null);
 
-  // Log component mount
+  // Log component mount and URL
   useEffect(() => {
-    console.log('CallbackPage - Mounted', {
+    console.log('CallbackPage - URL Info:', {
+      fullUrl: window.location.href,
       pathname: location.pathname,
       search: location.search,
-      hash: location.hash
+      hasCode: location.search.includes('code='),
+      hasState: location.search.includes('state=')
     });
-  }, []);
+  }, [location]);
 
-  // Log state changes
+  // Handle the redirect callback
   useEffect(() => {
-    console.log('CallbackPage - State Update:', {
-      isAuthenticated,
-      isLoading,
-      authAttempts,
-      currentUrl: window.location.href,
-      hasLoginFunction: !!login
-    });
-  }, [isAuthenticated, isLoading, authAttempts]);
-
-  // Handle initial auth
-  useEffect(() => {
-    const handleAuth = async () => {
+    const processCallback = async () => {
       try {
-        console.log('CallbackPage - Starting auth flow:', {
-          isAuthenticated,
-          isLoading,
-          attempt: authAttempts + 1
-        });
-
-        // If not authenticated and not loading, try to log in
-        if (!isAuthenticated && !isLoading) {
-          console.log('CallbackPage - Attempting login...');
-          await login({
-            appState: { returnTo: '/batch' }
-          });
-          setAuthAttempts(prev => prev + 1);
+        // Only process if we have a code and state
+        if (!location.search.includes('code=') || !location.search.includes('state=')) {
+          console.log('CallbackPage - Missing code or state parameters');
+          return;
         }
+
+        console.log('CallbackPage - Processing callback...');
         
-        // If authenticated, redirect
+        // Handle the redirect callback
+        if (handleRedirectCallback && typeof handleRedirectCallback === 'function') {
+          await handleRedirectCallback();
+          console.log('CallbackPage - Callback processed successfully');
+        } else {
+          console.error('CallbackPage - handleRedirectCallback is not available');
+          return;
+        }
+
+        // If we're authenticated after callback, redirect
         if (isAuthenticated) {
-          console.log('CallbackPage - Authentication successful, redirecting...');
+          console.log('CallbackPage - Authenticated, redirecting to /batch');
           navigate('/batch');
         }
-      } catch (error) {
-        console.error('CallbackPage - Auth error:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-          url: window.location.href,
-          search: location.search,
-          attempt: authAttempts
+      } catch (err) {
+        console.error('CallbackPage - Error:', {
+          name: err.name,
+          message: err.message,
+          stack: err.stack
         });
+        setError(err);
       }
     };
 
-    // Only attempt auth if we haven't tried too many times
-    if (authAttempts < 3) {
-      handleAuth();
-    } else {
-      console.error('CallbackPage - Too many auth attempts');
+    if (!isLoading) {
+      processCallback();
     }
-  }, [isAuthenticated, isLoading, login, navigate, location, authAttempts]);
+  }, [isLoading, handleRedirectCallback, isAuthenticated, navigate, location]);
+
+  // Log state changes
+  useEffect(() => {
+    console.log('CallbackPage - State:', {
+      isAuthenticated,
+      isLoading,
+      hasError: !!error,
+      errorMessage: error?.message
+    });
+  }, [isAuthenticated, isLoading, error]);
 
   return (
     <Box
