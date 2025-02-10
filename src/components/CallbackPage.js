@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
@@ -7,51 +7,72 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 export default function CallbackPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, isLoading, getToken } = useKindeAuth();
+  const { isAuthenticated, isLoading, login } = useKindeAuth();
+  const [authAttempts, setAuthAttempts] = useState(0);
 
+  // Log component mount
   useEffect(() => {
-    const handleCallback = async () => {
+    console.log('CallbackPage - Mounted', {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash
+    });
+  }, []);
+
+  // Log state changes
+  useEffect(() => {
+    console.log('CallbackPage - State Update:', {
+      isAuthenticated,
+      isLoading,
+      authAttempts,
+      currentUrl: window.location.href,
+      hasLoginFunction: !!login
+    });
+  }, [isAuthenticated, isLoading, authAttempts]);
+
+  // Handle initial auth
+  useEffect(() => {
+    const handleAuth = async () => {
       try {
-        console.log('Starting auth callback handling...', { 
-          isLoading, 
+        console.log('CallbackPage - Starting auth flow:', {
           isAuthenticated,
-          search: location.search
+          isLoading,
+          attempt: authAttempts + 1
         });
-        
-        // Get the token to ensure we're authenticated
-        const token = await getToken();
-        console.log('Token received:', token ? 'Yes' : 'No', {
-          hasState: location.search.includes('state='),
-          hasCode: location.search.includes('code=')
-        });
-        
-        // If we have a token and are authenticated, redirect
-        if (token && isAuthenticated) {
-          console.log('Authentication successful, redirecting to /batch...');
-          // Small delay to ensure state is saved
-          setTimeout(() => navigate('/batch'), 500);
-        } else {
-          console.log('Not authenticated yet:', { 
-            isAuthenticated, 
-            hasToken: !!token,
-            searchParams: new URLSearchParams(location.search).toString()
+
+        // If not authenticated and not loading, try to log in
+        if (!isAuthenticated && !isLoading) {
+          console.log('CallbackPage - Attempting login...');
+          await login({
+            appState: { returnTo: '/batch' }
           });
+          setAuthAttempts(prev => prev + 1);
+        }
+        
+        // If authenticated, redirect
+        if (isAuthenticated) {
+          console.log('CallbackPage - Authentication successful, redirecting...');
+          navigate('/batch');
         }
       } catch (error) {
-        console.error('Auth callback error:', {
+        console.error('CallbackPage - Auth error:', {
           name: error.name,
           message: error.message,
           stack: error.stack,
-          search: location.search
+          url: window.location.href,
+          search: location.search,
+          attempt: authAttempts
         });
       }
     };
 
-    // Only try to handle callback if we're not loading
-    if (!isLoading) {
-      handleCallback();
+    // Only attempt auth if we haven't tried too many times
+    if (authAttempts < 3) {
+      handleAuth();
+    } else {
+      console.error('CallbackPage - Too many auth attempts');
     }
-  }, [isLoading, isAuthenticated, navigate, getToken, location]);
+  }, [isAuthenticated, isLoading, login, navigate, location, authAttempts]);
 
   return (
     <Box
