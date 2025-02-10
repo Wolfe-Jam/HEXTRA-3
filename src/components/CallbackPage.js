@@ -6,32 +6,39 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 
 export default function CallbackPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading, handleRedirectCallback } = useKindeAuth();
+  const { isAuthenticated, isLoading, getToken } = useKindeAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        console.log('Starting auth callback handling...');
-        // Handle the redirect and token exchange
-        await handleRedirectCallback();
-        console.log('Callback handled, isAuthenticated:', isAuthenticated);
+        console.log('Starting auth callback handling...', { isLoading, isAuthenticated });
         
-        // If authenticated, redirect to /batch
-        if (isAuthenticated) {
-          console.log('Redirecting to /batch...');
+        // Get the token to ensure we're authenticated
+        const token = await getToken();
+        console.log('Token received:', token ? 'Yes' : 'No');
+        
+        // If we have a token and are authenticated, redirect
+        if (token && isAuthenticated) {
+          console.log('Authentication successful, redirecting to /batch...');
           navigate('/batch');
+        } else {
+          console.log('Not authenticated yet:', { isAuthenticated, hasToken: !!token });
         }
       } catch (error) {
-        console.error('Auth callback error:', error);
+        console.error('Auth callback error:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
       }
     };
 
+    // Only try to handle callback if we're not loading
     if (!isLoading) {
       handleCallback();
     }
-  }, [isLoading, handleRedirectCallback, isAuthenticated, navigate]);
+  }, [isLoading, isAuthenticated, navigate, getToken]);
 
-  // Show loading while authenticating
   return (
     <Box
       sx={{
