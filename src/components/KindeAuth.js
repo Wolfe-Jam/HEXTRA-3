@@ -4,15 +4,20 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CallbackPage from './CallbackPage';
 
 export default function KindeAuth({ children }) {
-  // Basic config - let Kinde handle everything
+  // Basic config with redirect
   const config = {
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
     redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
     logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
-    // Just the essentials
+    // Essential auth config
     responseType: 'code',
-    scope: 'openid profile email'
+    scope: 'openid profile email',
+    // Simple redirect handler
+    onRedirectCallback: () => {
+      console.log('Auth complete, redirecting to /batch');
+      window.location.href = '/batch';
+    }
   };
 
   // Debug: Log config

@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 
 export default function CallbackPage() {
-  const { isLoading } = useKindeAuth();
+  const { isAuthenticated, isLoading } = useKindeAuth();
+
+  // Force redirect after 2s if still on this page
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      const timer = setTimeout(() => {
+        console.log('Backup redirect to /batch');
+        window.location.href = '/batch';
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, isLoading]);
 
   return (
     <Box
@@ -24,7 +35,7 @@ export default function CallbackPage() {
       />
       <CircularProgress sx={{ color: 'white', mb: 2 }} />
       <Typography sx={{ color: 'white' }}>
-        {isLoading ? 'Processing login...' : 'Redirecting...'}
+        {isLoading ? 'Processing login...' : 'Redirecting to dashboard...'}
       </Typography>
     </Box>
   );
