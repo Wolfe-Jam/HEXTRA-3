@@ -7,7 +7,6 @@ export default function KindeAuth({ children }) {
     domain: process.env.REACT_APP_KINDE_DOMAIN,
     redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
     logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
-    audience: 'https://hextra-3-m1q12fr5q-wofejams-projects.vercel.app',
     onRedirectCallback: (appState) => {
       window.history.replaceState(
         {},
@@ -24,7 +23,6 @@ export default function KindeAuth({ children }) {
       redirectUri={config.redirectUri}
       logoutUri={config.logoutUri}
       loginButtonPosition="none"
-      audience={config.audience}
       onRedirectCallback={config.onRedirectCallback}
     >
       {children}
