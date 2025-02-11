@@ -26,7 +26,9 @@ const VERSION = 'v2.2.0';
 
 function App() {
   // 1. Basic hooks
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
+  // eslint-disable-next-line no-unused-vars
   const { user } = useKindeAuth();
 
   // 2. Refs
