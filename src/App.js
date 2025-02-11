@@ -26,9 +26,8 @@ const VERSION = 'v2.2.0';
 
 function App() {
   // 1. Basic hooks
-  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
-  const { login, isAuthenticated, isLoading } = useKindeAuth();
+  const { user } = useKindeAuth();
 
   // 2. Refs
   const wheelRef = useRef(null);
@@ -293,17 +292,8 @@ function App() {
     }
   }, [selectedColor, imageLoaded, applyColor]);
 
-  const handleLogin = () => {
-    console.log('Login clicked');
-    login({
-      authUrlParams: {
-        redirect_uri: 'https://hextra.io/api/auth/kinde/callback'
-      }
-    });
-  };
-
   // Handle loading state
-  if (isLoading) {
+  if (false) {
     return (
       <Box
         sx={{
@@ -326,7 +316,7 @@ function App() {
   }
 
   // Show login if not authenticated
-  if (!isAuthenticated) {
+  if (false) {
     return (
       <Box
         sx={{
@@ -346,7 +336,6 @@ function App() {
         />
         <Button
           variant="contained"
-          onClick={handleLogin}
           sx={{
             bgcolor: '#4CAF50',
             '&:hover': {
