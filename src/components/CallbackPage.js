@@ -27,7 +27,7 @@ export default function CallbackPage() {
   // Immediate redirect when authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      window.location.href = '/batch';
+      window.location.href = 'https://hextra-3-9qpapp02f-wofejams-projects.vercel.app/batch';
     }
   }, [isAuthenticated, isLoading]);
 
@@ -35,7 +35,7 @@ export default function CallbackPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isAuthenticated) {
-        window.location.href = '/batch';
+        window.location.href = 'https://hextra-3-9qpapp02f-wofejams-projects.vercel.app/batch';
       }
     }, 2000);
     return () => clearTimeout(timer);
