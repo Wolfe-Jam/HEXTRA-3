@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Typography, Tooltip } from '@mui/material';
+import { Box, Typography, Tooltip, Link } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import GlowIconButton from './GlowIconButton';
 import HextraClub from './HextraClub';
+import AboutDialog from './AboutDialog';
 
 /**
  * Banner Component (v2.2.2)
@@ -19,6 +20,7 @@ import HextraClub from './HextraClub';
 const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMode, setShowSubscriptionTest }) => {
   const { isAuthenticated, user, login, logout } = useKindeAuth();
   const [showSubscription, setShowSubscription] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const handleLogout = () => {
     // First scroll to batch section
@@ -59,30 +61,67 @@ const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMod
         top: 0,
         left: 0,
         right: 0,
-        bgcolor: 'var(--bg-primary)',
+        bgcolor: 'var(--bg-banner)',
         borderBottom: '1px solid var(--border-color)',
-        zIndex: 1000
+        zIndex: 1000,
+        transition: 'background-color 0.3s, border-color 0.3s',
+        '& .MuiSvgIcon-root': {
+          transition: 'color 0.3s'
+        }
       }}>
-        {/* Left side - Logo */}
-        <Box 
-          component="img" 
-          src="/images/HEXTRA-3-logo.svg" 
-          alt="HEXTRA"
-          sx={{ 
-            height: 24,
-            filter: 'var(--invert-logo)'
-          }} 
-        />
+        {/* Left side - Logo and Version */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Box 
+            component="img" 
+            src={isDarkMode ? '/images/HEXTRA-3-logo-Wht.svg' : '/images/HEXTRA-3-logo-Blk.svg'}
+            alt="HEXTRA"
+            sx={{ 
+              height: 24,
+              transition: 'filter 0.3s'
+            }} 
+          />
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Link
+              component="button"
+              variant="body2"
+              onClick={() => setAboutOpen(true)}
+              sx={{
+                color: 'var(--text-secondary)',
+                textAlign: 'left',
+                textDecoration: 'none',
+                transition: 'color 0.3s',
+                '&:hover': {
+                  color: '#D50032',
+                  textDecoration: 'none'
+                }
+              }}
+            >
+              About
+            </Link>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'var(--text-secondary)',
+                opacity: 0.7,
+                transition: 'color 0.3s'
+              }}
+            >
+              v{version}
+            </Typography>
+          </Box>
+        </Box>
 
         {/* Right side - Controls */}
         <Box sx={{ 
           display: 'flex', 
           gap: 2, 
           alignItems: 'center',
-          '& > *': { // Ensure consistent button sizes
+          '& > *': {
             width: 40,
             height: 40,
-            borderRadius: '50%'
+            borderRadius: '50%',
+            transition: 'all 0.3s'
           }
         }}>
           {/* Theme Toggle */}
@@ -90,8 +129,11 @@ const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMod
             onClick={onThemeToggle}
             sx={{
               color: 'var(--text-primary)',
+              bgcolor: 'var(--bg-primary)',
+              border: '1px solid var(--border-color)',
               '&:hover': {
-                bgcolor: 'var(--hover-light)'
+                bgcolor: 'var(--hover-bg)',
+                borderColor: 'var(--primary-hover)'
               }
             }}
           >
@@ -109,12 +151,16 @@ const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMod
               }}
               sx={{
                 color: 'var(--text-primary)',
+                bgcolor: 'var(--bg-primary)',
+                border: '1px solid var(--border-color)',
                 position: 'relative',
                 '&:hover': {
-                  bgcolor: 'var(--hover-light)'
+                  bgcolor: 'var(--hover-bg)',
+                  borderColor: 'var(--primary-hover)'
                 },
                 ...(isAuthenticated && {
                   bgcolor: 'rgba(0, 128, 94, 0.1)',
+                  borderColor: '#00805E',
                   '&:hover': {
                     bgcolor: 'rgba(0, 128, 94, 0.1)',
                     cursor: 'default'
@@ -129,7 +175,8 @@ const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMod
                 sx={{
                   width: 20,
                   height: 20,
-                  filter: isDarkMode ? 'none' : 'invert(1)'
+                  filter: isDarkMode ? 'none' : 'invert(1)',
+                  transition: 'filter 0.3s'
                 }}
               />
             </GlowIconButton>
@@ -141,7 +188,7 @@ const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMod
               <GlowIconButton
                 onClick={() => setShowSubscription(true)}
                 sx={{
-                  bgcolor: '#D50032', // Brand red
+                  bgcolor: '#D50032',
                   color: 'white',
                   '&:hover': {
                     bgcolor: '#D50032',
@@ -161,7 +208,7 @@ const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMod
                 login();
               }}
               sx={{
-                bgcolor: '#D50032', // Brand red
+                bgcolor: '#D50032',
                 color: 'white',
                 '&:hover': {
                   bgcolor: '#D50032',
@@ -179,6 +226,13 @@ const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMod
       {showSubscription && (
         <HextraClub onClose={() => setShowSubscription(false)} />
       )}
+
+      {/* About Dialog */}
+      <AboutDialog
+        open={aboutOpen}
+        onClose={() => setAboutOpen(false)}
+        version={version}
+      />
     </>
   );
 };

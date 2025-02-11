@@ -131,10 +131,8 @@ function App() {
   // Add state for subscription test
   const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('hextraTheme', newTheme);
+  const handleThemeToggle = () => {
+    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   };
 
   const handleHexInputChange = (e) => {
@@ -988,6 +986,10 @@ function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('hextraTheme', theme);
+  }, [theme]);
+
+  useEffect(() => {
     document.documentElement.style.setProperty('--text-primary', theme === 'light' ? '#141414' : '#F8F8F8');
     document.documentElement.style.setProperty('--text-secondary', theme === 'light' ? '#666666' : '#A0A0A0');
     document.documentElement.style.setProperty('--text-disabled', theme === 'light' ? 'rgba(20, 20, 20, 0.26)' : 'rgba(248, 248, 248, 0.3)');
@@ -1112,7 +1114,7 @@ function App() {
         <Banner 
           version={VERSION}
           isDarkMode={theme === 'dark'}
-          onThemeToggle={toggleTheme}
+          onThemeToggle={handleThemeToggle}
           showTooltips={showTooltips}
           setShowTooltips={setShowTooltips}
           isBatchMode={isBatchMode}
@@ -1124,7 +1126,7 @@ function App() {
         <Tooltip title="Dark/Light Mode">
           <GlowButton
             variant="contained"
-            onClick={toggleTheme}
+            onClick={handleThemeToggle}
             sx={{ minWidth: 'unset', width: 40, height: 40 }}
           >
             {theme === 'dark' ? '🌙' : '☀️'}

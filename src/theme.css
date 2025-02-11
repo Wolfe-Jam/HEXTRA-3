@@ -1,5 +1,6 @@
 :root[data-theme="light"] {
     --bg-primary: #ffffff;
+    --bg-banner: #f5f5f5;
     --text-primary: rgb(20, 20, 20);
     --text-secondary: #666666;
     --button-bg: rgb(20, 20, 20);
@@ -15,6 +16,7 @@
 
 :root[data-theme="dark"] {
     --bg-primary: rgb(20, 20, 20);
+    --bg-banner: #141414;
     --text-primary: #ffffff;
     --text-secondary: #999999;
     --button-bg: #ffffff;
@@ -63,6 +65,7 @@ body {
     z-index: 1100;
     margin: 0;
     padding: 0;
+    background-color: var(--bg-banner);
 }
 
 .banner-content {
