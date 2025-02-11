@@ -2,28 +2,20 @@ import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 
 export default function KindeAuth({ children }) {
-  // Debug: Log all process.env
-  console.log('All process.env:', process.env);
-  
-  // Log specific environment variables
-  console.log('Environment:', {
-    nodeEnv: process.env.REACT_APP_NODE_ENV,
-    baseUrl: process.env.REACT_APP_BASE_URL,
-    clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
-    domain: process.env.REACT_APP_KINDE_DOMAIN,
-    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
-    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI
-  });
-
   const config = {
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
     domain: process.env.REACT_APP_KINDE_DOMAIN,
     redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
-    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI
+    logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
+    audience: 'https://hextra-3-m1q12fr5q-wofejams-projects.vercel.app',
+    onRedirectCallback: (appState) => {
+      window.history.replaceState(
+        {},
+        document.title,
+        appState?.returnTo || window.location.pathname
+      );
+    }
   };
-
-  // Debug: Log final config
-  console.log('Kinde config:', config);
 
   return (
     <KindeProvider
@@ -32,6 +24,8 @@ export default function KindeAuth({ children }) {
       redirectUri={config.redirectUri}
       logoutUri={config.logoutUri}
       loginButtonPosition="none"
+      audience={config.audience}
+      onRedirectCallback={config.onRedirectCallback}
     >
       {children}
     </KindeProvider>
