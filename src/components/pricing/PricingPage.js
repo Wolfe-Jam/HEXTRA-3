@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Card, CardContent, CardActions } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
-import GlowText from '../GlowText';
+import GlowTextButton from '../GlowTextButton';
 
 const plans = [
   {
@@ -29,31 +29,13 @@ const plans = [
     buttonText: 'Upgrade to Pro',
     popular: true
   },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    features: [
-      'Everything in Pro',
-      'Custom integrations',
-      'Dedicated support',
-      'SLA guarantee',
-      'Team management'
-    ],
-    buttonText: 'Contact Sales',
-    popular: false
-  }
 ];
 
 const PricingPage = () => {
-  const { isAuthenticated, login } = useKindeAuth();
+  const { login } = useKindeAuth();
 
   const handlePlanSelect = (plan) => {
-    if (!isAuthenticated) {
-      login();
-      return;
-    }
-    // TODO: Implement Stripe checkout
-    console.log('Selected plan:', plan.name);
+    login();
   };
 
   return (
@@ -65,8 +47,11 @@ const PricingPage = () => {
       flexDirection: 'column',
       alignItems: 'center'
     }}>
-      <Typography variant="h2" sx={{ mb: 4, textAlign: 'center' }}>
-        Choose Your Plan
+      <Typography variant="h2" sx={{ mb: 2, textAlign: 'center' }}>
+        Welcome to HEXTRA
+      </Typography>
+      <Typography variant="h5" sx={{ mb: 4, textAlign: 'center', color: 'text.secondary' }}>
+        Choose your plan and start creating amazing designs
       </Typography>
       
       <Box sx={{ 
@@ -84,7 +69,9 @@ const PricingPage = () => {
               flexDirection: 'column',
               position: 'relative',
               border: plan.popular ? '2px solid #FED141' : '1px solid rgba(0,0,0,0.12)',
-              boxShadow: plan.popular ? '0 0 20px rgba(254, 209, 65, 0.2)' : undefined
+              boxShadow: plan.popular ? '0 0 20px rgba(254, 209, 65, 0.2)' : undefined,
+              background: 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+              backdropFilter: 'blur(10px)'
             }}
           >
             {plan.popular && (
@@ -125,13 +112,13 @@ const PricingPage = () => {
             </CardContent>
             
             <CardActions sx={{ p: 2, pt: 0 }}>
-              <GlowText
+              <GlowTextButton
                 onClick={() => handlePlanSelect(plan)}
                 variant={plan.popular ? 'contained' : 'outlined'}
-                sx={{ width: '100%' }}
+                fullWidth
               >
                 {plan.buttonText}
-              </GlowText>
+              </GlowTextButton>
             </CardActions>
           </Card>
         ))}

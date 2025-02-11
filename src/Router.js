@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
+import { Box } from '@mui/material';
 import App from './App';
 import StripeTest from './components/StripeTest';
 import PricingPage from './components/pricing/PricingPage';
 import CallbackPage from './components/CallbackPage';
+import Banner from './components/Banner';
 
 const ProtectedRoute = ({ children }) => {
   const { isLoading, isAuthenticated } = useKindeAuth();
@@ -34,13 +36,22 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <PricingPage />;
 };
 
+const Layout = ({ children }) => (
+  <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Banner />
+    <Box sx={{ flex: 1 }}>
+      {children}
+    </Box>
+  </Box>
+);
+
 const Router = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<ProtectedRoute><App /></ProtectedRoute>} />
-        <Route path="/stripe-test" element={<ProtectedRoute><StripeTest /></ProtectedRoute>} />
-        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/" element={<Layout><ProtectedRoute><App /></ProtectedRoute></Layout>} />
+        <Route path="/stripe-test" element={<Layout><ProtectedRoute><StripeTest /></ProtectedRoute></Layout>} />
+        <Route path="/pricing" element={<Layout><PricingPage /></Layout>} />
         <Route path="/api/auth/kinde/callback" element={<CallbackPage />} />
       </Routes>
     </BrowserRouter>
