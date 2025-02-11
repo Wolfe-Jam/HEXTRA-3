@@ -22,6 +22,7 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
+const VERSION = 'v2.2.0';
 
 function App() {
   // 1. Basic hooks
@@ -61,6 +62,8 @@ function App() {
   const [processedCount, setProcessedCount] = useState(0);
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
 
   // 4. Memo hooks
   const debouncedProcessImage = useMemo(
@@ -359,14 +362,16 @@ function App() {
     <Box className={`app ${theme}`}>
       {/* Section A: Banner */}
       <Banner 
-        version={''}
+        version={VERSION}
         isDarkMode={theme === 'dark'}
         onThemeToggle={() => setTheme(prevTheme => {
           const newTheme = prevTheme === 'dark' ? 'light' : 'dark';
           localStorage.setItem('hextraTheme', newTheme);
           return newTheme;
         })}
-        navigate={navigate}
+        isBatchMode={isBatchMode}
+        setIsBatchMode={setIsBatchMode}
+        setShowSubscriptionTest={setShowSubscriptionTest}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <GlowTextButton 
