@@ -27,10 +27,7 @@ export default function CallbackPage() {
   // Immediate redirect when authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      // Redirect to the app's root URL
-      const redirectUrl = process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL || process.env.REACT_APP_PUBLIC_URL;
-      console.log('🔄 Redirecting to:', redirectUrl);
-      window.location.replace(redirectUrl);
+      window.location.href = '/batch';
     }
   }, [isAuthenticated, isLoading]);
 
@@ -38,9 +35,7 @@ export default function CallbackPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isAuthenticated) {
-        const redirectUrl = process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL || process.env.REACT_APP_PUBLIC_URL;
-        console.log('⏰ Backup redirect to:', redirectUrl);
-        window.location.replace(redirectUrl);
+        window.location.href = '/batch';
       }
     }, 2000);
     return () => clearTimeout(timer);
