@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <title>Multiple T-Shirts</title>
-    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <path d="M20.33,3.67 L16.67,3.67 C16.3,2.75 15.43,2.08 14.41,2.08 L11.08,2.08 C10.06,2.08 9.19,2.75 8.82,3.67 L5.16,3.67 C4.7,3.67 4.33,4.04 4.33,4.5 L4.33,10.17 C4.33,10.63 4.7,11 5.16,11 L8.5,11 L8.5,16.83 C8.5,17.29 8.87,17.66 9.33,17.66 L16.16,17.66 C16.62,17.66 16.99,17.29 16.99,16.83 L16.99,11 L20.33,11 C20.79,11 21.16,10.63 21.16,10.17 L21.16,4.5 C21.16,4.04 20.79,3.67 20.33,3.67 Z" fill="currentColor" opacity="0.3" transform="translate(12.745000, 9.870000) scale(0.9) translate(-12.745000, -9.870000)"></path>
-        <path d="M19,7 L15.74,7 C15.3,5.84 14.25,5 13,5 L9,5 C7.75,5 6.7,5.84 6.26,7 L3,7 C2.45,7 2,7.45 2,8 L2,15 C2,15.55 2.45,16 3,16 L6,16 L6,21 C6,21.55 6.45,22 7,22 L15,22 C15.55,22 16,21.55 16,21 L16,16 L19,16 C19.55,16 20,15.55 20,15 L20,8 C20,7.45 19.55,7 19,7 Z M11,8 C10.45,8 10,7.55 10,7 C10,6.45 10.45,6 11,6 C11.55,6 12,6.45 12,7 C12,7.55 11.55,8 11,8 Z" fill="currentColor"></path>
-    </g>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Multiple T-Shirts</title>
+  <!-- Background shirt -->
+  <path d="M14 4H8L6.5 8.5L4 7L4.75 12.5L6.5 13.25V19H14V13.25L15.75 12.5L16.5 7L14 8.5L14 4Z" 
+    stroke="currentColor" 
+    stroke-width="1.5" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+    opacity="0.5"
+    transform="translate(2, 2)"
+  />
+  <!-- Foreground shirt -->
+  <path d="M16 2H8L6 8L3 6L4 13L6 14V22H18V14L20 13L21 6L18 8L16 2Z" 
+    stroke="currentColor" 
+    stroke-width="1.5" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+  />
 </svg>
