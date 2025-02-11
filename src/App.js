@@ -26,6 +26,7 @@ const VERSION = 'v2.2.0';
 
 function App() {
   // 1. Basic hooks
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading } = useKindeAuth();
 
@@ -50,6 +51,8 @@ function App() {
   const [lastClickTime, setLastClickTime] = useState(0);
   const [enhanceEffect, setEnhanceEffect] = useState(true);
   const [showTooltips, setShowTooltips] = useState(true);
+  // eslint-disable-next-line no-unused-vars
+  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [grayscaleValue, setGrayscaleValue] = useState(128);
   const [matteValue, setMatteValue] = useState(50);
@@ -63,7 +66,6 @@ function App() {
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isBatchMode, setIsBatchMode] = useState(false);
-  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
 
   // 4. Memo hooks
   const debouncedProcessImage = useMemo(

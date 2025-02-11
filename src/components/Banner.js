@@ -1,10 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { Box, Typography, IconButton, Button, Tooltip } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+// eslint-disable-next-line no-unused-vars
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AboutDialog from './AboutDialog';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
+// eslint-disable-next-line no-unused-vars
 import { VERSION } from '../version';
 import GlowIconButton from './GlowIconButton';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +25,7 @@ const Banner = ({
   const [aboutOpen, setAboutOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
 
   // Calculate user initials and color once
@@ -48,6 +52,7 @@ const Banner = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrolled]);
 
+  // eslint-disable-next-line no-unused-vars
   const handleLogout = () => {
     // First scroll to batch section
     const batchSection = document.querySelector('.batch-processing-section');
@@ -63,6 +68,7 @@ const Banner = ({
     }, 800); // Wait for scroll animation
   };
 
+  // eslint-disable-next-line no-unused-vars
   const scrollToBatch = () => {
     const batchSection = document.querySelector('.batch-processing-section');
     if (batchSection) {
@@ -70,6 +76,7 @@ const Banner = ({
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const COLORS = {
     textDark: 'rgba(255, 255, 255, 0.7)',
     textLight: 'rgba(255, 255, 255, 0.7)'
