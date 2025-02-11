@@ -47,10 +47,18 @@ const PricingPage = () => {
       flexDirection: 'column',
       alignItems: 'center'
     }}>
-      <Typography variant="h2" sx={{ mb: 2, textAlign: 'center' }}>
+      <Typography variant="h2" sx={{ 
+        mb: 2, 
+        textAlign: 'center',
+        color: 'inherit'
+      }}>
         Welcome to HEXTRA
       </Typography>
-      <Typography variant="h5" sx={{ mb: 4, textAlign: 'center', color: 'text.secondary' }}>
+      <Typography variant="h5" sx={{ 
+        mb: 4, 
+        textAlign: 'center', 
+        color: 'rgba(255, 255, 255, 0.7)'
+      }}>
         Choose your plan and start creating amazing designs
       </Typography>
       

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { Box } from '@mui/material';
@@ -7,6 +7,7 @@ import StripeTest from './components/StripeTest';
 import PricingPage from './components/pricing/PricingPage';
 import CallbackPage from './components/CallbackPage';
 import Banner from './components/Banner';
+import { VERSION } from './version';
 
 const ProtectedRoute = ({ children }) => {
   const { isLoading, isAuthenticated } = useKindeAuth();
@@ -36,14 +37,33 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <PricingPage />;
 };
 
-const Layout = ({ children }) => (
-  <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-    <Banner />
-    <Box sx={{ flex: 1 }}>
-      {children}
+const Layout = ({ children }) => {
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
+
+  return (
+    <Box sx={{ 
+      minHeight: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      bgcolor: isDarkMode ? '#1a1a1a' : '#ffffff',
+      color: isDarkMode ? '#ffffff' : '#000000'
+    }}>
+      <Banner 
+        version={VERSION}
+        isDarkMode={isDarkMode}
+        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
+        isBatchMode={isBatchMode}
+        setIsBatchMode={setIsBatchMode}
+        setShowSubscriptionTest={setShowSubscriptionTest}
+      />
+      <Box sx={{ flex: 1, mt: '62px' }}>
+        {children}
+      </Box>
     </Box>
-  </Box>
-);
+  );
+};
 
 const Router = () => {
   return (
