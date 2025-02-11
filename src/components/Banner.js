@@ -1,3 +1,10 @@
+/**
+ * HEXTRA Banner Component
+ * Maintains consistent styling across themes:
+ * - Dark background (#1a1a1a to #2d2d2d gradient)
+ * - White text and icons
+ * - Proper spacing and layout
+ */
 import React, { useState, useMemo, useEffect } from 'react';
 import { Box, Typography, IconButton, Button, Tooltip } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
