@@ -21,15 +21,26 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 export default function CallbackPage() {
   const { isAuthenticated, isLoading } = useKindeAuth();
 
-  // Backup redirect - ensures we don't get stuck
+  // Debug logging
+  console.log('🔄 Callback State:', { isAuthenticated, isLoading });
+
+  // Immediate redirect when authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      const timer = setTimeout(() => {
-        window.location.href = '/batch';
-      }, 2000);
-      return () => clearTimeout(timer);
+      // Redirect to the app's root URL
+      window.location.href = process.env.REACT_APP_PUBLIC_URL || 'https://hextra-3-9qpapp02f-wofejams-projects.vercel.app';
     }
   }, [isAuthenticated, isLoading]);
+
+  // Backup redirect - ensures we don't get stuck
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isAuthenticated) {
+        window.location.href = process.env.REACT_APP_PUBLIC_URL || 'https://hextra-3-9qpapp02f-wofejams-projects.vercel.app';
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
 
   return (
     <Box
