@@ -39,18 +39,18 @@ export default function CallbackPage() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#000000'
+        background: '#1a1a1a'
       }}
     >
       <Box
         component="img"
-        src="/images/HEXTRA-3-logo-Blk.svg"
+        src="/images/HEXTRA-3-logo-Wht.svg"
         alt="Hextra"
         sx={{ width: 200, mb: 4 }}
       />
       <CircularProgress sx={{ color: 'white', mb: 2 }} />
-      <Typography sx={{ color: 'white' }}>
-        {isLoading ? 'Processing login...' : 'Redirecting to dashboard...'}
+      <Typography sx={{ color: 'white', opacity: 0.7 }}>
+        Completing sign in...
       </Typography>
     </Box>
   );
