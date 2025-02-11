@@ -21,7 +21,7 @@ root.render(
         logoutUri={process.env.REACT_APP_KINDE_LOGOUT_URI}
       >
         <Routes>
-          <Route path="/api/auth/kinde/callback" element={<CallbackPage />} />
+          <Route path="/callback" element={<CallbackPage />} />
           <Route path="*" element={
             <KindeAuth>
               <App />
