@@ -101,7 +101,12 @@ const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMod
           {/* T-shirt Status */}
           <Tooltip title={isAuthenticated ? "Full Access" : "Single Shirt Only"}>
             <GlowIconButton
-              onClick={() => !isAuthenticated && login()}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  localStorage.setItem('returnTo', window.location.pathname + window.location.hash);
+                  login();
+                }
+              }}
               sx={{
                 color: 'var(--text-primary)',
                 position: 'relative',
@@ -151,7 +156,10 @@ const Banner = ({ isDarkMode, onThemeToggle, version, isBatchMode, setIsBatchMod
             </Tooltip>
           ) : (
             <GlowIconButton
-              onClick={login}
+              onClick={() => {
+                localStorage.setItem('returnTo', window.location.pathname + window.location.hash);
+                login();
+              }}
               sx={{
                 bgcolor: '#D50032', // Brand red
                 color: 'white',

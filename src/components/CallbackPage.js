@@ -7,8 +7,8 @@
  * Features:
  * - Loading spinner during auth processing
  * - Clear status messages
- * - Backup redirect timer (2s)
- * - Graceful auth state handling
+ * - Proper Kinde callback handling
+ * - Return URL restoration
  * 
  * @version 2.2.2
  * @lastUpdated 2025-02-10
@@ -17,19 +17,32 @@
 import React, { useEffect } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function CallbackPage() {
-  const { isAuthenticated, isLoading } = useKindeAuth();
+  const { handleCallback } = useKindeAuth();
+  const navigate = useNavigate();
 
-  // Backup redirect - ensures we don't get stuck
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      const timer = setTimeout(() => {
-        window.location.href = '/batch';
-      }, 2000);
-      return () => clearTimeout(timer);
+    async function processCallback() {
+      try {
+        // Get return URL from localStorage or default to home
+        const returnTo = localStorage.getItem('returnTo') || '/';
+        localStorage.removeItem('returnTo'); // Clean up
+
+        // Handle Kinde callback
+        await handleCallback();
+
+        // Navigate back to original page
+        navigate(returnTo, { replace: true });
+      } catch (error) {
+        console.error('Auth callback error:', error);
+        navigate('/', { replace: true });
+      }
     }
-  }, [isAuthenticated, isLoading]);
+
+    processCallback();
+  }, [handleCallback, navigate]);
 
   return (
     <Box
@@ -49,8 +62,8 @@ export default function CallbackPage() {
         sx={{ width: 200, mb: 4 }}
       />
       <CircularProgress sx={{ color: 'white', mb: 2 }} />
-      <Typography sx={{ color: 'white' }}>
-        {isLoading ? 'Processing login...' : 'Redirecting to dashboard...'}
+      <Typography variant="body1" sx={{ color: 'white' }}>
+        Completing sign in...
       </Typography>
     </Box>
   );
