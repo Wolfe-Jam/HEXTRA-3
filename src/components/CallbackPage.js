@@ -28,7 +28,9 @@ export default function CallbackPage() {
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
       // Redirect to the app's root URL
-      window.location.href = process.env.REACT_APP_PUBLIC_URL || 'https://hextra-3-9qpapp02f-wofejams-projects.vercel.app';
+      const redirectUrl = process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL || process.env.REACT_APP_PUBLIC_URL;
+      console.log('🔄 Redirecting to:', redirectUrl);
+      window.location.replace(redirectUrl);
     }
   }, [isAuthenticated, isLoading]);
 
@@ -36,7 +38,9 @@ export default function CallbackPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isAuthenticated) {
-        window.location.href = process.env.REACT_APP_PUBLIC_URL || 'https://hextra-3-9qpapp02f-wofejams-projects.vercel.app';
+        const redirectUrl = process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL || process.env.REACT_APP_PUBLIC_URL;
+        console.log('⏰ Backup redirect to:', redirectUrl);
+        window.location.replace(redirectUrl);
       }
     }, 2000);
     return () => clearTimeout(timer);

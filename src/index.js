@@ -11,6 +11,13 @@ import CallbackPage from './components/CallbackPage';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 themeManager.init();
 
+// Debug logging for environment variables
+console.log('🔧 Environment:', {
+  redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
+  postLoginRedirect: process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL,
+  publicUrl: process.env.REACT_APP_PUBLIC_URL
+});
+
 root.render(
   <React.StrictMode>
     <BrowserRouter>
@@ -19,6 +26,7 @@ root.render(
         domain={process.env.REACT_APP_KINDE_DOMAIN}
         redirectUri={process.env.REACT_APP_KINDE_REDIRECT_URI}
         logoutUri={process.env.REACT_APP_KINDE_LOGOUT_URI}
+        postLoginRedirectURL={process.env.REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL}
       >
         <Routes>
           <Route path="/callback" element={<CallbackPage />} />

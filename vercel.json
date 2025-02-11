@@ -8,6 +8,7 @@
     "REACT_APP_KINDE_CLIENT_ID": "0bd4c1c6f92d46f7b72290073d1806c7",
     "REACT_APP_KINDE_DOMAIN": "https://hextra.kinde.com",
     "REACT_APP_KINDE_REDIRECT_URI": "https://hextra-3-9qpapp02f-wofejams-projects.vercel.app/callback",
+    "REACT_APP_KINDE_POST_LOGIN_REDIRECT_URL": "https://hextra-3-9qpapp02f-wofejams-projects.vercel.app",
     "REACT_APP_KINDE_LOGOUT_URI": "https://hextra-3-9qpapp02f-wofejams-projects.vercel.app",
     "CI": "false"
   },
