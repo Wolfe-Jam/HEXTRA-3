@@ -20,6 +20,13 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CallbackPage from './CallbackPage';
 
 export default function KindeAuth({ children }) {
+  // Debug logging
+  console.log('🔧 KindeAuth Config:', {
+    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
+    postLoginRedirect: process.env.REACT_APP_PUBLIC_URL,
+    publicUrl: process.env.REACT_APP_PUBLIC_URL
+  });
+
   const config = {
     // Required Kinde configuration
     clientId: process.env.REACT_APP_KINDE_CLIENT_ID,
@@ -33,7 +40,7 @@ export default function KindeAuth({ children }) {
 
     // Redirect handler - keeps it simple and reliable
     onRedirectCallback: () => {
-      window.location.href = '/batch';
+      window.location.href = `${process.env.REACT_APP_PUBLIC_URL}/batch`;
     }
   };
 

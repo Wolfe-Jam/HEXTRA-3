@@ -21,11 +21,18 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 export default function CallbackPage() {
   const { isAuthenticated, isLoading } = useKindeAuth();
 
+  // Debug logging
+  console.log('🔄 Callback State:', { 
+    isAuthenticated, 
+    isLoading,
+    redirectUrl: `${process.env.REACT_APP_PUBLIC_URL}/batch`
+  });
+
   // Backup redirect - ensures we don't get stuck
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
       const timer = setTimeout(() => {
-        window.location.href = '/batch';
+        window.location.href = `${process.env.REACT_APP_PUBLIC_URL}/batch`;
       }, 2000);
       return () => clearTimeout(timer);
     }
