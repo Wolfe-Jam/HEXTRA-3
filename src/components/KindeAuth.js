@@ -104,9 +104,9 @@ export default function KindeAuth({ children }) {
 
     // Redirect handler - keeps it simple and reliable
     onRedirectCallback: (user) => {
-      const currentUrl = window.location.href;
-      const baseUrl = process.env.REACT_APP_PUBLIC_URL || currentUrl.split('/')[0];
-      window.location.href = `${baseUrl}/batch`;
+      // Go to root where App is mounted
+      // App will handle showing subscription or BIG features based on auth state
+      window.location.href = process.env.REACT_APP_PUBLIC_URL || window.location.origin;
     }
   };
 

@@ -26,15 +26,14 @@ export default function CallbackPage() {
     isAuthenticated, 
     isLoading,
     currentUrl: window.location.href,
-    redirectUrl: `${process.env.REACT_APP_PUBLIC_URL}/batch`
+    redirectUrl: process.env.REACT_APP_PUBLIC_URL || window.location.origin
   });
 
   // Immediate redirect when authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      const currentUrl = window.location.href;
-      const baseUrl = process.env.REACT_APP_PUBLIC_URL || currentUrl.split('/')[0];
-      window.location.href = `${baseUrl}/batch`;
+      // Go to root where App handles feature access based on auth state
+      window.location.href = process.env.REACT_APP_PUBLIC_URL || window.location.origin;
     }
   }, [isAuthenticated, isLoading]);
 
