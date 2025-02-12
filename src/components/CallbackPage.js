@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 
 export default function CallbackPage() {
@@ -25,16 +25,16 @@ export default function CallbackPage() {
   console.log('🔄 Callback State:', { 
     isAuthenticated, 
     isLoading,
+    currentUrl: window.location.href,
     redirectUrl: `${process.env.REACT_APP_PUBLIC_URL}/batch`
   });
 
-  // Backup redirect - ensures we don't get stuck
+  // Immediate redirect when authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      const timer = setTimeout(() => {
-        window.location.href = `${process.env.REACT_APP_PUBLIC_URL}/batch`;
-      }, 2000);
-      return () => clearTimeout(timer);
+      const currentUrl = window.location.href;
+      const baseUrl = process.env.REACT_APP_PUBLIC_URL || currentUrl.split('/')[0];
+      window.location.href = `${baseUrl}/batch`;
     }
   }, [isAuthenticated, isLoading]);
 
@@ -46,19 +46,15 @@ export default function CallbackPage() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#1a1a1a'
+        background: '#000000'
       }}
     >
       <Box
         component="img"
-        src="/images/HEXTRA-3-logo-Wht.svg"
+        src="/images/HEXTRA-3-logo-Blk.svg"
         alt="Hextra"
-        sx={{ width: 200, mb: 4 }}
+        sx={{ width: 200 }}
       />
-      <CircularProgress sx={{ color: 'white', mb: 2 }} />
-      <Typography sx={{ color: 'white', opacity: 0.7 }}>
-        Completing sign in...
-      </Typography>
     </Box>
   );
 }

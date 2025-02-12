@@ -19,7 +19,6 @@ import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Box, Button } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
-import KindeAuthButtons from './KindeAuthButtons';
 import CallbackPage from './CallbackPage';
 
 // Protected route wrapper
@@ -40,7 +39,7 @@ function RequireAuth({ children }) {
       >
         <Box
           component="img"
-          src="/images/HEXTRA-3-logo-Wht.svg"
+          src="/images/HEXTRA-3-logo-Blk.svg"
           alt="Hextra"
           sx={{ width: 200, mb: 4 }}
         />
@@ -62,7 +61,7 @@ function RequireAuth({ children }) {
       >
         <Box
           component="img"
-          src="/images/HEXTRA-3-logo-Wht.svg"
+          src="/images/HEXTRA-3-logo-Blk.svg"
           alt="Hextra"
           sx={{ width: 200, mb: 4 }}
         />
@@ -86,11 +85,10 @@ function RequireAuth({ children }) {
 }
 
 export default function KindeAuth({ children }) {
-  // Debug logging
-  console.log('🔧 KindeAuth Config:', {
-    redirectUri: process.env.REACT_APP_KINDE_REDIRECT_URI,
-    postLoginRedirect: process.env.REACT_APP_PUBLIC_URL,
-    publicUrl: process.env.REACT_APP_PUBLIC_URL
+  // Debug logging for redirect URLs
+  console.log('🔧 KindeAuth URLs:', {
+    publicUrl: process.env.REACT_APP_PUBLIC_URL,
+    currentUrl: window.location.href
   });
 
   const config = {
@@ -105,8 +103,10 @@ export default function KindeAuth({ children }) {
     scope: 'openid profile email',  // Required scopes
 
     // Redirect handler - keeps it simple and reliable
-    onRedirectCallback: () => {
-      window.location.href = `${process.env.REACT_APP_PUBLIC_URL}/batch`;
+    onRedirectCallback: (user) => {
+      const currentUrl = window.location.href;
+      const baseUrl = process.env.REACT_APP_PUBLIC_URL || currentUrl.split('/')[0];
+      window.location.href = `${baseUrl}/batch`;
     }
   };
 
