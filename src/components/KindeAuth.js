@@ -17,14 +17,14 @@
 import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import KindeAuthButtons from './KindeAuthButtons';
 import CallbackPage from './CallbackPage';
 
 // Protected route wrapper
 function RequireAuth({ children }) {
-  const { isLoading, isAuthenticated } = useKindeAuth();
+  const { isLoading, isAuthenticated, login } = useKindeAuth();
 
   if (isLoading) {
     return (
@@ -35,7 +35,7 @@ function RequireAuth({ children }) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#1a1a1a'
+          background: '#000000'
         }}
       >
         <Box
@@ -44,10 +44,6 @@ function RequireAuth({ children }) {
           alt="Hextra"
           sx={{ width: 200, mb: 4 }}
         />
-        <CircularProgress sx={{ color: 'white', mb: 2 }} />
-        <Typography sx={{ color: 'white', opacity: 0.7 }}>
-          Loading...
-        </Typography>
       </Box>
     );
   }
@@ -61,7 +57,7 @@ function RequireAuth({ children }) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#1a1a1a'
+          background: '#000000'
         }}
       >
         <Box
@@ -70,13 +66,18 @@ function RequireAuth({ children }) {
           alt="Hextra"
           sx={{ width: 200, mb: 4 }}
         />
-        <Typography variant="h5" sx={{ color: 'white', mb: 2 }}>
-          Welcome to HEXTRA
-        </Typography>
-        <Typography sx={{ color: 'white', opacity: 0.7, mb: 3 }}>
-          Please sign in to continue
-        </Typography>
-        <KindeAuthButtons />
+        <Button
+          variant="contained"
+          onClick={() => login()}
+          sx={{
+            backgroundColor: '#4CAF50',
+            '&:hover': {
+              backgroundColor: '#45a049'
+            }
+          }}
+        >
+          SIGN IN
+        </Button>
       </Box>
     );
   }
