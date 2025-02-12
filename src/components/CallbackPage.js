@@ -2,13 +2,7 @@
  * CallbackPage Component (v2.2.2)
  * 
  * Handles the OAuth callback after Kinde authentication.
- * Shows loading state and ensures redirect happens.
- * 
- * Features:
- * - Loading spinner during auth processing
- * - Clear status messages
- * - Backup redirect timer (2s)
- * - Graceful auth state handling
+ * Shows loading state while processing auth.
  * 
  * @version 2.2.2
  * @lastUpdated 2025-02-10
@@ -21,28 +15,18 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 export default function CallbackPage() {
   const { isAuthenticated, isLoading } = useKindeAuth();
 
-  // Debug logging
-  console.log('🔄 Callback State:', { 
-    isAuthenticated, 
-    isLoading,
-    currentUrl: window.location.href,
-    redirectUrl: process.env.REACT_APP_PUBLIC_URL || window.location.origin
-  });
-
-  // Immediate redirect when authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      // Go to root where App handles feature access based on auth state
       window.location.href = process.env.REACT_APP_PUBLIC_URL || window.location.origin;
     }
   }, [isAuthenticated, isLoading]);
 
+  // Simple loading screen
   return (
     <Box
       sx={{
         height: '100vh',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         background: '#000000'
