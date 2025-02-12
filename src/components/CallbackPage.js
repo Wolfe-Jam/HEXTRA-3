@@ -1,16 +1,35 @@
+/**
+ * CallbackPage Component (v2.2.2)
+ * 
+ * Handles the OAuth callback after Kinde authentication.
+ * Shows loading state and ensures redirect happens.
+ * 
+ * Features:
+ * - Loading spinner during auth processing
+ * - Clear status messages
+ * - Backup redirect timer (2s)
+ * - Graceful auth state handling
+ * 
+ * @version 2.2.2
+ * @lastUpdated 2025-02-10
+ */
+
 import React, { useEffect } from 'react';
-import { Box, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 
 export default function CallbackPage() {
-  const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useKindeAuth();
 
+  // Backup redirect - ensures we don't get stuck
   useEffect(() => {
-    // Give Kinde a moment to process, then go to main app
-    setTimeout(() => {
-      navigate('/', { replace: true });
-    }, 1000);
-  }, [navigate]);
+    if (isAuthenticated && !isLoading) {
+      const timer = setTimeout(() => {
+        window.location.href = '/batch';
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, isLoading]);
 
   return (
     <Box
@@ -20,16 +39,19 @@ export default function CallbackPage() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#000000'
+        background: '#1a1a1a'
       }}
     >
       <Box
         component="img"
-        src="/images/HEXTRA-3-logo-Blk.svg"
-        alt="HEXTRA"
+        src="/images/HEXTRA-3-logo-Wht.svg"
+        alt="Hextra"
         sx={{ width: 200, mb: 4 }}
       />
-      <CircularProgress sx={{ color: 'white' }} />
+      <CircularProgress sx={{ color: 'white', mb: 2 }} />
+      <Typography sx={{ color: 'white', opacity: 0.7 }}>
+        Completing sign in...
+      </Typography>
     </Box>
   );
 }
