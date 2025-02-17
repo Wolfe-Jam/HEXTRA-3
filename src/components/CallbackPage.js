@@ -17,7 +17,7 @@ export default function CallbackPage() {
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      window.location.href = process.env.REACT_APP_PUBLIC_URL || window.location.origin;
+      window.location.href = 'https://www.hextra.io';
     }
   }, [isAuthenticated, isLoading]);
 

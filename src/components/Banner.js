@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton, Button } from '@mui/material';
+import { Box, Typography, IconButton, Button, Avatar } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LocalMallIcon from '@mui/icons-material/LocalMall';
 import AboutDialog from './AboutDialog';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { VERSION } from '../version';
@@ -13,7 +14,8 @@ const Banner = ({
   onThemeToggle,
   isBatchMode,
   setIsBatchMode,
-  setShowSubscriptionTest
+  setShowSubscriptionTest,
+  subscriptionTier = 'free' // Add default subscription tier
 }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
@@ -28,9 +30,9 @@ const Banner = ({
     // After scroll animation, do the logout
     setTimeout(() => {
       logout({
-        post_logout_redirect_uri: `${window.location.origin}/#batch-section`
+        post_logout_redirect_uri: 'https://www.hextra.io/#batch-section'
       });
-    }, 800); // Wait for scroll animation
+    }, 500); // Wait for scroll animation
   };
 
   const scrollToBatch = () => {
@@ -151,6 +153,35 @@ const Banner = ({
             )}
             {isAuthenticated ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {/* Subscription indicator */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  color: COLORS.textDark,
+                  gap: 1
+                }}>
+                  {subscriptionTier !== 'free' && (
+                    <LocalMallIcon 
+                      sx={{ 
+                        fontSize: '1.2rem',
+                        opacity: 0.7,
+                        transform: subscriptionTier === 'pro' ? 'scale(1.2)' : 'none'
+                      }} 
+                    />
+                  )}
+                </Box>
+                {/* User avatar with first initial */}
+                <Avatar 
+                  sx={{ 
+                    width: 32, 
+                    height: 32,
+                    backgroundColor: '#D50032',
+                    fontSize: '0.875rem',
+                    color: 'white'
+                  }}
+                >
+                  {user?.given_name?.[0] || user?.email?.[0] || '?'}
+                </Avatar>
                 <Typography sx={{ color: COLORS.textDark }}>
                   {user?.email}
                 </Typography>

@@ -22,7 +22,7 @@ export default function KindeAuth({ children }) {
     responseType: 'code',
     scope: 'openid profile email',
     onRedirectCallback: () => {
-      window.location.href = process.env.REACT_APP_PUBLIC_URL || window.location.origin;
+      window.location.href = 'https://www.hextra.io';
     }
   };
 
