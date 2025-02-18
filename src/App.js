@@ -79,7 +79,7 @@ function rgbToHsv(r, g, b) {
 }
 
 function App() {
-  const { isLoading, isAuthenticated, login } = useKindeAuth();
+  const { isLoading, isAuthenticated, login, user } = useKindeAuth();
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImage, setWorkingImage] = useState(null);
@@ -130,6 +130,9 @@ function App() {
 
   // Add state for subscription test
   const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
+
+  // Add subscription status state
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -1089,6 +1092,26 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      // Check subscription status when user is authenticated
+      const checkSubscription = async () => {
+        try {
+          const response = await fetch('/api/check-subscription', {
+            headers: {
+              'x-kinde-user-id': user.id
+            }
+          });
+          const data = await response.json();
+          setSubscriptionStatus(data);
+        } catch (error) {
+          console.error('Error checking subscription:', error);
+        }
+      };
+      checkSubscription();
+    }
+  }, [isAuthenticated, user]);
+
   return (
     <Box
       sx={{
@@ -1649,130 +1672,161 @@ function App() {
 
                 {isAuthenticated ? (
                   <>
-                    {/* Catalog selector */}
-                    <Box sx={{ 
-                      display: 'flex', 
-                      gap: 2, 
-                      justifyContent: 'center', 
-                      mt: 2,
-                      mb: 3
-                    }}>
-                      <GlowTextButton
-                        variant="contained"
-                        onClick={() => handleCatalogSwitch('GILDAN_6400')}
-                        sx={{
-                          width: '140px',
-                          height: '36px',
-                          fontSize: '0.8rem',
-                          letterSpacing: '0.05em',
-                          whiteSpace: 'nowrap',
-                          opacity: activeCatalog === 'GILDAN_6400' ? 1 : 0.7,
-                          p: 1
-                        }}
-                      >
-                        GILDAN 6400
-                      </GlowTextButton>
-                      <GlowTextButton
-                        variant="contained"
-                        onClick={() => handleCatalogSwitch('HEXTRA_21')}
-                        sx={{
-                          width: '140px',
-                          height: '36px',
-                          fontSize: '0.8rem',
-                          letterSpacing: '0.05em',
-                          whiteSpace: 'nowrap',
-                          opacity: activeCatalog === 'HEXTRA_21' ? 1 : 0.7,
-                          p: 1
-                        }}
-                      >
-                        HEXTRA 21
-                      </GlowTextButton>
-                    </Box>
+                    {subscriptionStatus?.isSubscribed ? (
+                      <>
+                        {/* Catalog selector */}
+                        <Box sx={{ 
+                          display: 'flex', 
+                          gap: 2, 
+                          justifyContent: 'center', 
+                          mt: 2,
+                          mb: 3
+                        }}>
+                          <GlowTextButton
+                            variant="contained"
+                            onClick={() => handleCatalogSwitch('GILDAN_6400')}
+                            sx={{
+                              width: '140px',
+                              height: '36px',
+                              fontSize: '0.8rem',
+                              letterSpacing: '0.05em',
+                              whiteSpace: 'nowrap',
+                              opacity: activeCatalog === 'GILDAN_6400' ? 1 : 0.7,
+                              p: 1
+                            }}
+                          >
+                            GILDAN 6400
+                          </GlowTextButton>
+                          <GlowTextButton
+                            variant="contained"
+                            onClick={() => handleCatalogSwitch('HEXTRA_21')}
+                            sx={{
+                              width: '140px',
+                              height: '36px',
+                              fontSize: '0.8rem',
+                              letterSpacing: '0.05em',
+                              whiteSpace: 'nowrap',
+                              opacity: activeCatalog === 'HEXTRA_21' ? 1 : 0.7,
+                              p: 1
+                            }}
+                          >
+                            HEXTRA 21
+                          </GlowTextButton>
+                        </Box>
 
-                    {/* Main Action Buttons */}
-                    <Box sx={{ 
-                      display: 'flex', 
-                      gap: 2,
-                      mb: 3,
-                      justifyContent: 'center'
-                    }}>
-                      <GlowTextButton
-                        variant="contained"
-                        onClick={handleGenerateAll}
-                        disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded}
-                        sx={{ 
-                          width: '140px',
-                          position: 'relative'
-                        }}
-                      >
-                        {batchStatus === 'processing' || batchStatus === 'saving' ? (
-                          <>
-                            <CircularProgress
-                              size={16}
+                        {/* Main Action Buttons */}
+                        <Box sx={{ 
+                          display: 'flex', 
+                          gap: 2,
+                          mb: 3,
+                          justifyContent: 'center'
+                        }}>
+                          <GlowTextButton
+                            variant="contained"
+                            onClick={handleGenerateAll}
+                            disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded}
+                            sx={{ width: '140px' }}
+                          >
+                            {batchStatus === 'processing' || batchStatus === 'saving' ? (
+                              <>
+                                <CircularProgress
+                                  size={16}
+                                  sx={{
+                                    color: 'var(--text-primary)',
+                                    position: 'absolute',
+                                    left: '50%',
+                                    marginLeft: '-8px'
+                                  }}
+                                />
+                                <span style={{ visibility: 'hidden' }}>GENERATE ALL</span>
+                              </>
+                            ) : (
+                              'GENERATE ALL'
+                            )}
+                          </GlowTextButton>
+                          <GlowTextButton
+                            variant="contained"
+                            onClick={handleGenerateSelected}
+                            disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded || !selectedColors.length}
+                            sx={{ width: '140px' }}
+                          >
+                            SELECTED
+                          </GlowTextButton>
+                        </Box>
+
+                        {/* CSV Upload Button */}
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                          <GlowTextButton
+                            component="label"
+                            variant="contained"
+                            disabled={isProcessing || batchStatus === 'processing'}
+                            sx={{ width: '140px' }}
+                          >
+                            UPLOAD CSV
+                            <input
+                              type="file"
+                              hidden
+                              accept=".csv"
+                              onChange={handleCSVUpload}
+                            />
+                          </GlowTextButton>
+                        </Box>
+
+                        {/* Progress Indicator */}
+                        {(batchStatus === 'processing' || batchStatus === 'saving') && (
+                          <Box sx={{ width: '100%', maxWidth: 400, mt: 2, mx: 'auto' }}>
+                            <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
+                              {batchStatus === 'processing' ? (
+                                `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
+                              ) : (
+                                'Creating ZIP file...'
+                              )}
+                            </Typography>
+                            <LinearProgress 
+                              variant={batchStatus === 'saving' ? 'indeterminate' : 'determinate'}
+                              value={batchProgress} 
                               sx={{
-                                color: 'var(--text-primary)',
-                                position: 'absolute',
-                                left: '50%',
-                                marginLeft: '-8px'
+                                height: 8,
+                                borderRadius: 4,
+                                backgroundColor: 'var(--border-subtle)',
+                                '& .MuiLinearProgress-bar': {
+                                  backgroundColor: 'var(--glow-color)',
+                                  borderRadius: 4
+                                }
                               }}
                             />
-                            <span style={{ visibility: 'hidden' }}>GENERATE ALL</span>
-                          </>
-                        ) : (
-                          'GENERATE ALL'
+                          </Box>
                         )}
-                      </GlowTextButton>
-                      <GlowTextButton
-                        variant="contained"
-                        onClick={handleGenerateSelected}
-                        disabled={batchStatus === 'processing' || batchStatus === 'saving' || !imageLoaded || !selectedColors.length}
-                        sx={{ width: '140px' }}
-                      >
-                        SELECTED
-                      </GlowTextButton>
-                    </Box>
-
-                    {/* CSV Upload Button */}
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-                      <GlowTextButton
-                        component="label"
-                        variant="contained"
-                        disabled={isProcessing || batchStatus === 'processing'}
-                        sx={{ width: '140px' }}
-                      >
-                        UPLOAD CSV
-                        <input
-                          type="file"
-                          hidden
-                          accept=".csv"
-                          onChange={handleCSVUpload}
-                        />
-                      </GlowTextButton>
-                    </Box>
-
-                    {/* Progress Indicator */}
-                    {(batchStatus === 'processing' || batchStatus === 'saving') && (
-                      <Box sx={{ width: '100%', maxWidth: 400, mt: 2, mx: 'auto' }}>
-                        <Typography variant="body2" color="var(--text-secondary)" align="center" mt={1}>
-                          {batchStatus === 'processing' ? (
-                            `Processing: ${batchProgress}% (${processedCount} of ${totalCount})`
-                          ) : (
-                            'Creating ZIP file...'
-                          )}
-                        </Typography>
-                        <LinearProgress 
-                          variant={batchStatus === 'saving' ? 'indeterminate' : 'determinate'}
-                          value={batchProgress} 
-                          sx={{
-                            height: 8,
-                            borderRadius: 4,
-                            backgroundColor: 'var(--border-subtle)',
-                            '& .MuiLinearProgress-bar': {
-                              backgroundColor: 'var(--glow-color)',
-                              borderRadius: 4
-                            }
+                      </>
+                    ) : (
+                      // Show subscription prompt
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center',
+                        gap: 3,
+                        p: 4,
+                        width: '100%',
+                        textAlign: 'center'
+                      }}>
+                        <Typography 
+                          variant="h5" 
+                          sx={{ 
+                            fontFamily: "'League Spartan', sans-serif",
+                            fontWeight: 600,
+                            color: 'var(--text-primary)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
                           }}
-                        />
+                        >
+                          UPGRADE TO ACCESS BATCH PROCESSING
+                        </Typography>
+                        <GlowTextButton
+                          onClick={() => setShowSubscriptionTest(true)}
+                          sx={{ width: '200px' }}
+                        >
+                          UPGRADE NOW
+                        </GlowTextButton>
                       </Box>
                     )}
                   </>
