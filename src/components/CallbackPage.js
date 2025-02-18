@@ -12,32 +12,35 @@ import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 
-export default function CallbackPage() {
+const CallbackPage = () => {
   const { isAuthenticated, isLoading } = useKindeAuth();
 
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      window.location.href = 'https://www.hextra.io';
-    }
-  }, [isAuthenticated, isLoading]);
+    // Always redirect to production URL after authentication
+    window.location.href = 'https://www.hextra.io';
+  }, []);
 
   // Simple loading screen
   return (
     <Box
       sx={{
-        height: '100vh',
         display: 'flex',
-        alignItems: 'center',
         justifyContent: 'center',
-        background: '#000000'
+        alignItems: 'center',
+        height: '100vh',
+        width: '100vw'
       }}
     >
-      <Box
-        component="img"
-        src="/images/HEXTRA-3-logo-Blk.svg"
-        alt="Hextra"
-        sx={{ width: 200 }}
+      <img 
+        src="/images/loading.gif" 
+        alt="Loading..."
+        style={{
+          width: '50px',
+          height: '50px'
+        }}
       />
     </Box>
   );
-}
+};
+
+export default CallbackPage;

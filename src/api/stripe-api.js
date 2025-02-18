@@ -1,4 +1,5 @@
 // Stripe API endpoints
+// Use production URL consistently
 const BASE_URL = 'https://www.hextra.io';
 
 export const createCheckoutSession = async (userId) => {

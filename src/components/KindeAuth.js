@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { KindeProvider } from '@kinde-oss/kinde-auth-react';
+import { KindeProvider, useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CallbackPage from './CallbackPage';
 
@@ -21,9 +21,19 @@ export default function KindeAuth({ children }) {
     logoutUri: process.env.REACT_APP_KINDE_LOGOUT_URI,
     responseType: 'code',
     scope: 'openid profile email',
-    onRedirectCallback: () => {
-      window.location.href = 'https://www.hextra.io';
-    }
+  };
+
+  const { logout } = useKindeAuth();
+
+  const handleLogout = () => {
+    logout({
+      post_logout_redirect_uri: 'https://www.hextra.io'
+    });
+  };
+
+  const handleRedirect = () => {
+    // Always redirect to production URL
+    window.location.href = 'https://www.hextra.io';
   };
 
   return (
