@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         },
       ],
       // Use consistent production URLs for success and cancel
-      success_url: 'https://www.hextra.io/batch-success?session_id={CHECKOUT_SESSION_ID}',
+      success_url: 'https://www.hextra.io/batch-success?session_id={CHECKOUT_SESSION_ID}#batch-section',
       cancel_url: 'https://www.hextra.io/batch',
       metadata: {
         kindeUserId: req.headers['x-kinde-user-id']
