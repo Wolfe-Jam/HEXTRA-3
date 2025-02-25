@@ -66,13 +66,13 @@
   },
   "scripts": {
     "start": "DISABLE_ESLINT_PLUGIN=true react-scripts start",
-    "build": "cross-env CI=false react-scripts build",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:color": "jest color-application.test.js --watch",
-    "eject": "react-scripts eject",
+    "build": "cross-env CI=false DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "test": "DISABLE_ESLINT_PLUGIN=true jest",
+    "test:watch": "DISABLE_ESLINT_PLUGIN=true jest --watch",
+    "test:color": "DISABLE_ESLINT_PLUGIN=true jest color-application.test.js --watch",
+    "eject": "DISABLE_ESLINT_PLUGIN=true react-scripts eject",
     "generate-icons": "node scripts/generate-icons.js",
-    "vercel-build": "cross-env CI=false REACT_APP_KINDE_REDIRECT_URI=https://www.hextra.io/api/auth/kinde/callback REACT_APP_KINDE_LOGOUT_URI=https://www.hextra.io react-scripts build"
+    "vercel-build": "cross-env CI=false DISABLE_ESLINT_PLUGIN=true REACT_APP_KINDE_REDIRECT_URI=https://www.hextra.io/api/auth/kinde/callback REACT_APP_KINDE_LOGOUT_URI=https://www.hextra.io react-scripts build"
   },
   "eslintConfig": {
     "extends": [
