@@ -15,6 +15,7 @@ const Banner = ({
   isBatchMode,
   setIsBatchMode,
   setShowSubscriptionTest,
+  setShowPricingPage,
   subscriptionTier = 'free' // Add default subscription tier
 }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -148,6 +149,12 @@ const Banner = ({
                   onClick={() => setShowSubscriptionTest(true)}
                 >
                   Subscription Test
+                </GlowTextButton>
+
+                <GlowTextButton
+                  onClick={() => setShowPricingPage(true)}
+                >
+                  Pricing
                 </GlowTextButton>
               </Box>
             )}

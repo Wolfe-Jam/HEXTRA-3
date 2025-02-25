@@ -27,6 +27,7 @@ import { LUMINANCE_METHODS } from './constants/luminance';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import KindeAuthButtons from './components/KindeAuthButtons';
 import SubscriptionTest from './components/SubscriptionTest';
+import PricingPage from './components/PricingPage';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -130,6 +131,9 @@ function App() {
 
   // Add state for subscription test
   const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
+
+  // Add state for pricing page
+  const [showPricingPage, setShowPricingPage] = useState(false);
 
   // Add subscription status state
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
@@ -1141,6 +1145,7 @@ function App() {
           isBatchMode={isBatchMode}
           setIsBatchMode={setIsBatchMode}
           setShowSubscriptionTest={setShowSubscriptionTest}
+          setShowPricingPage={setShowPricingPage}
         />
         
         {/* Theme Toggle */}
@@ -1170,6 +1175,16 @@ function App() {
             <SubscriptionTest />
             <GlowTextButton
               onClick={() => setShowSubscriptionTest(false)}
+              sx={{ mt: 4, display: 'block', mx: 'auto' }}
+            >
+              Back to Editor
+            </GlowTextButton>
+          </Box>
+        ) : showPricingPage ? (
+          <Box sx={{ p: 4 }}>
+            <PricingPage />
+            <GlowTextButton
+              onClick={() => setShowPricingPage(false)}
               sx={{ mt: 4, display: 'block', mx: 'auto' }}
             >
               Back to Editor

@@ -15,4 +15,4 @@ root.render(
       <App />
     </KindeAuth>
   </React.StrictMode>
-);
+ );
