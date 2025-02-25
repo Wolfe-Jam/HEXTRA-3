@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert } from '@mui/material';
+import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, TextField } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import JSZip from 'jszip';
 import Jimp from 'jimp';
@@ -17,7 +17,7 @@ import HEXTRA_21 from './data/catalogs/hextra21';
 import './theme.css';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { RefreshRounded as ResetIcon, LinkRounded as LinkIcon } from '@mui/icons-material';
-import { TextField, InputAdornment, IconButton } from '@mui/material';
+import { InputAdornment, IconButton } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
 import { VERSION } from './version';
 import DefaultTshirt from './components/DefaultTshirt';
