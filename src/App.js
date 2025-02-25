@@ -27,7 +27,7 @@ import { LUMINANCE_METHODS } from './constants/luminance';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import KindeAuthButtons from './components/KindeAuthButtons';
 import SubscriptionTest from './components/SubscriptionTest';
-import PricingPage from './components/PricingPage';
+import SubscriptionPage from './components/SubscriptionPage';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -137,6 +137,18 @@ function App() {
 
   // Add subscription status state
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+
+  // Add state for subscription tier
+  const [subscriptionTier, setSubscriptionTier] = useState('free'); // 'free', 'early-bird', 'pro', 'team'
+
+  // Add state for showing subscription page
+  const [showSubscriptionPage, setShowSubscriptionPage] = useState(false);
+
+  // State for email capture dialog
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -1116,6 +1128,87 @@ function App() {
     }
   }, [isAuthenticated, user]);
 
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      checkSubscriptionStatus();
+    } else {
+      setSubscriptionTier('free');
+    }
+  }, [isAuthenticated, user]);
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const response = await fetch('/api/check-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: user.email }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSubscriptionTier(data.tier || 'free');
+      } else {
+        console.error('Failed to check subscription status');
+        setSubscriptionTier('free');
+      }
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      setSubscriptionTier('free');
+    }
+  };
+
+  // Function to handle email submission
+  const handleEmailSubmit = async () => {
+    // Validate email
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    
+    setEmailSubmitting(true);
+    
+    try {
+      // Store email in database or send to your backend
+      const response = await fetch('/api/store-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (response.ok) {
+        // Close dialog and proceed with download
+        setShowEmailDialog(false);
+        handleQuickDownload();
+        
+        // Optional: Show a success message
+        setSnackbarMessage('Thank you! Your image is downloading.');
+        setSnackbarOpen(true);
+      } else {
+        setEmailError('Failed to submit email. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting email:', error);
+      setEmailError('An error occurred. Please try again.');
+    } finally {
+      setEmailSubmitting(false);
+    }
+  };
+
+  // Modified download function to check for email
+  const handleDownloadClick = () => {
+    if (isAuthenticated) {
+      // User is logged in, proceed with download
+      handleQuickDownload();
+    } else {
+      // Show email capture dialog
+      setShowEmailDialog(true);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -1137,15 +1230,16 @@ function App() {
         
         {/* Section A: Banner */}
         <Banner 
-          version={VERSION}
-          isDarkMode={theme === 'dark'}
-          onThemeToggle={toggleTheme}
-          showTooltips={showTooltips}
-          setShowTooltips={setShowTooltips}
+          theme={theme} 
+          setTheme={setTheme} 
+          isAuthenticated={isAuthenticated}
+          user={user}
+          login={login}
+          handleLogout={null}
+          setShowPricingPage={setShowSubscriptionPage}
+          subscriptionTier={subscriptionTier}
           isBatchMode={isBatchMode}
           setIsBatchMode={setIsBatchMode}
-          setShowSubscriptionTest={setShowSubscriptionTest}
-          setShowPricingPage={setShowPricingPage}
         />
         
         {/* Theme Toggle */}
@@ -1182,7 +1276,7 @@ function App() {
           </Box>
         ) : showPricingPage ? (
           <Box sx={{ p: 4 }}>
-            <PricingPage />
+            <SubscriptionPage />
             <GlowTextButton
               onClick={() => setShowPricingPage(false)}
               sx={{ mt: 4, display: 'block', mx: 'auto' }}
@@ -1552,7 +1646,7 @@ function App() {
               )}
               {/* Download button using GlowButton */}
               <GlowButton
-                onClick={handleQuickDownload}
+                onClick={handleDownloadClick}
                 disabled={!canDownload}
                 sx={{
                   position: 'absolute',
@@ -1649,7 +1743,6 @@ function App() {
               {/* Batch Processing Section */}
               <Box 
                 id="batch-section"
-                className="batch-processing-section"
                 sx={{
                   mt: 4,
                   p: 3,
@@ -1674,7 +1767,7 @@ function App() {
                   }
                 }}
               >
-                {isAuthenticated && subscriptionStatus?.isSubscribed ? (
+                {isAuthenticated && subscriptionTier !== 'free' ? (
                   <>
                     {/* Catalog selector */}
                     <Box sx={{ 
@@ -1800,7 +1893,7 @@ function App() {
                       </Box>
                     )}
                   </>
-                ) : (
+                ) : isAuthenticated ? (
                   // Show subscription prompt
                   <Box sx={{ 
                     display: 'flex', 
@@ -1823,11 +1916,81 @@ function App() {
                     >
                       UPGRADE TO ACCESS BATCH PROCESSING
                     </Typography>
-                    <GlowTextButton
-                      onClick={() => setShowSubscriptionTest(true)}
-                      sx={{ width: '200px' }}
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        color: 'var(--text-secondary)',
+                        maxWidth: '600px',
+                        mb: 2
+                      }}
                     >
-                      UPGRADE NOW
+                      Subscribe to unlock Batch Image Generation (BIG) and process entire catalogs with a single click.
+                    </Typography>
+                    <GlowTextButton
+                      onClick={() => {
+                        document.getElementById('batch-section').scrollIntoView({ behavior: 'smooth' });
+                        setTimeout(() => setShowSubscriptionPage(true), 500);
+                      }}
+                      sx={{ 
+                        width: '200px',
+                        backgroundColor: '#D50032',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: '#B8002C',
+                        }
+                      }}
+                    >
+                      VIEW SUBSCRIPTION PLANS
+                    </GlowTextButton>
+                  </Box>
+                ) : (
+                  // Anonymous user - show login prompt
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    gap: 3,
+                    p: 4,
+                    width: '100%',
+                    textAlign: 'center'
+                  }}>
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        fontFamily: "'League Spartan', sans-serif",
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
+                      }}
+                    >
+                      SIGN IN TO ACCESS BATCH PROCESSING
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        color: 'var(--text-secondary)',
+                        maxWidth: '600px',
+                        mb: 2
+                      }}
+                    >
+                      Sign in to unlock Batch Image Generation (BIG) and process entire catalogs with a single click.
+                    </Typography>
+                    <GlowTextButton
+                      onClick={() => {
+                        document.getElementById('batch-section').scrollIntoView({ behavior: 'smooth' });
+                        setTimeout(() => login(), 500);
+                      }}
+                      sx={{ 
+                        width: '200px',
+                        backgroundColor: '#D50032',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: '#B8002C',
+                        }
+                      }}
+                    >
+                      SIGN IN
                     </GlowTextButton>
                   </Box>
                 )}
@@ -1849,6 +2012,86 @@ function App() {
         )}
       </Box>
     </Box>
+
+    {/* Email capture dialog */}
+    <Dialog 
+      open={showEmailDialog} 
+      onClose={() => setShowEmailDialog(false)}
+      PaperProps={{
+        sx: {
+          borderRadius: '12px',
+          padding: '16px',
+          backgroundColor: 'var(--bg-primary)',
+        }
+      }}
+    >
+      <DialogTitle sx={{ color: 'var(--text-primary)' }}>
+        Enter your email to download
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{ mb: 2, color: 'var(--text-secondary)' }}>
+          Please provide your email address to download your image. We'll also send you updates about HEXTRA.
+        </Typography>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Email Address"
+          type="email"
+          fullWidth
+          variant="outlined"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setEmailError('');
+          }}
+          error={!!emailError}
+          helperText={emailError}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: 'var(--border-color)',
+              },
+              '&:hover fieldset': {
+                borderColor: '#D50032',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#D50032',
+              },
+            },
+            '& .MuiInputLabel-root': {
+              color: 'var(--text-secondary)',
+            },
+            '& .MuiInputBase-input': {
+              color: 'var(--text-primary)',
+            },
+          }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button 
+          onClick={() => setShowEmailDialog(false)}
+          sx={{ color: 'var(--text-secondary)' }}
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleEmailSubmit}
+          disabled={emailSubmitting}
+          sx={{
+            backgroundColor: '#D50032',
+            color: 'white',
+            '&:hover': {
+              backgroundColor: '#B8002C',
+            },
+            '&.Mui-disabled': {
+              backgroundColor: 'rgba(213, 0, 50, 0.5)',
+            }
+          }}
+        >
+          {emailSubmitting ? 'Submitting...' : 'Download'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 

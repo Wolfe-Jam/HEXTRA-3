@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton, Button, Avatar } from '@mui/material';
+import { Box, Typography, IconButton, Button, Avatar, Chip } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
@@ -136,28 +136,6 @@ const Banner = ({
           marginRight: '24px'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {isAuthenticated && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <GlowTextButton
-                  onClick={() => setIsBatchMode(!isBatchMode)}
-                  active={isBatchMode}
-                >
-                  {isBatchMode ? 'Single Mode' : 'Batch Mode'}
-                </GlowTextButton>
-
-                <GlowTextButton
-                  onClick={() => setShowSubscriptionTest(true)}
-                >
-                  Subscription Test
-                </GlowTextButton>
-
-                <GlowTextButton
-                  onClick={() => setShowPricingPage(true)}
-                >
-                  Pricing
-                </GlowTextButton>
-              </Box>
-            )}
             {isAuthenticated ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 {/* Subscription indicator */}
@@ -167,31 +145,62 @@ const Banner = ({
                   color: COLORS.textDark,
                   gap: 1
                 }}>
-                  {subscriptionTier !== 'free' && (
-                    <LocalMallIcon 
+                  {/* T-shirt icon - single for registered, multiple for paid */}
+                  {subscriptionTier === 'free' ? (
+                    <IconButton 
+                      disabled
                       sx={{ 
                         fontSize: '1.2rem',
                         opacity: 0.7,
-                        transform: subscriptionTier === 'pro' ? 'scale(1.2)' : 'none'
-                      }} 
-                    />
+                        p: 0
+                      }}
+                    >
+                      <img 
+                        src="/images/single-tshirt-icon.svg" 
+                        alt="Single T-shirt" 
+                        style={{ width: '24px', height: '24px' }} 
+                      />
+                    </IconButton>
+                  ) : (
+                    <IconButton 
+                      onClick={() => setIsBatchMode(!isBatchMode)}
+                      sx={{ 
+                        fontSize: '1.2rem',
+                        opacity: 0.7,
+                        p: 0
+                      }}
+                    >
+                      <img 
+                        src={isBatchMode ? "/images/multiple-tshirt-icon.svg" : "/images/single-tshirt-icon.svg"} 
+                        alt={isBatchMode ? "Multiple T-shirts" : "Single T-shirt"} 
+                        style={{ width: '24px', height: '24px' }} 
+                      />
+                    </IconButton>
                   )}
                 </Box>
-                {/* User avatar with first initial */}
+                
+                {/* User avatar with subscription color */}
                 <Avatar 
                   sx={{ 
                     width: 32, 
                     height: 32,
-                    backgroundColor: '#D50032',
+                    backgroundColor: subscriptionTier === 'early-bird' ? '#D50032' : 
+                                    subscriptionTier === 'pro' ? '#00805E' : 
+                                    subscriptionTier === 'team' ? '#224D8F' : 
+                                    'rgba(0, 0, 0, 0.2)',
                     fontSize: '0.875rem',
                     color: 'white'
                   }}
                 >
                   {user?.given_name?.[0] || user?.email?.[0] || '?'}
                 </Avatar>
+                
+                {/* User email */}
                 <Typography sx={{ color: COLORS.textDark }}>
                   {user?.email}
                 </Typography>
+                
+                {/* Logout button */}
                 <Button 
                   variant="outlined" 
                   color="primary"
@@ -209,19 +218,61 @@ const Banner = ({
                 </Button>
               </Box>
             ) : (
-              <Button 
-                variant="text" 
-                onClick={scrollToBatch}
-                sx={{ 
-                  color: 'rgba(128, 128, 128, 0.5)',
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    color: 'rgba(128, 128, 128, 0.7)'
-                  }
-                }}
-              >
-                Login
-              </Button>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {/* FREE indicator for anonymous users */}
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: COLORS.textDark,
+                    fontWeight: 'bold',
+                    border: '1px solid rgba(0,0,0,0.2)',
+                    borderRadius: '4px',
+                    padding: '2px 8px',
+                    backgroundColor: 'rgba(0,0,0,0.05)'
+                  }}
+                >
+                  FREE VERSION
+                </Typography>
+                
+                <Button 
+                  variant="text" 
+                  onClick={() => {
+                    // Scroll to batch processing section
+                    document.getElementById('batch-section').scrollIntoView({ behavior: 'smooth' });
+                    // Then trigger login
+                    setTimeout(() => login(), 500);
+                  }}
+                  sx={{ 
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: '#D50032',
+                    padding: '6px 16px',
+                    borderRadius: '4px',
+                    '&:hover': {
+                      backgroundColor: '#B8002C',
+                      color: 'rgba(255, 255, 255, 1)'
+                    }
+                  }}
+                >
+                  Login
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => {
+                    document.getElementById('batch-section').scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => setShowPricingPage(true), 500);
+                  }}
+                  sx={{ 
+                    borderColor: '#D50032',
+                    color: '#D50032',
+                    '&:hover': {
+                      borderColor: '#B8002C',
+                      backgroundColor: 'rgba(213, 0, 50, 0.05)'
+                    }
+                  }}
+                >
+                  Subscription
+                </Button>
+              </Box>
             )}
           </Box>
           <IconButton

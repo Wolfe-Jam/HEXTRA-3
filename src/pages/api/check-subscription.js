@@ -3,64 +3,70 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
   }
 
   try {
-    const kindeUserId = req.headers['x-kinde-user-id'];
-    if (!kindeUserId) {
-      return res.status(401).json({ message: 'No user ID provided' });
-    }
-
-    // Find customer by Kinde user ID in metadata
+    // Find customer by email
     const customers = await stripe.customers.list({
+      email: email,
       limit: 1,
-      metadata: {
-        kindeUserId: kindeUserId
-      }
     });
 
     if (customers.data.length === 0) {
-      return res.json({ 
+      // No customer found with this email
+      return res.status(200).json({
         isSubscribed: false,
-        tier: 'free'
+        tier: 'free',
       });
     }
 
-    // Check for active subscriptions
+    const customer = customers.data[0];
+
+    // Get all subscriptions for this customer
     const subscriptions = await stripe.subscriptions.list({
-      customer: customers.data[0].id,
+      customer: customer.id,
       status: 'active',
-      limit: 1
+      expand: ['data.plan.product'],
     });
 
     if (subscriptions.data.length === 0) {
-      return res.json({ 
+      // No active subscriptions
+      return res.status(200).json({
         isSubscribed: false,
-        tier: 'free'
+        tier: 'free',
       });
     }
 
-    // Determine subscription tier
-    const subscription = subscriptions.data[0];
-    const priceId = subscription.items.data[0].price.id;
-    
+    // Check which plan the customer is subscribed to
     let tier = 'free';
-    if (priceId === process.env.STRIPE_EARLY_BIRD_PRICE_ID) {
-      tier = 'early-bird';
-    } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
-      tier = 'pro';
+    
+    for (const subscription of subscriptions.data) {
+      const priceId = subscription.items.data[0].price.id;
+      
+      if (priceId === process.env.STRIPE_EARLY_BIRD_PRICE_ID) {
+        tier = 'early-bird';
+      } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
+        tier = 'pro';
+      } else if (priceId === process.env.STRIPE_TEAM_PRICE_ID) {
+        tier = 'team';
+      }
     }
 
-    res.json({ 
-      isSubscribed: true,
+    return res.status(200).json({
+      isSubscribed: tier !== 'free',
       tier: tier,
-      subscriptionId: subscription.id
+      customerId: customer.id,
     });
-
   } catch (error) {
-    console.error('Subscription check error:', error);
-    res.status(500).json({ message: 'Error checking subscription' });
+    console.error('Error checking subscription status:', error);
+    return res.status(500).json({ error: 'Failed to check subscription status' });
   }
 }
