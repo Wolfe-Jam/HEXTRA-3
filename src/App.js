@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress, Chip } from '@mui/material';
+import { Box, Button, Typography, Tooltip, Slider, CircularProgress, LinearProgress, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert } from '@mui/material';
 import { Wheel } from '@uiw/react-color';
 import JSZip from 'jszip';
 import Jimp from 'jimp';
@@ -149,6 +149,10 @@ function App() {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [emailSubmitting, setEmailSubmitting] = useState(false);
+
+  // Add snackbar state variables
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -2092,6 +2096,20 @@ function App() {
         </Button>
       </DialogActions>
     </Dialog>
+
+    {/* Snackbar */}
+    <Snackbar
+      open={snackbarOpen}
+      autoHideDuration={6000}
+      onClose={() => setSnackbarOpen(false)}
+      message={snackbarMessage}
+      sx={{
+        '& .MuiSnackbarContent-root': {
+          backgroundColor: 'var(--bg-primary)',
+          color: 'var(--text-primary)',
+        },
+      }}
+    />
   );
 }
 
