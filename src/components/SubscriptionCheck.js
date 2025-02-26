@@ -1,12 +1,15 @@
-import { useKindeAuth } from '@kinde-oss/kinde-auth-nextjs';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { loadStripe } from '@stripe/stripe-js';
+import React from 'react';
+import SubscriptionPage from './SubscriptionPage';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
-export default function SubscriptionCheck({ children }) {
+export default function SubscriptionCheck({ children, setShowSubscriptionPage }) {
   const { isAuthenticated, user } = useKindeAuth();
   const [isSubscribed, setIsSubscribed] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
+  const [showDialog, setShowDialog] = React.useState(false);
 
   React.useEffect(() => {
     if (isAuthenticated && user?.id) {
@@ -22,22 +25,17 @@ export default function SubscriptionCheck({ children }) {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
   }, [isAuthenticated, user]);
 
-  const handleSubscribe = async () => {
-    const stripe = await stripePromise;
-    
-    const response = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-kinde-user-id': user.id
-      }
-    });
-    
-    const { sessionId } = await response.json();
-    stripe.redirectToCheckout({ sessionId });
+  const handleOpenSubscription = () => {
+    if (setShowSubscriptionPage) {
+      setShowSubscriptionPage(true);
+    } else {
+      setShowDialog(true);
+    }
   };
 
   if (!isAuthenticated) {
@@ -50,14 +48,22 @@ export default function SubscriptionCheck({ children }) {
 
   if (!isSubscribed) {
     return (
-      <div className="subscription-prompt">
-        <button 
-          onClick={handleSubscribe}
-          className="glow-button" // Using your existing button style
-        >
-          Upgrade to Early-Bird
-        </button>
-      </div>
+      <>
+        <div className="subscription-prompt">
+          <button 
+            onClick={handleOpenSubscription}
+            className="glow-button"
+          >
+            Upgrade to Early-Bird
+          </button>
+        </div>
+        {!setShowSubscriptionPage && (
+          <SubscriptionPage 
+            open={showDialog} 
+            onClose={() => setShowDialog(false)} 
+          />
+        )}
+      </>
     );
   }
 

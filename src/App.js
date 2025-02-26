@@ -26,7 +26,7 @@ import { testJimp, replaceColor } from './utils/jimp-test';
 import { LUMINANCE_METHODS } from './constants/luminance';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import KindeAuthButtons from './components/KindeAuthButtons';
-import SubscriptionTest from './components/SubscriptionTest';
+import SubscriptionPage from './components/SubscriptionPage';
 
 const DEFAULT_COLOR = '#FED141';
 const DEFAULT_IMAGE_URL = '/images/default-tshirt.webp';
@@ -128,8 +128,8 @@ function App() {
   // Add state for advanced settings toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Add state for subscription test
-  const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
+  // Add state for subscription page
+  const [showSubscriptionPage, setShowSubscriptionPage] = useState(false);
 
   // Add subscription status state
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
@@ -1140,7 +1140,7 @@ function App() {
           setShowTooltips={setShowTooltips}
           isBatchMode={isBatchMode}
           setIsBatchMode={setIsBatchMode}
-          setShowSubscriptionTest={setShowSubscriptionTest}
+          setShowSubscriptionPage={setShowSubscriptionPage}
         />
         
         {/* Theme Toggle */}
@@ -1165,11 +1165,14 @@ function App() {
         color: 'var(--text-primary)',
         transition: 'background-color 0.3s, color 0.3s'
       }}>
-        {showSubscriptionTest ? (
+        {showSubscriptionPage ? (
           <Box sx={{ p: 4 }}>
-            <SubscriptionTest />
+            <SubscriptionPage 
+              open={showSubscriptionPage} 
+              onClose={() => setShowSubscriptionPage(false)} 
+            />
             <GlowTextButton
-              onClick={() => setShowSubscriptionTest(false)}
+              onClick={() => setShowSubscriptionPage(false)}
               sx={{ mt: 4, display: 'block', mx: 'auto' }}
             >
               Back to Editor
@@ -1809,7 +1812,7 @@ function App() {
                       UPGRADE TO ACCESS BATCH PROCESSING
                     </Typography>
                     <GlowTextButton
-                      onClick={() => setShowSubscriptionTest(true)}
+                      onClick={() => setShowSubscriptionPage(true)}
                       sx={{ width: '200px' }}
                     >
                       UPGRADE NOW
