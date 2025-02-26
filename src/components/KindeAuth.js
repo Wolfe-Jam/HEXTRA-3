@@ -18,6 +18,8 @@ import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CallbackPage from './CallbackPage';
+import SubscriptionPage from './SubscriptionPage';
+import App from '../App';
 
 export default function KindeAuth({ children }) {
   const config = {
@@ -42,6 +44,7 @@ export default function KindeAuth({ children }) {
       <Router>
         <Routes>
           <Route path="/api/auth/kinde/callback" element={<CallbackPage />} />
+          <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="*" element={children} />
         </Routes>
       </Router>

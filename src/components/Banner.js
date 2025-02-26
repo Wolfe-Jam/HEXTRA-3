@@ -211,13 +211,9 @@ const Banner = ({
           </Tooltip>
 
           {/* T-shirt Status Badge / Sign Up CTA */}
-          <Tooltip title={!isAuthenticated ? "Single Shirt Only" : "Full Access"}>
+          <Tooltip title={!isAuthenticated ? "View Subscription Options" : "Manage Subscription"}>
             <GlowIconButton
-              onClick={() => {
-                if (!isAuthenticated) {
-                  login();
-                }
-              }}
+              onClick={() => navigate('/subscription')}
               sx={{ 
                 width: '32px',
                 height: '32px',
@@ -229,8 +225,7 @@ const Banner = ({
                 ...(isAuthenticated && {
                   backgroundColor: 'rgba(0, 128, 94, 0.1)',
                   '&:hover': {
-                    backgroundColor: 'rgba(0, 128, 94, 0.1)',
-                    cursor: 'default'
+                    backgroundColor: 'rgba(0, 128, 94, 0.2)',
                   }
                 })
               }}
@@ -239,7 +234,7 @@ const Banner = ({
               <Box
                 component="img"
                 src={isAuthenticated ? "/images/tshirts-icon.svg" : "/images/tshirt-icon.svg"}
-                alt={isAuthenticated ? "Full Access" : "Single Shirt Only"}
+                alt={isAuthenticated ? "Manage Subscription" : "View Subscription Options"}
                 sx={{
                   width: '20px',
                   height: '20px'

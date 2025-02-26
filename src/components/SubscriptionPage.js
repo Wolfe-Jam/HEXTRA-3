@@ -1,174 +1,209 @@
 import React from 'react';
+import { Box, Typography, Paper, Button } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
-import { loadStripe } from '@stripe/stripe-js';
 import GlowButton from './GlowButton';
-
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 export default function SubscriptionPage() {
   const { isAuthenticated, user, login } = useKindeAuth();
-  const [subscriptionStatus, setSubscriptionStatus] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
 
-  React.useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      checkSubscription();
-    } else {
-      setLoading(false);
+  // Simple subscription plans data
+  const plans = [
+    {
+      name: 'Early-Bird Plan',
+      price: '$5/month',
+      features: [
+        'Unlimited batch processing',
+        'Priority support',
+        'Early access to new features'
+      ]
+    },
+    {
+      name: 'Pro Plan',
+      price: '$10/month',
+      features: [
+        'Everything in Early-Bird',
+        'Advanced color management',
+        'Custom export options',
+        'Dedicated support'
+      ]
     }
-  }, [isAuthenticated, user]);
+  ];
 
-  const checkSubscription = async () => {
-    try {
-      const response = await fetch('/api/check-subscription', {
-        headers: {
-          'x-kinde-user-id': user.id
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to check subscription status');
-      }
-      
-      const data = await response.json();
-      setSubscriptionStatus(data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      setError('Failed to load subscription status. Please try again later.');
-      setLoading(false);
-    }
+  // Mock subscription status - in production this would come from your API
+  const mockSubscriptionStatus = {
+    isSubscribed: false,
+    tier: 'free'
   };
 
-  const handleSubscribe = async () => {
+  // Handle subscription button click
+  const handleSubscribe = (planName) => {
     if (!isAuthenticated) {
       login();
       return;
     }
-
-    try {
-      setLoading(true);
-      const stripe = await stripePromise;
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-kinde-user-id': user.id
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create checkout session');
-      }
-      
-      const { sessionId } = await response.json();
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error('Subscription error:', error);
-      setError('Failed to start subscription process. Please try again later.');
-      setLoading(false);
-    }
+    
+    console.log(`Subscribing to ${planName}`);
+    // In production, this would redirect to Stripe checkout
+    alert(`This would redirect to Stripe checkout for ${planName}`);
   };
 
   return (
-    <div style={{ 
-      padding: '20px',
-      maxWidth: '800px',
+    <Box sx={{ 
+      padding: '40px 20px',
+      maxWidth: '1000px',
       margin: '0 auto',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
+      minHeight: 'calc(100vh - 200px)'
     }}>
-      <h1 style={{ marginBottom: '30px' }}>HEXTRA Subscription</h1>
+      <Typography 
+        variant="h3" 
+        component="h1" 
+        sx={{ 
+          mb: 4, 
+          textAlign: 'center',
+          color: 'var(--text-primary)',
+          fontWeight: 600
+        }}
+      >
+        HEXTRA Subscription
+      </Typography>
       
       {!isAuthenticated ? (
-        <div style={{ textAlign: 'center', marginTop: '40px' }}>
-          <p style={{ marginBottom: '20px' }}>
-            Sign in to manage your subscription and access premium features.
-          </p>
+        <Paper 
+          elevation={3} 
+          sx={{ 
+            p: 4, 
+            textAlign: 'center',
+            bgcolor: 'var(--background-paper)',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h5" sx={{ mb: 3 }}>
+            Sign in to manage your subscription
+          </Typography>
+          <Typography sx={{ mb: 4 }}>
+            Access premium features like batch processing with a HEXTRA subscription.
+          </Typography>
           <GlowButton onClick={login}>
             Sign In
           </GlowButton>
-        </div>
-      ) : loading ? (
-        <div style={{ textAlign: 'center', marginTop: '40px' }}>
-          <p>Loading subscription status...</p>
-        </div>
-      ) : error ? (
-        <div style={{ textAlign: 'center', marginTop: '40px' }}>
-          <p style={{ color: 'red', marginBottom: '20px' }}>{error}</p>
-          <GlowButton onClick={checkSubscription}>
-            Try Again
-          </GlowButton>
-        </div>
+        </Paper>
       ) : (
         <>
-          <div style={{ marginBottom: '30px' }}>
-            <h2>Subscription Status</h2>
-            <div style={{ 
-              background: '#f5f5f5', 
-              padding: '20px',
-              borderRadius: '8px',
-              marginTop: '15px'
-            }}>
-              {subscriptionStatus?.isSubscribed ? (
-                <div>
-                  <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#00805E' }}>
-                    Active Subscription
-                  </p>
-                  <p>
-                    Plan: {subscriptionStatus.tier === 'early-bird' ? 'Early-Bird' : 'Pro'} Plan
-                  </p>
-                  <p>
-                    Subscription ID: {subscriptionStatus.subscriptionId}
-                  </p>
-                </div>
-              ) : (
-                <p>
+          {/* Subscription Status */}
+          <Paper 
+            elevation={3} 
+            sx={{ 
+              p: 4, 
+              mb: 4,
+              bgcolor: 'var(--background-paper)',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="h5" sx={{ mb: 3 }}>
+              Subscription Status
+            </Typography>
+            
+            {mockSubscriptionStatus.isSubscribed ? (
+              <Box sx={{ p: 2, bgcolor: 'rgba(0, 128, 94, 0.1)', borderRadius: 1 }}>
+                <Typography variant="h6" sx={{ color: '#00805E', fontWeight: 600 }}>
+                  Active Subscription
+                </Typography>
+                <Typography>
+                  Plan: {mockSubscriptionStatus.tier === 'early-bird' ? 'Early-Bird' : 'Pro'} Plan
+                </Typography>
+                <Typography sx={{ mt: 2 }}>
+                  Thank you for supporting HEXTRA!
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ p: 2, bgcolor: 'rgba(0, 0, 0, 0.05)', borderRadius: 1 }}>
+                <Typography>
                   You don't have an active subscription. Subscribe to access premium features.
-                </p>
-              )}
-            </div>
-          </div>
+                </Typography>
+              </Box>
+            )}
+          </Paper>
 
-          {!subscriptionStatus?.isSubscribed && (
-            <div style={{ textAlign: 'center', marginTop: '30px' }}>
-              <h3 style={{ marginBottom: '20px' }}>Available Plans</h3>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '20px',
-                flexWrap: 'wrap'
-              }}>
-                <div style={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  width: '300px',
-                  textAlign: 'left'
-                }}>
-                  <h4>Early-Bird Plan</h4>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', margin: '15px 0' }}>$5/month</p>
-                  <ul style={{ marginBottom: '20px', paddingLeft: '20px' }}>
-                    <li>Unlimited batch processing</li>
-                    <li>Priority support</li>
-                    <li>Early access to new features</li>
-                  </ul>
-                  <GlowButton 
-                    onClick={handleSubscribe}
-                    style={{ width: '100%' }}
-                  >
-                    Subscribe Now
-                  </GlowButton>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Subscription Plans */}
+          <Typography 
+            variant="h4" 
+            sx={{ 
+              mb: 3, 
+              textAlign: 'center',
+              color: 'var(--text-primary)'
+            }}
+          >
+            Available Plans
+          </Typography>
+          
+          <Box sx={{ 
+            display: 'flex', 
+            flexWrap: 'wrap',
+            gap: 4,
+            justifyContent: 'center'
+          }}>
+            {plans.map((plan) => (
+              <Paper
+                key={plan.name}
+                elevation={3}
+                sx={{
+                  p: 3,
+                  width: { xs: '100%', sm: '45%', md: '350px' },
+                  bgcolor: 'var(--background-paper)',
+                  borderRadius: 2,
+                  transition: 'transform 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-5px)'
+                  }
+                }}
+              >
+                <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+                  {plan.name}
+                </Typography>
+                <Typography variant="h4" sx={{ mb: 3, color: '#FED141', fontWeight: 700 }}>
+                  {plan.price}
+                </Typography>
+                
+                <Box component="ul" sx={{ mb: 4, pl: 2 }}>
+                  {plan.features.map((feature, index) => (
+                    <Typography component="li" key={index} sx={{ mb: 1 }}>
+                      {feature}
+                    </Typography>
+                  ))}
+                </Box>
+                
+                <GlowButton 
+                  onClick={() => handleSubscribe(plan.name)}
+                  fullWidth
+                >
+                  Subscribe Now
+                </GlowButton>
+              </Paper>
+            ))}
+          </Box>
         </>
       )}
-    </div>
+      
+      {/* Information Section */}
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 4, 
+          mt: 6,
+          bgcolor: 'var(--background-paper)',
+          borderRadius: 2
+        }}
+      >
+        <Typography variant="h5" sx={{ mb: 3 }}>
+          Why Subscribe?
+        </Typography>
+        <Typography paragraph>
+          HEXTRA Premium unlocks powerful batch processing capabilities, allowing you to process multiple images at once with the same color settings.
+        </Typography>
+        <Typography paragraph>
+          Perfect for e-commerce stores, design agencies, and anyone who needs to process multiple product images quickly and consistently.
+        </Typography>
+      </Paper>
+    </Box>
   );
 }
