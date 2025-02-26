@@ -29,7 +29,7 @@ function App() {
   // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   // eslint-disable-next-line no-unused-vars
-  const { user } = useKindeAuth();
+  const { isAuthenticated, user } = useKindeAuth();
 
   // 2. Refs
   const wheelRef = useRef(null);
@@ -61,12 +61,13 @@ function App() {
   const [batchResults, setBatchResults] = useState([]);
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchStatus, setBatchStatus] = useState('idle');
-  const [selectedColors, setSelectedColors] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isBatchMode, setIsBatchMode] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [selectedColors, setSelectedColors] = useState([]);
 
   // 4. Memo hooks
   const debouncedProcessImage = useMemo(
@@ -293,6 +294,23 @@ function App() {
       applyColor(selectedColor);
     }
   }, [selectedColor, imageLoaded, applyColor]);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      fetch('/api/check-subscription', {
+        headers: {
+          'x-kinde-user-id': user.id
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        setIsSubscribed(data.isSubscribed);
+      })
+      .catch(err => {
+        console.error('Error checking subscription:', err);
+      });
+    }
+  }, [isAuthenticated, user]);
 
   // Handle loading state
   if (false) {
@@ -1154,20 +1172,26 @@ function App() {
               </Box>
 
               {/* CSV Upload Button */}
-              <GlowTextButton
-                component="label"
-                variant="contained"
-                disabled={isProcessing || batchStatus === 'processing'}
-                sx={{ width: '140px' }}
-              >
-                UPLOAD CSV
-                <input
-                  type="file"
-                  hidden
-                  accept=".csv"
-                  onChange={handleCSVUpload}
-                />
-              </GlowTextButton>
+              <Tooltip title={!isSubscribed ? "Subscribe to unlock batch processing" : ""}>
+                <span>
+                  <GlowTextButton
+                    component="label"
+                    variant="contained"
+                    disabled={isProcessing || batchStatus === 'processing' || !isSubscribed}
+                    sx={{ width: '140px' }}
+                    onClick={!isSubscribed && isAuthenticated ? () => navigate('/subscription') : undefined}
+                  >
+                    UPLOAD CSV
+                    <input
+                      type="file"
+                      hidden
+                      accept=".csv"
+                      onChange={handleCSVUpload}
+                      disabled={!isSubscribed}
+                    />
+                  </GlowTextButton>
+                </span>
+              </Tooltip>
 
               {/* Progress Indicator */}
               {batchStatus === 'processing' && (

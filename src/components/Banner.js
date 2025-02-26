@@ -263,7 +263,7 @@ const Banner = ({
               }
             >
               <GlowIconButton
-                onClick={() => setShowSubscriptionTest(true)}
+                onClick={() => navigate('/subscription')}
                 sx={{ 
                   width: '32px',
                   height: '32px',
