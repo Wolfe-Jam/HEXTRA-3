@@ -18,7 +18,40 @@ import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CallbackPage from './CallbackPage';
+import SubscriptionPage from './SubscriptionPage';
 import App from '../App';
+import Banner from './Banner';
+import { VERSION } from '../version';
+import { Box } from '@mui/material';
+
+// Layout component for consistent UI across routes
+const Layout = ({ children }) => {
+  const [isDarkMode, setIsDarkMode] = React.useState(true);
+  const [isBatchMode, setIsBatchMode] = React.useState(false);
+  const [showSubscriptionTest, setShowSubscriptionTest] = React.useState(false);
+
+  return (
+    <Box sx={{ 
+      minHeight: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      bgcolor: isDarkMode ? '#1a1a1a' : '#ffffff',
+      color: isDarkMode ? '#ffffff' : '#000000'
+    }}>
+      <Banner 
+        version={VERSION}
+        isDarkMode={isDarkMode}
+        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
+        isBatchMode={isBatchMode}
+        setIsBatchMode={setIsBatchMode}
+        setShowSubscriptionTest={setShowSubscriptionTest}
+      />
+      <Box sx={{ flex: 1, mt: '62px' }}>
+        {children}
+      </Box>
+    </Box>
+  );
+};
 
 export default function KindeAuth({ children }) {
   const config = {
@@ -42,8 +75,17 @@ export default function KindeAuth({ children }) {
     <KindeProvider {...config}>
       <Router>
         <Routes>
+          {/* Make Subscription Page the home page */}
+          <Route path="/" element={<Layout><SubscriptionPage /></Layout>} />
+          
+          {/* App is now at /app path */}
+          <Route path="/app" element={<Layout><App /></Layout>} />
+          
+          {/* Auth callback route */}
           <Route path="/api/auth/kinde/callback" element={<CallbackPage />} />
-          <Route path="*" element={children} />
+          
+          {/* Keep subscription route for backward compatibility */}
+          <Route path="/subscription" element={<Layout><SubscriptionPage /></Layout>} />
         </Routes>
       </Router>
     </KindeProvider>
