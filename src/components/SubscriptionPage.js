@@ -1,10 +1,12 @@
 import React from 'react';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
+import { useNavigate } from 'react-router-dom';
 import GlowButton from './GlowButton';
 
 export default function SubscriptionPage() {
   const { isAuthenticated, user, login } = useKindeAuth();
+  const navigate = useNavigate();
 
   // Simple subscription plans data
   const plans = [
@@ -47,6 +49,11 @@ export default function SubscriptionPage() {
     alert(`This would redirect to Stripe checkout for ${planName}`);
   };
 
+  // Handle free preview button click
+  const handleFreePreview = () => {
+    navigate('/app');
+  };
+
   return (
     <Box sx={{ 
       padding: '40px 20px',
@@ -66,6 +73,24 @@ export default function SubscriptionPage() {
       >
         HEXTRA Subscription
       </Typography>
+      
+      {/* Free Preview Button - Always visible at the top */}
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <GlowButton 
+          onClick={handleFreePreview}
+          sx={{ 
+            fontSize: '1.2rem', 
+            py: 1.5, 
+            px: 4,
+            background: 'linear-gradient(45deg, #4CAF50 30%, #8BC34A 90%)',
+            '&:hover': {
+              background: 'linear-gradient(45deg, #43A047 30%, #7CB342 90%)',
+            }
+          }}
+        >
+          Try Free Preview
+        </GlowButton>
+      </Box>
       
       {!isAuthenticated ? (
         <Paper 
@@ -198,10 +223,10 @@ export default function SubscriptionPage() {
           Why Subscribe?
         </Typography>
         <Typography paragraph>
-          HEXTRA Premium unlocks powerful batch processing capabilities, allowing you to process multiple images at once with the same color settings.
+          HEXTRA subscription gives you access to premium features like batch processing, advanced color management, and priority support.
         </Typography>
         <Typography paragraph>
-          Perfect for e-commerce stores, design agencies, and anyone who needs to process multiple product images quickly and consistently.
+          Our subscription plans are designed to provide the best value for professionals who need reliable and powerful tools for their workflow.
         </Typography>
       </Paper>
     </Box>

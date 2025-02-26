@@ -8,17 +8,16 @@
  * 1. User clicks sign in
  * 2. Kinde handles authentication
  * 3. Redirects back to callback URL
- * 4. Processes tokens and redirects to /batch
+ * 4. Processes tokens and redirects to /app
  * 
  * @version 2.2.2
- * @lastUpdated 2025-02-10
+ * @lastUpdated 2025-02-26
  */
 
 import React from 'react';
 import { KindeProvider } from '@kinde-oss/kinde-auth-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CallbackPage from './CallbackPage';
-import SubscriptionPage from './SubscriptionPage';
 import App from '../App';
 
 export default function KindeAuth({ children }) {
@@ -35,7 +34,7 @@ export default function KindeAuth({ children }) {
 
     // Redirect handler - keeps it simple and reliable
     onRedirectCallback: () => {
-      window.location.href = '/batch';
+      window.location.href = '/app';
     }
   };
 
@@ -44,7 +43,6 @@ export default function KindeAuth({ children }) {
       <Router>
         <Routes>
           <Route path="/api/auth/kinde/callback" element={<CallbackPage />} />
-          <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="*" element={children} />
         </Routes>
       </Router>

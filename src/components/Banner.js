@@ -213,7 +213,7 @@ const Banner = ({
           {/* T-shirt Status Badge / Sign Up CTA */}
           <Tooltip title={!isAuthenticated ? "View Subscription Options" : "Manage Subscription"}>
             <GlowIconButton
-              onClick={() => navigate('/subscription')}
+              onClick={() => navigate('/')}
               sx={{ 
                 width: '32px',
                 height: '32px',
