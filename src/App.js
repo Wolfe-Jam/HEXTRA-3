@@ -31,6 +31,39 @@ function App() {
   // eslint-disable-next-line no-unused-vars
   const { isAuthenticated, user } = useKindeAuth();
 
+  // Add a state to control whether to show the main app or subscription page
+  const [showSubscription, setShowSubscription] = useState(false);
+  
+  // If URL has ?subscription=true, show the subscription page
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'true') {
+      setShowSubscription(true);
+    }
+  }, []);
+
+  // Add a button to toggle subscription view for testing
+  const toggleSubscriptionView = () => {
+    setShowSubscription(!showSubscription);
+  };
+
+  // Import the subscription page component lazily
+  const SubscriptionPage = React.lazy(() => import('./components/SubscriptionPage'));
+
+  // If showing subscription, render that instead of the main app
+  if (showSubscription) {
+    return (
+      <React.Suspense fallback={<div>Loading subscription page...</div>}>
+        <Box sx={{ position: 'fixed', top: 10, right: 10, zIndex: 1000 }}>
+          <GlowButton onClick={toggleSubscriptionView}>
+            Back to App
+          </GlowButton>
+        </Box>
+        <SubscriptionPage />
+      </React.Suspense>
+    );
+  }
+
   // 2. Refs
   const wheelRef = useRef(null);
   const hexInputRef = useRef(null);

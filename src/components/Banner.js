@@ -11,6 +11,7 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { VERSION } from '../version';
 import GlowIconButton from './GlowIconButton';
 import { useNavigate } from 'react-router-dom';
+import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 
 const BRAND_COLORS = ['#D50032', '#00805E', '#224D8F'];  // Red, Green, Blue
 
@@ -245,6 +246,24 @@ const Banner = ({
                   height: '20px'
                 }}
               />
+            </GlowIconButton>
+          </Tooltip>
+
+          {/* Subscription Button - Always visible */}
+          <Tooltip title="View Subscription Plans">
+            <GlowIconButton
+              onClick={() => navigate('/subscription')}
+              sx={{ 
+                width: '32px',
+                height: '32px',
+                color: isDarkMode ? '#1a1a1a' : '#FFFFFF',
+                backgroundColor: isDarkMode ? 'rgba(213, 0, 50, 0.1)' : 'rgba(213, 0, 50, 0.3)',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(213, 0, 50, 0.2)' : 'rgba(213, 0, 50, 0.4)',
+                }
+              }}
+            >
+              <SubscriptionsIcon fontSize="small" />
             </GlowIconButton>
           </Tooltip>
 
