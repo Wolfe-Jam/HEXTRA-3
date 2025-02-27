@@ -72,6 +72,17 @@ function App() {
   const [selectedColors, setSelectedColors] = useState([]);
   const [showSubscription, setShowSubscription] = useState(false);
 
+  // Check subscription status when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      // For now, we'll just mock the subscription check
+      // In production, this would call your API
+      console.log("Checking subscription status for user:", user.id);
+      // Mock response - set to true to test subscription features
+      setIsSubscribed(false);
+    }
+  }, [isAuthenticated, user]);
+
   // 4. Memo hooks
   const debouncedProcessImage = useMemo(
     () => debounce(async (url, color) => {
@@ -400,29 +411,25 @@ function App() {
       <Banner 
         version={VERSION}
         isDarkMode={theme === 'dark'}
-        onThemeToggle={() => {
-          const newTheme = theme === 'dark' ? 'light' : 'dark';
-          localStorage.setItem('hextraTheme', newTheme);
-          setTheme(newTheme);
-          themeManager.applyTheme(newTheme);
-        }}
+        onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         isBatchMode={isBatchMode}
         setIsBatchMode={setIsBatchMode}
         setShowSubscriptionTest={setShowSubscriptionTest}
       >
-        <Box sx={{ display: 'flex', alignItems: "center", justifyContent: "flex-start", gap: 2 }}>
-          <GlowTextButton 
-            disabled={true} 
-            sx={{ 
-              opacity: 0.5,
-              cursor: 'not-allowed',
-              '&:hover': {
-                opacity: 0.5
-              }
-            }}
-          >
-            Login (Coming in v2.2.0)
-          </GlowTextButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {isAuthenticated && (
+            <GlowButton
+              variant="contained"
+              onClick={() => navigate('/subscription')}
+              sx={{
+                minWidth: '200px',
+                backgroundColor: isSubscribed ? 'rgba(0, 128, 94, 0.1)' : 'rgba(254, 209, 65, 0.1)',
+                color: isSubscribed ? '#00805E' : '#FED141'
+              }}
+            >
+              {isSubscribed ? '✓ Active Subscription' : 'Upgrade to Premium'}
+            </GlowButton>
+          )}
         </Box>
       </Banner>
       
@@ -476,6 +483,21 @@ function App() {
             paddingLeft: 'calc(2 * 8px + 15px)' // 2 for p:2 + 15px offset
           }
         }}>
+          {/* Subscription Button */}
+          {isAuthenticated && (
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 3 }}>
+              <GlowButton
+                onClick={() => navigate('/subscription')}
+                sx={{ 
+                  minWidth: '200px',
+                  backgroundColor: isSubscribed ? 'rgba(0, 128, 94, 0.1)' : 'rgba(254, 209, 65, 0.1)',
+                  color: isSubscribed ? '#00805E' : '#FED141'
+                }}
+              >
+                {isSubscribed ? '✓ Active Subscription' : 'Upgrade to Premium'}
+              </GlowButton>
+            </Box>
+          )}
           {/* Color Section */}
           <Box sx={{ mb: 1 }}>
             {/* Section B: Title and RGB Color Disc */}

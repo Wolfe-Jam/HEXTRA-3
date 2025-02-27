@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Paper, Button } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
-import { loadStripe } from '@stripe/stripe-js';
-import GlowButton from './GlowButton';
-import GlowTextButton from './GlowTextButton'; // Import GlowTextButton
 import { useNavigate } from 'react-router-dom';
-import Banner from './Banner';
-import { VERSION } from '../version';
+import GlowButton from './GlowButton';
+import GlowTextButton from './GlowTextButton';
 import themeManager from '../theme';
-import { Box } from '@mui/material';
-
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+import { VERSION } from '../version';
+import Banner from './Banner';
 
 export default function SubscriptionPage() {
   const { isAuthenticated: kindeAuthenticated, user, login } = useKindeAuth();
@@ -23,13 +20,28 @@ export default function SubscriptionPage() {
     return savedTheme || 'dark';
   });
 
-  React.useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      checkSubscription();
-    } else {
-      setLoading(false);
+  // Simple subscription plans data
+  const plans = [
+    {
+      name: 'Early-Bird Plan',
+      price: '$5/month',
+      features: [
+        'Unlimited batch processing',
+        'Priority support',
+        'Early access to new features'
+      ]
+    },
+    {
+      name: 'Pro Plan',
+      price: '$10/month',
+      features: [
+        'Everything in Early-Bird',
+        'Advanced color management',
+        'Custom export options',
+        'Dedicated support'
+      ]
     }
-  }, [isAuthenticated, user]);
+  ];
 
   // Apply theme when it changes
   React.useEffect(() => {
@@ -69,43 +81,21 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handleSubscribe = async () => {
+  // Handle subscription button click
+  const handleSubscribe = (planName) => {
     if (!isAuthenticated) {
       login();
       return;
     }
-
-    try {
-      setLoading(true);
-      const stripe = await stripePromise;
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-kinde-user-id': user.id
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create checkout session');
-      }
-      
-      const { sessionId } = await response.json();
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error('Subscription error:', error);
-      setError('Failed to start subscription process. Please try again later.');
-      setLoading(false);
-    }
+    
+    console.log(`Subscribing to ${planName}`);
+    // In production, this would redirect to Stripe checkout
+    alert(`This would redirect to Stripe checkout for ${planName}`);
   };
 
   // Handle free preview button click
   const handleFreePreview = () => {
-    navigate('/');
+    navigate('/app');
   };
 
   return (
@@ -193,170 +183,146 @@ export default function SubscriptionPage() {
         </p>
       </div>
       
-      {!isAuthenticated ? (
-        <div style={{ textAlign: 'center', marginTop: '40px' }}>
-          <p style={{ marginBottom: '20px' }}>
-            Sign in to manage your subscription and access premium features.
-          </p>
-          <GlowButton onClick={login}>
-            Sign In
-          </GlowButton>
-        </div>
-      ) : loading ? (
-        <div style={{ textAlign: 'center', marginTop: '40px' }}>
-          <p>Loading subscription status...</p>
-        </div>
-      ) : error ? (
-        <div style={{ textAlign: 'center', marginTop: '40px' }}>
-          <p style={{ color: 'red', marginBottom: '20px' }}>{error}</p>
-          <GlowButton onClick={checkSubscription}>
-            Try Again
-          </GlowButton>
-        </div>
-      ) : (
-        <>
-          <div style={{ marginBottom: '30px' }}>
-            <h2 style={{ 
-              textAlign: 'center',
-              fontFamily: "'League Spartan', sans-serif"
-            }}>Subscription Status</h2>
-            <div style={{ 
-              background: theme === 'dark' ? '#333333' : '#f5f5f5', 
-              padding: '25px',
-              borderRadius: '8px',
-              marginTop: '15px',
-              color: theme === 'dark' ? '#ffffff' : '#333333',
-              textAlign: 'center'
+      <div style={{ marginBottom: '30px' }}>
+        <h2 style={{ 
+          textAlign: 'center',
+          fontFamily: "'League Spartan', sans-serif"
+        }}>Subscription Status</h2>
+        <div style={{ 
+          background: theme === 'dark' ? '#333333' : '#f5f5f5', 
+          padding: '25px',
+          borderRadius: '8px',
+          marginTop: '15px',
+          color: theme === 'dark' ? '#ffffff' : '#333333',
+          textAlign: 'center'
+        }}>
+          {subscriptionStatus?.isSubscribed ? (
+            <div>
+              <p style={{ 
+                fontSize: '20px', 
+                fontWeight: 'bold', 
+                color: '#00805E',
+                fontFamily: "'League Spartan', sans-serif",
+                marginBottom: '10px'
+              }}>
+                Your Premium Access is Active!
+              </p>
+              <p style={{ fontSize: '16px', marginBottom: '10px' }}>
+                Plan: {subscriptionStatus.tier === 'early-bird' ? 'Early-Bird' : 'Pro'} Plan
+              </p>
+              <p style={{ fontSize: '14px', color: theme === 'dark' ? '#cccccc' : '#666666' }}>
+                Subscription ID: {subscriptionStatus.subscriptionId}
+              </p>
+            </div>
+          ) : (
+            <p style={{ 
+              fontSize: '18px',
+              marginBottom: '15px',
+              lineHeight: '1.5'
             }}>
-              {subscriptionStatus?.isSubscribed ? (
-                <div>
-                  <p style={{ 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    color: '#00805E',
-                    fontFamily: "'League Spartan', sans-serif",
-                    marginBottom: '10px'
-                  }}>
-                    Your Premium Access is Active!
-                  </p>
-                  <p style={{ fontSize: '16px', marginBottom: '10px' }}>
-                    Plan: {subscriptionStatus.tier === 'early-bird' ? 'Early-Bird' : 'Pro'} Plan
-                  </p>
-                  <p style={{ fontSize: '14px', color: theme === 'dark' ? '#cccccc' : '#666666' }}>
-                    Subscription ID: {subscriptionStatus.subscriptionId}
-                  </p>
-                </div>
-              ) : (
-                <p style={{ 
-                  fontSize: '18px',
-                  marginBottom: '15px',
-                  lineHeight: '1.5'
-                }}>
-                  Upgrade now to unlock all premium features and supercharge your color workflow!
-                </p>
-              )}
+              Upgrade now to unlock all premium features and supercharge your color workflow!
+            </p>
+          )}
+        </div>
+      </div>
+
+      {!subscriptionStatus?.isSubscribed && (
+        <div style={{ textAlign: 'center', marginTop: '30px' }}>
+          <h3 style={{ marginBottom: '20px' }}>Available Plans</h3>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '20px',
+            flexWrap: 'wrap'
+          }}>
+            {/* Early Bird Plan */}
+            <div style={{
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              padding: '20px',
+              width: '300px',
+              textAlign: 'left',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '12px',
+                right: '-30px',
+                transform: 'rotate(45deg)',
+                backgroundColor: '#224D8F',
+                color: 'white',
+                padding: '5px 40px',
+                fontSize: '0.75rem',
+                fontWeight: 'bold'
+              }}>
+                POPULAR
+              </div>
+              <h4 style={{ color: '#224D8F' }}>Early-Bird Plan</h4>
+              <p style={{ fontSize: '24px', fontWeight: 'bold', margin: '15px 0' }}>$5/month</p>
+              <ul style={{ marginBottom: '20px', paddingLeft: '20px' }}>
+                <li>Unlimited batch processing</li>
+                <li>Priority support</li>
+                <li>Early access to new features</li>
+                <li>Basic color management</li>
+              </ul>
+              <GlowButton 
+                onClick={() => handleSubscribe('Early-Bird Plan')}
+                style={{ 
+                  width: '100%',
+                  background: 'linear-gradient(45deg, #1565C0 30%, #42A5F5 90%)'
+                }}
+              >
+                Subscribe Now
+              </GlowButton>
+            </div>
+            
+            {/* Pro Plan */}
+            <div style={{
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              padding: '20px',
+              width: '300px',
+              textAlign: 'left',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '12px',
+                right: '-30px',
+                transform: 'rotate(45deg)',
+                backgroundColor: '#D50032',
+                color: 'white',
+                padding: '5px 40px',
+                fontSize: '0.75rem',
+                fontWeight: 'bold'
+              }}>
+                PREMIUM
+              </div>
+              <h4 style={{ color: '#D50032' }}>Pro Plan</h4>
+              <p style={{ fontSize: '24px', fontWeight: 'bold', margin: '15px 0' }}>$10/month</p>
+              <ul style={{ marginBottom: '20px', paddingLeft: '20px' }}>
+                <li>Everything in Early-Bird</li>
+                <li>Advanced color management</li>
+                <li>Custom export options</li>
+                <li>Dedicated support</li>
+                <li>Unlimited color catalogs</li>
+              </ul>
+              <GlowButton 
+                onClick={() => handleSubscribe('Pro Plan')}
+                style={{ 
+                  width: '100%',
+                  background: 'linear-gradient(45deg, #C62828 30%, #EF5350 90%)'
+                }}
+              >
+                Subscribe Now
+              </GlowButton>
             </div>
           </div>
-
-          {!subscriptionStatus?.isSubscribed && (
-            <div style={{ textAlign: 'center', marginTop: '30px' }}>
-              <h3 style={{ marginBottom: '20px' }}>Available Plans</h3>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '20px',
-                flexWrap: 'wrap'
-              }}>
-                {/* Early Bird Plan */}
-                <div style={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  width: '300px',
-                  textAlign: 'left',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '-30px',
-                    transform: 'rotate(45deg)',
-                    backgroundColor: '#224D8F',
-                    color: 'white',
-                    padding: '5px 40px',
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold'
-                  }}>
-                    POPULAR
-                  </div>
-                  <h4 style={{ color: '#224D8F' }}>Early-Bird Plan</h4>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', margin: '15px 0' }}>$5/month</p>
-                  <ul style={{ marginBottom: '20px', paddingLeft: '20px' }}>
-                    <li>Unlimited batch processing</li>
-                    <li>Priority support</li>
-                    <li>Early access to new features</li>
-                    <li>Basic color management</li>
-                  </ul>
-                  <GlowButton 
-                    onClick={handleSubscribe}
-                    style={{ 
-                      width: '100%',
-                      background: 'linear-gradient(45deg, #1565C0 30%, #42A5F5 90%)'
-                    }}
-                  >
-                    Subscribe Now
-                  </GlowButton>
-                </div>
-                
-                {/* Pro Plan */}
-                <div style={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  width: '300px',
-                  textAlign: 'left',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '-30px',
-                    transform: 'rotate(45deg)',
-                    backgroundColor: '#D50032',
-                    color: 'white',
-                    padding: '5px 40px',
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold'
-                  }}>
-                    PREMIUM
-                  </div>
-                  <h4 style={{ color: '#D50032' }}>Pro Plan</h4>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', margin: '15px 0' }}>$10/month</p>
-                  <ul style={{ marginBottom: '20px', paddingLeft: '20px' }}>
-                    <li>Everything in Early-Bird</li>
-                    <li>Advanced color management</li>
-                    <li>Custom export options</li>
-                    <li>Dedicated support</li>
-                    <li>Unlimited color catalogs</li>
-                  </ul>
-                  <GlowButton 
-                    onClick={handleSubscribe}
-                    style={{ 
-                      width: '100%',
-                      background: 'linear-gradient(45deg, #C62828 30%, #EF5350 90%)'
-                    }}
-                  >
-                    Subscribe Now
-                  </GlowButton>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
+        </div>
       )}
       
       {/* FAQ Section */}

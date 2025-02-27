@@ -1,8 +1,14 @@
 /**
- * KindeAuth Component (v2.2.4)
+ * KindeAuth Component (v2.2.1)
  * 
  * Provides authentication wrapper for the application using Kinde Auth.
  * Handles the OAuth2 PKCE flow and redirects.
+ * 
+ * Flow:
+ * 1. User clicks sign in
+ * 2. Kinde handles authentication
+ * 3. Redirects back to callback URL
+ * 4. Processes tokens and redirects to /app
  * 
  * This version includes support for both:
  * - KINDE_* variables (standard pattern)
@@ -13,6 +19,9 @@
  * KINDE_ISSUER_URL or REACT_APP_KINDE_DOMAIN
  * KINDE_POST_LOGIN_REDIRECT_URL or REACT_APP_KINDE_REDIRECT_URI
  * KINDE_POST_LOGOUT_REDIRECT_URL or REACT_APP_KINDE_LOGOUT_URI
+ * 
+ * @version 2.2.1
+ * @lastUpdated 2025-02-27
  */
 
 import React from 'react';
@@ -24,6 +33,9 @@ import App from '../App';
 
 // Auth-related Components
 import CallbackPage from './CallbackPage';
+import Banner from './Banner';
+import { VERSION } from '../version';
+import { Box } from '@mui/material';
 
 // Lazy load the SubscriptionPage to improve performance
 const SubscriptionPage = React.lazy(() => import('./SubscriptionPage'));
@@ -33,6 +45,35 @@ const TestSubscription = React.lazy(() => import('../testSubscription'));
 const ProfilePage = React.lazy(() => import('./ProfilePage'));
 // Import TestLoginPage component
 const TestLoginPage = React.lazy(() => import('./TestLoginPage'));
+
+// Layout component for consistent UI across routes
+const Layout = ({ children }) => {
+  const [isDarkMode, setIsDarkMode] = React.useState(true);
+  const [isBatchMode, setIsBatchMode] = React.useState(false);
+  const [showSubscriptionTest, setShowSubscriptionTest] = React.useState(false);
+
+  return (
+    <Box sx={{ 
+      minHeight: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      bgcolor: isDarkMode ? '#1a1a1a' : '#ffffff',
+      color: isDarkMode ? '#ffffff' : '#000000'
+    }}>
+      <Banner 
+        version={VERSION}
+        isDarkMode={isDarkMode}
+        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
+        isBatchMode={isBatchMode}
+        setIsBatchMode={setIsBatchMode}
+        setShowSubscriptionTest={setShowSubscriptionTest}
+      />
+      <Box sx={{ flex: 1, mt: '62px' }}>
+        {children}
+      </Box>
+    </Box>
+  );
+};
 
 export default function KindeAuth({ children }) {
   // Get the environment variables with fallbacks
@@ -68,8 +109,8 @@ export default function KindeAuth({ children }) {
     // Redirect handler - keeps it simple and reliable
     onRedirectCallback: (appState) => {
       console.log("onRedirectCallback called with:", appState);
-      // Default redirect to batch page
-      window.location.href = '/batch';
+      // Redirect to app path in new routing structure
+      window.location.href = '/app';
     }
   };
 
@@ -92,31 +133,28 @@ export default function KindeAuth({ children }) {
       )}
       <Router>
         <Routes>
-          {/* Main App */}
-          <Route path="/" element={<App />} />
-          <Route path="/batch" element={<App />} />
+          {/* Make Subscription Page the home page */}
+          <Route path="/" element={<Layout><SubscriptionPage /></Layout>} />
           
-          {/* Auth Routes */}
-          <Route path="/callback" element={<CallbackPage />} />
+          {/* App is now at /app path */}
+          <Route path="/app" element={<Layout><App /></Layout>} />
+          
+          {/* Auth callback route */}
           <Route path="/api/auth/kinde/callback" element={<CallbackPage />} />
+          <Route path="/callback" element={<CallbackPage />} />
+          
+          {/* Keep subscription route for backward compatibility */}
+          <Route path="/subscription" element={<Layout><SubscriptionPage /></Layout>} />
           
           {/* Profile Pages */}
           <Route 
             path="/profile" 
             element={
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <ProfilePage />
-              </React.Suspense>
-            } 
-          />
-          
-          {/* Subscription Pages */}
-          <Route 
-            path="/subscription" 
-            element={
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <SubscriptionPage />
-              </React.Suspense>
+              <Layout>
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <ProfilePage />
+                </React.Suspense>
+              </Layout>
             } 
           />
           
@@ -124,17 +162,21 @@ export default function KindeAuth({ children }) {
           <Route 
             path="/test-subscription" 
             element={
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <TestSubscription />
-              </React.Suspense>
+              <Layout>
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <TestSubscription />
+                </React.Suspense>
+              </Layout>
             } 
           />
           <Route 
             path="/test-login" 
             element={
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <TestLoginPage />
-              </React.Suspense>
+              <Layout>
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <TestLoginPage />
+                </React.Suspense>
+              </Layout>
             } 
           />
         </Routes>
