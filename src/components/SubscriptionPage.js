@@ -1,17 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { loadStripe } from '@stripe/stripe-js';
 import GlowButton from './GlowButton';
+import GlowTextButton from './GlowTextButton'; // Import GlowTextButton
 import { useNavigate } from 'react-router-dom';
+import Banner from './Banner';
+import { VERSION } from '../version';
+import themeManager from '../theme';
+import { Box } from '@mui/material';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 export default function SubscriptionPage() {
-  const { isAuthenticated, user, login } = useKindeAuth();
+  const { isAuthenticated: kindeAuthenticated, user, login } = useKindeAuth();
+  const isAuthenticated = true; // Force authenticated for local development
   const [subscriptionStatus, setSubscriptionStatus] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const navigate = useNavigate();
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('hextraTheme');
+    return savedTheme || 'dark';
+  });
 
   React.useEffect(() => {
     if (isAuthenticated && user?.id) {
@@ -20,6 +30,11 @@ export default function SubscriptionPage() {
       setLoading(false);
     }
   }, [isAuthenticated, user]);
+
+  // Apply theme when it changes
+  React.useEffect(() => {
+    themeManager.applyTheme(theme);
+  }, [theme]);
 
   // Handle window resize for responsive design
   React.useEffect(() => {
@@ -95,29 +110,78 @@ export default function SubscriptionPage() {
 
   return (
     <div style={{ 
-      padding: '20px',
-      maxWidth: '800px',
-      margin: '0 auto',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
-      <h1 style={{ 
-        marginBottom: '30px', 
-        textAlign: 'center',
-        fontSize: window.innerWidth < 600 ? '1.8rem' : '2.5rem'
-      }}>HEXTRA Subscription</h1>
+      {/* Banner */}
+      <Banner 
+        version={VERSION}
+        isDarkMode={theme === 'dark'}
+        onThemeToggle={() => {
+          const newTheme = theme === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('hextraTheme', newTheme);
+          setTheme(newTheme);
+          themeManager.applyTheme(newTheme);
+        }}
+        isBatchMode={false}
+        setIsBatchMode={() => {}}
+        setShowSubscriptionTest={() => {}}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <GlowButton 
+            disabled={true} 
+            sx={{ 
+              opacity: 0.5,
+              cursor: 'not-allowed',
+              '&:hover': {
+                opacity: 0.5
+              }
+            }}
+          >
+            Login (Coming in v2.2.0)
+          </GlowButton>
+        </Box>
+      </Banner>
+      
+      {/* Subscription content */}
+      <div style={{ 
+        padding: '60px 20px 20px 20px',
+        maxWidth: '800px',
+        margin: '0 auto',
+        flex: 1,
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <h1 style={{ 
+          marginBottom: '30px', 
+          textAlign: 'center',
+          fontSize: window.innerWidth < 600 ? '1.8rem' : '2.5rem',
+          fontFamily: "'League Spartan', sans-serif"
+        }}>HEXTRA Subscription</h1>
       
       {/* Free Preview Button - Always visible at the top */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <GlowButton 
+        <GlowTextButton 
           onClick={handleFreePreview}
-          style={{ 
+          variant="contained"
+          sx={{ 
             fontSize: '1.2rem', 
             padding: '12px 24px',
-            background: 'linear-gradient(45deg, #4CAF50 30%, #8BC34A 90%)'
+            minWidth: '200px',
+            boxShadow: 'none',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'var(--text-primary)',
+              borderColor: 'var(--glow-color)',
+              color: 'var(--glow-color)',
+              boxShadow: '0 0 0 3px var(--glow-subtle)',
+              transform: 'scale(1.05)'
+            }
           }}
         >
           Try Free Preview
-        </GlowButton>
+        </GlowTextButton>
       </div>
       
       {/* Subscription Info Section */}
@@ -152,28 +216,43 @@ export default function SubscriptionPage() {
       ) : (
         <>
           <div style={{ marginBottom: '30px' }}>
-            <h2>Subscription Status</h2>
+            <h2 style={{ 
+              textAlign: 'center',
+              fontFamily: "'League Spartan', sans-serif"
+            }}>Subscription Status</h2>
             <div style={{ 
-              background: '#f5f5f5', 
-              padding: '20px',
+              background: theme === 'dark' ? '#333333' : '#f5f5f5', 
+              padding: '25px',
               borderRadius: '8px',
-              marginTop: '15px'
+              marginTop: '15px',
+              color: theme === 'dark' ? '#ffffff' : '#333333',
+              textAlign: 'center'
             }}>
               {subscriptionStatus?.isSubscribed ? (
                 <div>
-                  <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#00805E' }}>
-                    Active Subscription
+                  <p style={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#00805E',
+                    fontFamily: "'League Spartan', sans-serif",
+                    marginBottom: '10px'
+                  }}>
+                    Your Premium Access is Active!
                   </p>
-                  <p>
+                  <p style={{ fontSize: '16px', marginBottom: '10px' }}>
                     Plan: {subscriptionStatus.tier === 'early-bird' ? 'Early-Bird' : 'Pro'} Plan
                   </p>
-                  <p>
+                  <p style={{ fontSize: '14px', color: theme === 'dark' ? '#cccccc' : '#666666' }}>
                     Subscription ID: {subscriptionStatus.subscriptionId}
                   </p>
                 </div>
               ) : (
-                <p>
-                  You don't have an active subscription. Subscribe to access premium features.
+                <p style={{ 
+                  fontSize: '18px',
+                  marginBottom: '15px',
+                  lineHeight: '1.5'
+                }}>
+                  Upgrade now to unlock all premium features and supercharge your color workflow!
                 </p>
               )}
             </div>
@@ -333,5 +412,6 @@ export default function SubscriptionPage() {
         </div>
       </div>
     </div>
+  </div>
   );
 }

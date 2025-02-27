@@ -10,8 +10,9 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 // eslint-disable-next-line no-unused-vars
 import { VERSION } from '../version';
 import GlowIconButton from './GlowIconButton';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
+import HomeIcon from '@mui/icons-material/Home';
 
 const BRAND_COLORS = ['#D50032', '#00805E', '#224D8F'];  // Red, Green, Blue
 
@@ -28,6 +29,8 @@ const Banner = ({
   const { isAuthenticated, user, login, logout } = useKindeAuth();
   // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
+  const location = useLocation();
+  const isSubscriptionPage = location.pathname === '/subscription';
 
   // Calculate user initials and color once
   const userInitial = useMemo(() => {
@@ -161,10 +164,14 @@ const Banner = ({
         <Box
           sx={{
             position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
+            top: 0,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
             zIndex: 1100,
-            marginTop: '-5px'
+            marginTop: '-5px',
+            pointerEvents: 'none'
           }}
         >
           <Box
@@ -175,7 +182,9 @@ const Banner = ({
               height: '90px',
               width: 'auto',
               objectFit: 'contain',
-              display: 'block'
+              display: 'block',
+              position: 'relative',
+              pointerEvents: 'none'
             }}
           />
         </Box>
@@ -250,9 +259,9 @@ const Banner = ({
           </Tooltip>
 
           {/* Subscription Button - Always visible */}
-          <Tooltip title="View Subscription Plans">
+          <Tooltip title={isSubscriptionPage ? "Return to App" : "View Subscription Plans"}>
             <GlowIconButton
-              onClick={() => navigate('/subscription')}
+              onClick={() => isSubscriptionPage ? navigate('/') : navigate('/subscription')}
               sx={{ 
                 width: '32px',
                 height: '32px',
@@ -263,7 +272,7 @@ const Banner = ({
                 }
               }}
             >
-              <SubscriptionsIcon fontSize="small" />
+              {isSubscriptionPage ? <HomeIcon fontSize="small" /> : <SubscriptionsIcon fontSize="small" />}
             </GlowIconButton>
           </Tooltip>
 
@@ -308,7 +317,7 @@ const Banner = ({
       <AboutDialog
         open={aboutOpen}
         onClose={() => setAboutOpen(false)}
-        version={`v${version}`}
+        version={version}
         PaperProps={{
           sx: {
             bgcolor: isDarkMode ? '#1a1a1a' : '#FFFFFF',

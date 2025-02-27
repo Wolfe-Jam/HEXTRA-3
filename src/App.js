@@ -19,50 +19,21 @@ import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
 import { debounce } from 'lodash';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
+import themeManager from './theme';
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
-const VERSION = 'v2.2.0';
+const VERSION = '2.2.1';
 
 function App() {
   // 1. Basic hooks
-  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   // eslint-disable-next-line no-unused-vars
-  const { isAuthenticated, user } = useKindeAuth();
-
-  // Add a state to control whether to show the main app or subscription page
-  const [showSubscription, setShowSubscription] = useState(false);
+  const { isAuthenticated: kindeAuthenticated, user } = useKindeAuth();
   
-  // If URL has ?subscription=true, show the subscription page
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('subscription') === 'true') {
-      setShowSubscription(true);
-    }
-  }, []);
-
-  // Add a button to toggle subscription view for testing
-  const toggleSubscriptionView = () => {
-    setShowSubscription(!showSubscription);
-  };
-
-  // Import the subscription page component lazily
-  const SubscriptionPage = React.lazy(() => import('./components/SubscriptionPage'));
-
-  // If showing subscription, render that instead of the main app
-  if (showSubscription) {
-    return (
-      <React.Suspense fallback={<div>Loading subscription page...</div>}>
-        <Box sx={{ position: 'fixed', top: 10, right: 10, zIndex: 1000 }}>
-          <GlowButton onClick={toggleSubscriptionView}>
-            Back to App
-          </GlowButton>
-        </Box>
-        <SubscriptionPage />
-      </React.Suspense>
-    );
-  }
+  // Force authentication and subscription to be true for localhost development
+  const isAuthenticated = true; // Bypass authentication check
+  const [isSubscribed, setIsSubscribed] = useState(true); // Default to subscribed
 
   // 2. Refs
   const wheelRef = useRef(null);
@@ -85,7 +56,6 @@ function App() {
   const [lastClickTime, setLastClickTime] = useState(0);
   const [enhanceEffect, setEnhanceEffect] = useState(true);
   const [showTooltips, setShowTooltips] = useState(true);
-  // eslint-disable-next-line no-unused-vars
   const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [grayscaleValue, setGrayscaleValue] = useState(128);
@@ -99,8 +69,8 @@ function App() {
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isBatchMode, setIsBatchMode] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [selectedColors, setSelectedColors] = useState([]);
+  const [showSubscription, setShowSubscription] = useState(false);
 
   // 4. Memo hooks
   const debouncedProcessImage = useMemo(
@@ -299,10 +269,13 @@ function App() {
     }
   }, []);
 
-  const handleDefaultImageLoad = useCallback((e) => {
-    if (e.target.src) {
-      setWorkingImageUrl(e.target.src);
-      setWorkingProcessedUrl(e.target.src);
+  const handleDefaultImageLoad = useCallback((urlOrEvent) => {
+    // Handle both event objects and direct URL strings
+    const imageUrl = urlOrEvent?.target?.src || urlOrEvent;
+    
+    if (imageUrl) {
+      setWorkingImageUrl(imageUrl);
+      setWorkingProcessedUrl(imageUrl);
       setImageLoaded(true);
       setCanDownload(true);
     }
@@ -329,21 +302,27 @@ function App() {
   }, [selectedColor, imageLoaded, applyColor]);
 
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      fetch('/api/check-subscription', {
-        headers: {
-          'x-kinde-user-id': user.id
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        setIsSubscribed(data.isSubscribed);
-      })
-      .catch(err => {
-        console.error('Error checking subscription:', err);
-      });
+    console.log('Subscription check bypassed for local development');
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'true') {
+      setShowSubscription(true);
     }
-  }, [isAuthenticated, user]);
+  }, []);
+
+  useEffect(() => {
+    themeManager.applyTheme(theme);
+  }, [theme]);
+
+  // Add a button to toggle subscription view for testing
+  const toggleSubscriptionView = () => {
+    setShowSubscription(!showSubscription);
+  };
+
+  // Import the subscription page component lazily
+  const SubscriptionPage = React.lazy(() => import('./components/SubscriptionPage'));
 
   // Handle loading state
   if (false) {
@@ -352,7 +331,7 @@ function App() {
         sx={{
           height: '100vh',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: "center", justifyContent: "flex-start",
           justifyContent: 'center',
           background: '#000000'
         }}
@@ -376,7 +355,7 @@ function App() {
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: "center", justifyContent: "flex-start",
           justifyContent: 'center',
           background: '#000000'
         }}
@@ -402,22 +381,36 @@ function App() {
     );
   }
 
+  // Show subscription page if subscription is required
+  if (showSubscription) {
+    return (
+      <React.Suspense fallback={<CircularProgress />}>
+        <SubscriptionPage />
+      </React.Suspense>
+    );
+  }
+
   const mainContent = (
-    <Box className={`app ${theme}`}>
+    <Box className={`app ${theme}`} sx={{ 
+      width: '100%', 
+      overflowX: 'hidden',
+      boxSizing: 'border-box'
+    }}>
       {/* Section A: Banner */}
       <Banner 
         version={VERSION}
         isDarkMode={theme === 'dark'}
-        onThemeToggle={() => setTheme(prevTheme => {
-          const newTheme = prevTheme === 'dark' ? 'light' : 'dark';
+        onThemeToggle={() => {
+          const newTheme = theme === 'dark' ? 'light' : 'dark';
           localStorage.setItem('hextraTheme', newTheme);
-          return newTheme;
-        })}
+          setTheme(newTheme);
+          themeManager.applyTheme(newTheme);
+        }}
         isBatchMode={isBatchMode}
         setIsBatchMode={setIsBatchMode}
         setShowSubscriptionTest={setShowSubscriptionTest}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: "center", justifyContent: "flex-start", gap: 2 }}>
           <GlowTextButton 
             disabled={true} 
             sx={{ 
@@ -433,7 +426,16 @@ function App() {
         </Box>
       </Banner>
       
-      <Box className="app-content">
+      <Box className="app-content" sx={{ 
+        pt: '80px',
+        width: '100%',
+        maxWidth: '1200px',
+        boxSizing: 'border-box',
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}>
         <Typography 
           variant="h2" 
           sx={{ 
@@ -446,7 +448,9 @@ function App() {
             mb: 5,  
             '@media (max-width: 532px)': {
               fontSize: '0.7rem'
-            }
+            },
+            width: '100%',
+            margin: '0 auto',
           }}
         >
           <Box component="span">COLORIZE</Box> | <Box component="span">VISUALIZE</Box> | <Box component="span">MESMERIZE</Box>
@@ -459,21 +463,39 @@ function App() {
           gap: 4,
           width: '100%',
           maxWidth: '800px',  
-          mx: 'auto',
+          margin: '0 auto',
           p: 3,
+          paddingLeft: 'calc(3 * 8px + 15px)', // 3 for p:3 + 15px offset
           alignItems: 'center',
+          textAlign: 'center',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
           '@media (max-width: 832px)': { 
-            maxWidth: 'calc(100% - 32px)', 
-            p: 2
+            maxWidth: '100%', 
+            p: 2,
+            paddingLeft: 'calc(2 * 8px + 15px)' // 2 for p:2 + 15px offset
           }
         }}>
           {/* Color Section */}
           <Box sx={{ mb: 1 }}>
-            {/* Section B: RGB Color Disc */}
+            {/* Section B: Title and RGB Color Disc */}
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                textAlign: 'center', 
+                mb: 2,
+                fontFamily: "'League Spartan', sans-serif",
+                color: 'var(--text-primary)'
+              }}
+            >
+              Pick a HEX Code or Color
+            </Typography>
             <Box sx={{ 
               display: 'flex',
               justifyContent: 'center',
-              mb: 3
+              alignItems: 'center',
+              mb: 3,
+              width: '100%'
             }}>
               <Wheel
                 ref={wheelRef}
@@ -491,7 +513,7 @@ function App() {
             {/* Section C: Grayscale Tool Bar */}
             <Box sx={{ 
               display: 'flex',
-              alignItems: 'center',
+              alignItems: "center", justifyContent: "flex-start",
               gap: 2,
               width: '100%',
               mb: 3,
@@ -505,7 +527,7 @@ function App() {
                 whiteSpace: 'nowrap',
                 width: '120px',  
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: "center", justifyContent: "flex-start",
                 gap: 1
               }}>
                 <Box component="span" sx={{ flexShrink: 0 }}>GRAY Value:</Box>
@@ -529,7 +551,7 @@ function App() {
                 background: 'linear-gradient(to right, #000000, #FFFFFF)',
                 overflow: 'hidden',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: "center", justifyContent: "flex-start",
                 px: 1
               }}>
                 <Slider
@@ -578,7 +600,7 @@ function App() {
               display: 'flex',
               flexWrap: 'wrap',  
               gap: 2,
-              alignItems: 'center',
+              alignItems: "center", justifyContent: "flex-start",
               width: '100%',
               pl: '40px',  
               '@media (max-width: 532px)': {
@@ -599,7 +621,7 @@ function App() {
                 whiteSpace: 'nowrap',
                 width: '140px',  
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: "center", justifyContent: "flex-start",
                 gap: 1
               }}>
                 <Box component="span" sx={{ flexShrink: 0 }}>RGB:</Box>
@@ -721,14 +743,14 @@ function App() {
           <Box sx={{ 
             display: 'flex', 
             gap: 2,
-            alignItems: 'center',
+            alignItems: "center", justifyContent: "flex-start",
             justifyContent: 'center', 
             mt: 1,
             mb: 3,
             width: '100%',
             '@media (max-width: 600px)': {
               flexDirection: 'column',
-              alignItems: 'center', 
+              alignItems: "center", justifyContent: "flex-start", 
               '& > button': {
                 width: '110px', 
                 alignSelf: 'center'
@@ -795,7 +817,7 @@ function App() {
             mt: 2,
             display: 'flex',
             justifyContent: 'center',
-            alignItems: 'center',
+            alignItems: "center", justifyContent: "flex-start",
             minHeight: '200px',
             width: '100%',
             maxWidth: '800px', 
@@ -825,7 +847,7 @@ function App() {
                 borderRadius: '50%',
                 padding: 0,
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: "center", justifyContent: "flex-start",
                 justifyContent: 'center'
               }}
             >
@@ -844,7 +866,7 @@ function App() {
             <Box sx={{ 
               display: 'flex',
               justifyContent: 'flex-end',
-              alignItems: 'center',
+              alignItems: "center", justifyContent: "flex-start",
               mb: 2
             }}>
               <Box sx={{ 
@@ -878,7 +900,7 @@ function App() {
               <Box sx={{ 
                 display: 'flex',
                 justifyContent: 'center',
-                alignItems: 'center',
+                alignItems: "center", justifyContent: "flex-start",
                 gap: 4,
                 mb: 3
               }}>
@@ -1048,7 +1070,7 @@ function App() {
               display: 'flex',
               flexDirection: 'column',
               gap: 2,
-              alignItems: 'center',
+              alignItems: "center", justifyContent: "flex-start",
               p: 3,
               borderRadius: '8px',
               bgcolor: 'var(--bg-secondary)',

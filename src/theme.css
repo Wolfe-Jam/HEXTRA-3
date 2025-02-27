@@ -11,6 +11,10 @@
     --disabled-bg: #e0e0e0;
     --disabled-text: #888888;
     --hover-bg: #f5f5f5;
+    --glow-color: #FED141;
+    --glow-subtle: rgba(254, 209, 65, 0.3);
+    --bg-secondary: #f0f0f0;
+    --element-bg: #ffffff;
 }
 
 :root[data-theme="dark"] {
@@ -26,6 +30,10 @@
     --disabled-bg: #333333;
     --disabled-text: #666666;
     --hover-bg: #333333;
+    --glow-color: #FED141;
+    --glow-subtle: rgba(254, 209, 65, 0.3);
+    --bg-secondary: #2a2a2a;
+    --element-bg: #2a2a2a;
 }
 
 /* Base styles */
@@ -34,6 +42,7 @@ html, body {
     padding: 0;
     height: 100%;
     min-height: 100vh;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 body {
@@ -44,6 +53,8 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
+    align-items: stretch;
+    justify-content: flex-start;
 }
 
 #root {
