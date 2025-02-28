@@ -1,4 +1,4 @@
-# HEXTRA-3 🎨
+# HEXTRA-3 🎨 (v2.2.2)
 
 HEXTRA-3 is a powerful color processing tool for rapid, professional-grade, product visualization with streamlined batch color-line generation.
 
@@ -6,8 +6,9 @@ HEXTRA-3 is a powerful color processing tool for rapid, professional-grade, prod
 
 ### COLORIZE 🎨
 - RGB color space simplified
-- Interactive color wheel
+- Interactive color wheel with precise color selection
 - HEX support Input/Output system
+- Visual feedback for color application
 
 ### VISUALIZE 👁️
 - Live fast preview rendering
