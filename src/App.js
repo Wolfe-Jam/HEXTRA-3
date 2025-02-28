@@ -1,12 +1,24 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Box, Button, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
-import { hexToRgb } from './utils/image-processing';
-import { processImage } from './utils/image-processing';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { 
+  Box, 
+  Button, 
+  Container, 
+  Grid, 
+  TextField, 
+  Typography, 
+  Paper, 
+  CircularProgress, 
+  Slider, 
+  LinearProgress, 
+  Tooltip
+} from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { LinkRounded as LinkIcon } from '@mui/icons-material';
-import { Wheel } from '@uiw/react-color';
-import JSZip from 'jszip';
+import { styled } from '@mui/material/styles';
+import { debounce } from 'lodash';
+import { hexToRgb } from './utils/colorUtils';
+import { processImage } from './utils/image-processing';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import GlowTextButton from './components/GlowTextButton';
 import GlowButton from './components/GlowButton';
@@ -17,12 +29,21 @@ import { useNavigate } from 'react-router-dom';
 import DefaultTshirt from './components/DefaultTshirt';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
 import './theme.css';
-import { debounce } from 'lodash';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
-import themeManager from './theme';
+import { useTheme } from './context/ThemeContext';
+import JSZip from 'jszip';
+import Wheel from './components/Wheel';
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
+const DEFAULT_COLORS = [
+  '#FED141',  // Default yellow
+  '#D50032',  // Red
+  '#00805E',  // Green
+  '#224D8F',  // Blue
+  '#FF4400',  // Orange
+  '#CABFAD',  // Beige
+];
 const VERSION = '2.2.1';
 
 function App() {
@@ -48,10 +69,7 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
   const [urlInput, setUrlInput] = useState('');
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('hextraTheme');
-    return savedTheme || 'dark';
-  });
+  const { theme, toggleTheme } = useTheme();
   const [lastClickColor, setLastClickColor] = useState(null);
   const [lastClickTime, setLastClickTime] = useState(0);
   const [enhanceEffect, setEnhanceEffect] = useState(true);
@@ -86,7 +104,10 @@ function App() {
   // 4. Memo hooks
   const debouncedProcessImage = useMemo(
     () => debounce(async (url, color) => {
-      if (!url || !color) return;
+      if (!url || !color) {
+        setIsProcessing(false);
+        return;
+      }
       try {
         const processedUrl = await processImage(url, color);
         setWorkingProcessedUrl(processedUrl);
@@ -94,32 +115,96 @@ function App() {
       } catch (error) {
         console.error('Error processing image:', error);
         setCanDownload(false);
+      } finally {
+        setIsProcessing(false);
       }
     }, 150),
-    []
+    [] // No dependencies needed here
   );
 
   // 5. Callback hooks
-  const applyColor = useCallback(async (color) => {
-    if (!workingImageUrl) return;
-    
+  const focusHexInput = useCallback(() => {
     try {
-      setIsProcessing(true);
-      await debouncedProcessImage(workingImageUrl, color);
+      // Try using the provided ref first
+      if (hexInputRef.current && hexInputRef.current.focus) {
+        hexInputRef.current.focus();
+        return;
+      }
+      
+      // If ref approach fails, try DOM selection
+      const inputElement = document.querySelector('.color-picker-container input');
+      if (inputElement) {
+        inputElement.focus();
+      }
     } catch (err) {
-      console.error('Failed to process image:', err);
-      setCanDownload(false);
-    } finally {
+      console.error('Error focusing hex input:', err);
+    }
+  }, []);
+
+  const applyColor = useCallback(() => {
+    try {
+      // Only apply color if we have a valid hex color
+      if (selectedColor && selectedColor.match(/^#[0-9A-F]{6}$/i) && workingImageUrl) {
+        console.log('Applying color:', selectedColor);
+        
+        // Trigger image processing with the selected color
+        setIsProcessing(true);
+        debouncedProcessImage(workingImageUrl, selectedColor);
+        
+        // Since debounce doesn't return a Promise, we need to handle this differently
+        // The setIsProcessing(false) will happen in the debouncedProcessImage function
+        
+        // Ensure hex input stays focused
+        focusHexInput();
+      } else {
+        console.log('Cannot apply color:', selectedColor);
+      }
+    } catch (err) {
+      console.error('Error applying color:', err);
       setIsProcessing(false);
     }
-  }, [workingImageUrl, debouncedProcessImage]);
+  }, [debouncedProcessImage, focusHexInput, selectedColor, workingImageUrl]);
+
+  const handleColorWheelChange = useCallback((color) => {
+    // Ensure we have a valid hex color with # prefix
+    if (!color || !color.startsWith('#')) {
+      return;
+    }
+    
+    // Update the selected color
+    setSelectedColor(color);
+    
+    // Convert to RGB
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      setRgbColor(rgb);
+    }
+    
+    // Focus the hex input field
+    focusHexInput();
+  }, [focusHexInput]);
 
   const handleColorChange = useCallback((color) => {
+    console.log("Color changed to:", color);
     setSelectedColor(color);
-    if (!isDragging.current) {
-      applyColor(color);
+    
+    // Validate color and convert to RGB
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      setRgbColor(rgb);
+    } else {
+      console.warn('Invalid color format received:', color);
+      // Use default RGB if conversion fails
+      setRgbColor(hexToRgb(DEFAULT_COLOR));
     }
-  }, [applyColor]);
+    
+    // Focus the hex input field
+    focusHexInput();
+    
+    if (!isDragging.current) {
+      applyColor();
+    }
+  }, [applyColor, focusHexInput]);
 
   const handleDragStart = useCallback(() => {
     isDragging.current = true;
@@ -127,16 +212,53 @@ function App() {
 
   const handleDragEnd = useCallback(() => {
     isDragging.current = false;
-    debouncedProcessImage(workingImageUrl, selectedColor);
-  }, [workingImageUrl, selectedColor, debouncedProcessImage]);
+    
+    // Apply the color when dragging ends
+    applyColor();
+  }, [applyColor]);
 
   const handleDropdownSelect = useCallback((color) => {
-    setSelectedColor(color.hex);
-    setRgbColor(hexToRgb(color.hex));
-    if (hexInputRef.current) {
-      hexInputRef.current.focus();
+    // Basic validation
+    if (!color) {
+      console.log('Invalid color from dropdown:', color);
+      return;
     }
-  }, []);
+    
+    // Make sure color is a string
+    const hexColor = typeof color === 'string' ? color : 
+                     (color.hex ? color.hex : null);
+    
+    if (!hexColor) {
+      console.log('Could not extract hex color from:', color);
+      return;
+    }
+    
+    console.log('Selected color from dropdown:', hexColor);
+    
+    // Update the selected color
+    setSelectedColor(hexColor);
+    
+    // Convert to RGB
+    const rgb = hexToRgb(hexColor);
+    if (rgb) {
+      setRgbColor(rgb);
+    }
+    
+    // Apply the selected color immediately
+    applyColor();
+    
+    // Try to focus the hex input
+    try {
+      setTimeout(() => {
+        const inputElement = document.querySelector('.color-picker-container input');
+        if (inputElement) {
+          inputElement.focus();
+        }
+      }, 100);
+    } catch (err) {
+      console.log('Error focusing input:', err);
+    }
+  }, [applyColor]);
 
   const handleImageUpload = useCallback(async (file) => {
     if (!file) return;
@@ -179,33 +301,61 @@ function App() {
     }
   }, [handleLoadUrl]);
 
-  const handleWheelClick = useCallback((e) => {
+  const handleWheelClick = useCallback((e, color) => {
+    // Update the selected color from the wheel click
+    if (color) {
+      setSelectedColor(color);
+      
+      // Convert to RGB
+      const rgb = hexToRgb(color);
+      if (rgb) {
+        setRgbColor(rgb);
+      }
+      
+      // Focus the hex input after clicking on the wheel
+      focusHexInput();
+    }
+    
+    // Handle the click logic for possibly applying the color
     const now = Date.now();
-    const timeDiff = now - lastClickTime;
     
-    if (timeDiff < 300 && lastClickColor === selectedColor) {
-      applyColor(selectedColor);
+    // If this is another click on the same color within the time window, apply the color
+    if (lastClickColor === color && now - lastClickTime < 500) {
+      applyColor();
     }
     
-    setLastClickColor(selectedColor);
+    // Update the last click info
+    setLastClickColor(color);
     setLastClickTime(now);
-  }, [applyColor, lastClickColor, lastClickTime, selectedColor]);
+  }, [applyColor, focusHexInput, lastClickColor, lastClickTime]);
 
-  const handleHexInputChange = useCallback((e) => {
-    const value = e.target.value;
-    if (!value && selectedColor) {
-      e.target.value = selectedColor;
-      return;
-    }
-
-    if (value) {
-      if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
-        setSelectedColor(value);
-        setRgbColor(hexToRgb(value));
-        applyColor();
+  const handleHexInputChange = useCallback((event) => {
+    if (!event || !event.target) return;
+    
+    // Get the input value
+    let inputValue = event.target.value || '';
+    
+    // Don't add # here - this is just the raw input change
+    // The full hex with # will be managed by the component state
+    
+    // Update the selected color with # prefix
+    let fullHex = inputValue.startsWith('#') ? inputValue : '#' + inputValue;
+    fullHex = fullHex.toUpperCase(); // Ensure uppercase
+    
+    // Basic validation
+    const validHex = /^#[0-9A-F]{0,6}$/i.test(fullHex);
+    if (validHex || fullHex === '#') {
+      setSelectedColor(fullHex);
+      
+      // Only convert to RGB if we have a valid 6-digit hex code
+      if (/^#[0-9A-F]{6}$/i.test(fullHex)) {
+        const rgb = hexToRgb(fullHex);
+        if (rgb) {
+          setRgbColor(rgb);
+        }
       }
     }
-  }, [applyColor, selectedColor]);
+  }, []);
 
   const resetColor = useCallback(() => {
     const defaultRgb = hexToRgb(DEFAULT_COLOR);
@@ -324,7 +474,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    themeManager.applyTheme(theme);
+    // Removed themeManager.applyTheme(theme);
   }, [theme]);
 
   // Add a button to toggle subscription view for testing
@@ -405,43 +555,35 @@ function App() {
     <Box className={`app ${theme}`} sx={{ 
       width: '100%', 
       overflowX: 'hidden',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      backgroundColor: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+      minHeight: '100vh'
     }}>
       {/* Section A: Banner */}
       <Banner 
         version={VERSION}
         isDarkMode={theme === 'dark'}
-        onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        onThemeToggle={toggleTheme}
         isBatchMode={isBatchMode}
         setIsBatchMode={setIsBatchMode}
         setShowSubscriptionTest={setShowSubscriptionTest}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {isAuthenticated && (
-            <GlowButton
-              variant="contained"
-              onClick={() => navigate('/subscription')}
-              sx={{
-                minWidth: '200px',
-                backgroundColor: isSubscribed ? 'rgba(0, 128, 94, 0.1)' : 'rgba(254, 209, 65, 0.1)',
-                color: isSubscribed ? '#00805E' : '#FED141'
-              }}
-            >
-              {isSubscribed ? '✓ Active Subscription' : 'Upgrade to Premium'}
-            </GlowButton>
-          )}
+          {/* Subscription button removed */}
         </Box>
       </Banner>
       
       <Box className="app-content" sx={{ 
-        pt: '80px',
+        pt: '25px',
         width: '100%',
         maxWidth: '1200px',
         boxSizing: 'border-box',
         overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        backgroundColor: 'var(--bg-primary)'
       }}>
         <Typography 
           variant="h2" 
@@ -452,12 +594,12 @@ function App() {
             letterSpacing: '0.25em',
             textTransform: 'uppercase',
             color: 'var(--text-secondary)',
-            mb: 5,  
-            '@media (max-width: 532px)': {
-              fontSize: '0.7rem'
-            },
-            width: '100%',
-            margin: '0 auto',
+            height: '0px',
+            padding: 0,
+            margin: 0,
+            overflow: 'hidden',
+            position: 'absolute',
+            visibility: 'hidden'
           }}
         >
           <Box component="span">COLORIZE</Box> | <Box component="span">VISUALIZE</Box> | <Box component="span">MESMERIZE</Box>
@@ -467,68 +609,57 @@ function App() {
         <Box sx={{ 
           display: 'flex',
           flexDirection: 'column',
-          gap: 4,
+          gap: 2,
           width: '100%',
           maxWidth: '800px',  
           margin: '0 auto',
-          p: 3,
-          paddingLeft: 'calc(3 * 8px + 15px)', // 3 for p:3 + 15px offset
+          p: 2,
+          pt: 2,
+          paddingLeft: 'calc(2 * 8px + 15px)', // 2 for p:2 + 15px offset
           alignItems: 'center',
           textAlign: 'center',
           boxSizing: 'border-box',
           overflow: 'hidden',
           '@media (max-width: 832px)': { 
             maxWidth: '100%', 
-            p: 2,
-            paddingLeft: 'calc(2 * 8px + 15px)' // 2 for p:2 + 15px offset
+            p: 1,
+            pt: 1,
+            paddingLeft: 'calc(1 * 8px + 15px)' // 1 for p:1 + 15px offset
           }
         }}>
-          {/* Subscription Button */}
-          {isAuthenticated && (
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 3 }}>
-              <GlowButton
-                onClick={() => navigate('/subscription')}
-                sx={{ 
-                  minWidth: '200px',
-                  backgroundColor: isSubscribed ? 'rgba(0, 128, 94, 0.1)' : 'rgba(254, 209, 65, 0.1)',
-                  color: isSubscribed ? '#00805E' : '#FED141'
-                }}
-              >
-                {isSubscribed ? '✓ Active Subscription' : 'Upgrade to Premium'}
-              </GlowButton>
-            </Box>
-          )}
           {/* Color Section */}
-          <Box sx={{ mb: 1 }}>
+          <Box sx={{ mb: 0 }}>
             {/* Section B: Title and RGB Color Disc */}
             <Typography 
               variant="h6" 
               sx={{ 
                 textAlign: 'center', 
-                mb: 2,
+                mb: 1,
                 fontFamily: "'League Spartan', sans-serif",
                 color: 'var(--text-primary)'
               }}
             >
-              Pick a HEX Code or Color
+              Pick a Color, or Enter a HEX code
             </Typography>
-            <Box sx={{ 
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              mb: 3,
-              width: '100%'
-            }}>
+            <Box 
+              className="color-picker-container"
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                mb: 2,
+                width: '100%'
+              }}
+            >
               <Wheel
                 ref={wheelRef}
                 color={selectedColor}
-                onChange={handleColorChange}
+                onChange={handleColorWheelChange}
                 onClick={handleWheelClick}
                 onDoubleClick={() => applyColor()}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
-                width={240}
-                height={240}
+                isDragging={isDragging.current}
               />
             </Box>
 
@@ -538,7 +669,7 @@ function App() {
               alignItems: "center", justifyContent: "flex-start",
               gap: 2,
               width: '100%',
-              mb: 3,
+              mb: 1,
               pl: '40px'  
             }}>
               {/* GRAY Value Display */}
@@ -671,55 +802,25 @@ function App() {
 
               {/* HEX Input with Reset Icon */}
               <SwatchDropdownField
+                ref={hexInputRef}
                 value={selectedColor}
                 onChange={handleHexInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault(); // Prevent default behavior
-                    e.stopPropagation(); // Stop event from bubbling up
-                    
-                    let value = e.target.value;
-                    if (!value && selectedColor) {
-                      value = selectedColor;
-                    }
-                    if (!value.startsWith('#')) {
-                      value = '#' + value;
-                    }
-                    value = value.toUpperCase();
-                    
-                    if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
-                      setSelectedColor(value);
-                      setRgbColor(hexToRgb(value));
-                      applyColor();
-                    }
-                  }
-                }}
-                placeholder="#FED141"
-                startIcon={<TagIcon />}
-                hasReset
+                onEnterPress={applyColor}
+                onDropdownSelect={handleDropdownSelect}
                 onReset={resetColor}
-                options={[
-                  '#FED141',
-                  '#D50032',
-                  '#00805E',
-                  '#224D8F',
-                  '#FF4400',
-                  '#CABFAD'
-                ]}
-                onSelectionChange={handleDropdownSelect}
+                label="HEX"
+                options={DEFAULT_COLORS}
                 sx={{ 
-                  width: '180px',  
-                  '& .MuiOutlinedInput-root': {
-                    paddingLeft: '8px'  
-                  }
+                  width: '180px',
+                  marginLeft: '12px',
+                  marginRight: '12px'
                 }}
-                inputRef={hexInputRef}
               />
               {/* Apply Button */}
               <GlowTextButton
                 id="apply-button"
                 variant="contained"
-                onClick={applyColor}
+                onClick={() => applyColor(selectedColor)}
                 disabled={isProcessing || !imageLoaded}
                 sx={{
                   width: '110px',
@@ -747,7 +848,7 @@ function App() {
           <Typography 
             variant="h2" 
             sx={{ 
-              mb: 4,  
+              mb: 2,  
               textAlign: 'center',
               fontFamily: "'Inter', sans-serif",
               fontSize: '1.25rem',
@@ -768,7 +869,7 @@ function App() {
             alignItems: "center", justifyContent: "flex-start",
             justifyContent: 'center', 
             mt: 1,
-            mb: 3,
+            mb: 2,
             width: '100%',
             '@media (max-width: 600px)': {
               flexDirection: 'column',
@@ -1029,13 +1130,13 @@ function App() {
           <Box sx={{ 
             width: '100%',
             maxWidth: '800px',
-            mt: 3 
+            mt: 1 // Changed from mt: 3 to mt: 1
           }}>
             {/* MESMERIZE Section Title */}
             <Typography 
               variant="h2" 
               sx={{ 
-                mb: 4,  
+                mb: 1, // Changed from mb: 4 to mb: 1
                 textAlign: 'center',
                 fontFamily: "'Inter', sans-serif",
                 fontSize: '1.25rem',
