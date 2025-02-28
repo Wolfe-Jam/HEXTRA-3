@@ -44,8 +44,8 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD',  // Beige
 ];
-// Improved color wheel with accurate selection and visual feedback - v2.2.2
-const VERSION = '2.2.2';
+// Improved color wheel with accurate selection and visual feedback - v2.2.3
+const VERSION = '2.2.3';
 
 function App() {
   // 1. Basic hooks
