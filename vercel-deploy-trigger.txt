@@ -1,0 +1,5 @@
+Deployment trigger file for Vercel
+Version: 2.2.2
+Date: 2025-02-28
+Description: Color wheel improvements with accurate selection and visual feedback
+Commit: Retry deployment after Vercel technical issues
