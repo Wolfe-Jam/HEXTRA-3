@@ -135,15 +135,35 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
       const canvas = canvasRef.current;
       if (!canvas) return '#FED141'; // Default to yellow
       
-      const rect = canvas.getBoundingClientRect();
       const ctx = canvas.getContext('2d');
       
-      // Convert client coordinates to canvas coordinates
-      const canvasX = Math.round((x - rect.left) * (canvas.width / rect.width));
-      const canvasY = Math.round((y - rect.top) * (canvas.height / rect.height));
-      
       // Store current cursor position
-      cursorPos.current = { x: canvasX, y: canvasY };
+      cursorPos.current = { x, y };
+      
+      // Get the center of the wheel
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(width, height) / 2 - 5;
+      
+      // Calculate distance from center
+      const distanceFromCenter = Math.sqrt(
+        Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
+      );
+      
+      // If outside the wheel radius, constrain to edge of wheel
+      if (distanceFromCenter > radius) {
+        // Calculate angle
+        const angle = Math.atan2(y - centerY, x - centerX);
+        
+        // Calculate point on circumference
+        const adjustedX = centerX + radius * Math.cos(angle);
+        const adjustedY = centerY + radius * Math.sin(angle);
+        
+        // Update cursor position to edge of wheel
+        cursorPos.current = { x: adjustedX, y: adjustedY };
+        x = adjustedX;
+        y = adjustedY;
+      }
       
       // Clear canvas and redraw wheel with cursor at new position
       ctx.clearRect(0, 0, width, height);
@@ -151,22 +171,24 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
       drawCursor();
       
       // Get pixel data at cursor position
-      const pixelData = ctx.getImageData(canvasX, canvasY, 1, 1).data;
+      const pixelData = ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data;
       
       // Convert RGB to HEX
       const r = pixelData[0];
       const g = pixelData[1];
       const b = pixelData[2];
       
-      const hex = '#' + 
+      // Format as HEX color
+      const hex = '#' +
         r.toString(16).padStart(2, '0') +
         g.toString(16).padStart(2, '0') +
         b.toString(16).padStart(2, '0');
       
+      // Return uppercase HEX color
       return hex.toUpperCase();
     } catch (err) {
       console.error('Error getting color from position:', err);
-      return '#FED141'; // Default to yellow on error
+      return '#FED141'; // Default yellow as fallback
     }
   };
 
@@ -174,9 +196,16 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     isDragging.current = true;
     if (onDragStart) onDragStart();
     
+    // Capture current position
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
     // Get color at the mouse position and trigger onChange
-    const color = getColorFromPosition(e.clientX, e.clientY);
-    onChange(color);
+    const color = getColorFromPosition(x, y);
+    if (color) {
+      onChange(color);
+    }
     
     // Call onClick if provided
     if (onClick) onClick(e);
@@ -184,9 +213,16 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
 
   const handleMouseMove = (e) => {
     if (isDragging.current) {
+      // Capture current position
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
       // Get color at the mouse position and trigger onChange
-      const color = getColorFromPosition(e.clientX, e.clientY);
-      onChange(color);
+      const color = getColorFromPosition(x, y);
+      if (color) {
+        onChange(color);
+      }
     }
   };
 

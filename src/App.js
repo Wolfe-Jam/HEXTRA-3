@@ -89,6 +89,7 @@ function App() {
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [selectedColors, setSelectedColors] = useState([]);
   const [showSubscription, setShowSubscription] = useState(false);
+  const [colorApplied, setColorApplied] = useState(false);
 
   // Check subscription status when user is authenticated
   useEffect(() => {
@@ -151,8 +152,13 @@ function App() {
         setIsProcessing(true);
         debouncedProcessImage(workingImageUrl, selectedColor);
         
-        // Since debounce doesn't return a Promise, we need to handle this differently
-        // The setIsProcessing(false) will happen in the debouncedProcessImage function
+        // Show visual feedback that color was applied
+        setColorApplied(true);
+        
+        // Reset the visual feedback after a delay
+        setTimeout(() => {
+          setColorApplied(false);
+        }, 500);
         
         // Ensure hex input stays focused
         focusHexInput();
@@ -162,6 +168,7 @@ function App() {
     } catch (err) {
       console.error('Error applying color:', err);
       setIsProcessing(false);
+      setColorApplied(false);
     }
   }, [debouncedProcessImage, focusHexInput, selectedColor, workingImageUrl]);
 
@@ -824,6 +831,9 @@ function App() {
                 disabled={isProcessing || !imageLoaded}
                 sx={{
                   width: '110px',
+                  transition: 'all 0.2s ease',
+                  transform: colorApplied ? 'scale(1.05)' : 'scale(1)',
+                  background: colorApplied ? `linear-gradient(135deg, ${selectedColor}, #FFFFFF, ${selectedColor})` : undefined,
                   '@media (max-width: 532px)': {
                     width: '110px',
                     marginTop: '8px'
