@@ -44,7 +44,7 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD',  // Beige
 ];
-const VERSION = '2.2.1';
+const VERSION = '2.2.2';
 
 function App() {
   // 1. Basic hooks
