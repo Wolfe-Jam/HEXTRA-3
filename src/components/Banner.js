@@ -1,18 +1,17 @@
-import React, { useState, useMemo, useEffect } from 'react';
-// eslint-disable-next-line no-unused-vars
-import { Box, Typography, IconButton, Button, Tooltip } from '@mui/material';
+import React, { useState, useMemo, useEffect, useContext, useTransition } from 'react';
+import { Box, Typography, IconButton, Button, Tooltip, Divider, Menu, MenuItem, ListItemIcon } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
-// eslint-disable-next-line no-unused-vars
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AboutDialog from './AboutDialog';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
-// eslint-disable-next-line no-unused-vars
 import { VERSION } from '../version';
 import GlowIconButton from './GlowIconButton';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import HomeIcon from '@mui/icons-material/Home';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
 
 const BRAND_COLORS = ['#D50032', '#00805E', '#224D8F'];  // Red, Green, Blue
 
@@ -27,12 +26,11 @@ const Banner = ({
   const [aboutOpen, setAboutOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
-  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const location = useLocation();
-  const isSubscriptionPage = location.pathname === '/subscription';
+  const isSubscriptionPage = location.pathname === '/subscription' || location.pathname === '/';
+  const [isPending, startTransition] = useTransition();
 
-  // Calculate user initials and color once
   const userInitial = useMemo(() => {
     return user?.given_name ? user.given_name[0].toUpperCase() : '?';
   }, [user?.given_name]);
@@ -43,7 +41,6 @@ const Banner = ({
     return BRAND_COLORS[index];
   }, [user?.email]);
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 0;
@@ -56,23 +53,19 @@ const Banner = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrolled]);
 
-  // eslint-disable-next-line no-unused-vars
   const handleLogout = () => {
-    // First scroll to batch section
     const batchSection = document.querySelector('.batch-processing-section');
     if (batchSection) {
       batchSection.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // After scroll animation, do the logout
     setTimeout(() => {
       logout({
         post_logout_redirect_uri: `${window.location.origin}/#batch-section`
       });
-    }, 800); // Wait for scroll animation
+    }, 800); 
   };
 
-  // eslint-disable-next-line no-unused-vars
   const scrollToBatch = () => {
     const batchSection = document.querySelector('.batch-processing-section');
     if (batchSection) {
@@ -80,10 +73,9 @@ const Banner = ({
     }
   };
 
-  // eslint-disable-next-line no-unused-vars
   const COLORS = {
     textDark: 'rgba(255, 255, 255, 0.7)',
-    textLight: 'rgba(255, 255, 255, 0.7)'
+    textLight: 'rgba(0, 0, 0, 0.7)'
   };
 
   return (
@@ -146,7 +138,7 @@ const Banner = ({
           <Typography
             component="span"
             sx={{
-              color: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              color: isDarkMode ? COLORS.textLight : COLORS.textDark,
               fontSize: '0.75rem',
               cursor: 'pointer',
               '&:hover': {
@@ -157,6 +149,34 @@ const Banner = ({
             onClick={() => setAboutOpen(true)}
           >
             About • v{version}
+          </Typography>
+          {/* User Email or Subscription Prompt */}
+          <Typography
+            component="span"
+            sx={{
+              color: isDarkMode ? COLORS.textLight : COLORS.textDark,
+              fontSize: '0.7rem',
+              fontStyle: isAuthenticated ? 'normal' : 'italic',
+              cursor: isAuthenticated ? 'default' : 'pointer',
+              mt: 0.5,
+              maxWidth: '200px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                color: isAuthenticated ? (isDarkMode ? COLORS.textLight : COLORS.textDark) : '#FED141',
+                textDecoration: isAuthenticated ? 'none' : 'underline'
+              }
+            }}
+            onClick={() => {
+              if (!isAuthenticated) {
+                startTransition(() => {
+                  navigate('/subscription#available-plans');
+                });
+              }
+            }}
+          >
+            {isAuthenticated && user?.email ? user.email : 'Subscribe for premium features'}
           </Typography>
         </Box>
 
@@ -203,51 +223,57 @@ const Banner = ({
           mt: 1.5
         }}>
           {/* Theme Toggle */}
-          <Tooltip title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-            <GlowIconButton
+          <Tooltip title={`Switch to ${isDarkMode ? 'Light' : 'Dark'} Mode`}>
+            <IconButton 
               onClick={onThemeToggle}
-              sx={{ 
+              sx={{
                 width: '32px',
                 height: '32px',
-                color: isDarkMode ? '#FED141' : '#FFFFFF',
-                backgroundColor: isDarkMode ? 'rgba(26, 26, 26, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                color: isDarkMode ? COLORS.textLight : COLORS.textDark,
                 '&:hover': {
-                  backgroundColor: isDarkMode ? 'rgba(26, 26, 26, 0.2)' : 'rgba(255, 255, 255, 0.2)',
+                  color: '#FED141',
                 }
               }}
             >
-              {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
-            </GlowIconButton>
+              {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
           </Tooltip>
 
           {/* T-shirt Status Badge / Sign Up CTA */}
           <Tooltip title={!isAuthenticated ? "View Subscription Options" : "Manage Subscription"}>
             <GlowIconButton
-              onClick={() => navigate('/')}
+              onClick={() => {
+                startTransition(() => {
+                  if (isSubscriptionPage) {
+                    // If already on subscription page, just scroll to available plans
+                    const availablePlansSection = document.getElementById('available-plans');
+                    if (availablePlansSection) {
+                      availablePlansSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  } else {
+                    // Navigate to subscription page with hash for available plans
+                    navigate('/subscription#available-plans');
+                  }
+                });
+              }}
               sx={{ 
                 width: '32px',
                 height: '32px',
                 position: 'relative',
-                color: isDarkMode ? '#1a1a1a' : '#FFFFFF',
-                '& img': {
-                  filter: isDarkMode ? 'none' : 'invert(1)'
-                },
-                ...(isAuthenticated && {
-                  backgroundColor: 'rgba(0, 128, 94, 0.1)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 128, 94, 0.2)',
-                  }
-                })
+                color: isDarkMode ? COLORS.textLight : COLORS.textDark,
+                '&:hover': {
+                  color: '#FED141',
+                }
               }}
             >
-              {/* Show single t-shirt for non-members, multi-shirt for members */}
               <Box
                 component="img"
                 src={isAuthenticated ? "/images/tshirts-icon.svg" : "/images/tshirt-icon.svg"}
                 alt={isAuthenticated ? "Manage Subscription" : "View Subscription Options"}
                 sx={{
                   width: '20px',
-                  height: '20px'
+                  height: '20px',
+                  filter: !isDarkMode ? 'brightness(0) invert(1)' : 'none'
                 }}
               />
             </GlowIconButton>
@@ -255,57 +281,61 @@ const Banner = ({
 
           {/* Subscription Button - Always visible */}
           <Tooltip title={isSubscriptionPage ? "Return to App" : "View Subscription Plans"}>
-            <GlowIconButton
-              onClick={() => isSubscriptionPage ? navigate('/') : navigate('/subscription')}
-              sx={{ 
+            <IconButton
+              onClick={() => startTransition(() => {
+                isSubscriptionPage ? navigate('/app') : navigate('/subscription');
+              })}
+              sx={{
                 width: '32px',
                 height: '32px',
-                color: isDarkMode ? '#1a1a1a' : '#FFFFFF',
-                backgroundColor: isDarkMode ? 'rgba(213, 0, 50, 0.1)' : 'rgba(213, 0, 50, 0.3)',
+                position: 'relative',
+                color: isDarkMode ? COLORS.textLight : COLORS.textDark,
                 '&:hover': {
-                  backgroundColor: isDarkMode ? 'rgba(213, 0, 50, 0.2)' : 'rgba(213, 0, 50, 0.4)',
+                  color: '#FED141',
                 }
               }}
             >
-              {isSubscriptionPage ? <HomeIcon fontSize="small" /> : <SubscriptionsIcon fontSize="small" />}
-            </GlowIconButton>
+              {isSubscriptionPage ? <HomeIcon fontSize="small" /> : <SubscriptionsIcon />}
+            </IconButton>
           </Tooltip>
 
-          {/* Account Button (only shown when authenticated) */}
-          {isAuthenticated && (
-            <Tooltip 
-              title={
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {user?.given_name} {user?.family_name}
-                  </Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                    {user?.email}
-                  </Typography>
-                </Box>
-              }
-            >
-              <GlowIconButton
-                onClick={() => navigate('/subscription')}
-                sx={{ 
+          {/* Account Button (always visible) */}
+          <Tooltip title={isAuthenticated ? user?.email : "Free Version"}>
+            {isAuthenticated ? (
+              <IconButton
+                onClick={() => startTransition(() => navigate('/profile'))}
+                sx={{
                   width: '32px',
                   height: '32px',
-                  backgroundColor: userColor,
-                  color: isDarkMode ? '#1a1a1a' : '#FFFFFF',
+                  color: isDarkMode ? COLORS.textLight : COLORS.textDark,
+                  '&:hover': {
+                    color: '#FED141',
+                  }
+                }}
+              >
+                <AccountCircleIcon />
+              </IconButton>
+            ) : (
+              <GlowIconButton
+                onClick={() => startTransition(() => login())}
+                sx={{
+                  width: '32px',
+                  height: '32px',
+                  backgroundColor: '#D50032', // HEXTRA Red
+                  color: '#FFFFFF',
                   fontFamily: "'League Spartan', sans-serif",
                   fontSize: '1rem',
                   fontWeight: 600,
                   '&:hover': {
-                    backgroundColor: userColor,
-                    opacity: 0.9,
+                    backgroundColor: '#B3002B',
                     transform: 'scale(1.05)'
                   }
                 }}
               >
-                {userInitial}
+                F
               </GlowIconButton>
-            </Tooltip>
-          )}
+            )}
+          </Tooltip>
         </Box>
       </Box>
 
@@ -339,28 +369,28 @@ const Banner = ({
         <Typography variant="h6" className="colorize-header" sx={{ mb: 1 }}>
           COLORIZE
         </Typography>
-        <Typography variant="body2" sx={{ mb: 2, color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.7)' }}>
+        <Typography variant="body2" sx={{ mb: 2, color: isDarkMode ? COLORS.textLight : COLORS.textDark }}>
           Transform your images with vibrant, customizable colors
         </Typography>
 
         <Typography variant="h6" className="visualize-header" sx={{ mb: 1 }}>
           VISUALIZE
         </Typography>
-        <Typography variant="body2" sx={{ mb: 2, color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.7)' }}>
+        <Typography variant="body2" sx={{ mb: 2, color: isDarkMode ? COLORS.textLight : COLORS.textDark }}>
           See your designs come to life in real-time
         </Typography>
 
         <Typography variant="h6" className="mesmerize-header" sx={{ mb: 1 }}>
           MESMERIZE
         </Typography>
-        <Typography variant="body2" sx={{ mb: 2, color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.7)' }}>
+        <Typography variant="body2" sx={{ mb: 2, color: isDarkMode ? COLORS.textLight : COLORS.textDark }}>
           Create stunning effects that captivate and inspire
         </Typography>
 
-        <Typography variant="body2" sx={{ mb: 1, color: isDarkMode ? '#FFFFFF' : '#1a1a1a' }}>
+        <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
           Version {version}
         </Typography>
-        <Typography variant="body2" sx={{ color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.7)' }}>
+        <Typography variant="body2" sx={{ color: isDarkMode ? COLORS.textLight : COLORS.textDark }}>
           2024 HEXTRA Color System. All rights reserved.
         </Typography>
       </AboutDialog>

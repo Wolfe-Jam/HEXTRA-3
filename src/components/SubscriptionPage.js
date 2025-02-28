@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Button } from '@mui/material';
+import React, { useState, useEffect, useTransition } from 'react';
+import { Box, Typography, Paper, Button, Divider } from '@mui/material';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { useNavigate } from 'react-router-dom';
 import GlowButton from './GlowButton';
 import GlowTextButton from './GlowTextButton';
-import themeManager from '../theme';
 import { VERSION } from '../version';
 import Banner from './Banner';
+import { useTheme } from '../context';
 
 export default function SubscriptionPage() {
   const { isAuthenticated: kindeAuthenticated, user, login } = useKindeAuth();
@@ -15,10 +15,8 @@ export default function SubscriptionPage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const navigate = useNavigate();
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('hextraTheme');
-    return savedTheme || 'dark';
-  });
+  const { theme, toggleTheme } = useTheme();
+  const [isPending, startTransition] = useTransition();
 
   // Simple subscription plans data
   const plans = [
@@ -43,11 +41,6 @@ export default function SubscriptionPage() {
     }
   ];
 
-  // Apply theme when it changes
-  React.useEffect(() => {
-    themeManager.applyTheme(theme);
-  }, [theme]);
-
   // Handle window resize for responsive design
   React.useEffect(() => {
     const handleResize = () => {
@@ -58,6 +51,27 @@ export default function SubscriptionPage() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [loading]);
+
+  // Handle hash navigation for direct scrolling to sections
+  React.useEffect(() => {
+    // Check if there's a hash in the URL
+    if (window.location.hash) {
+      const id = window.location.hash.substring(1);
+      console.log(`Attempting to navigate to section: #${id}`);
+      const element = document.getElementById(id);
+      if (element) {
+        // Wait a bit for the page to render, then scroll
+        startTransition(() => {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth' });
+            console.log(`Successfully scrolled to #${id}`);
+          }, 300);
+        });
+      } else {
+        console.warn(`Element with id "${id}" not found in the document`);
+      }
+    }
+  }, [startTransition]);
 
   const checkSubscription = async () => {
     try {
@@ -84,7 +98,9 @@ export default function SubscriptionPage() {
   // Handle subscription button click
   const handleSubscribe = (planName) => {
     if (!isAuthenticated) {
-      login();
+      startTransition(() => {
+        login();
+      });
       return;
     }
     
@@ -95,7 +111,9 @@ export default function SubscriptionPage() {
 
   // Handle free preview button click
   const handleFreePreview = () => {
-    navigate('/app');
+    startTransition(() => {
+      navigate('/app');
+    });
   };
 
   return (
@@ -103,18 +121,15 @@ export default function SubscriptionPage() {
       fontFamily: 'system-ui, -apple-system, sans-serif',
       height: '100vh',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      backgroundColor: 'var(--bg-primary)',
+      color: 'var(--text-primary)'
     }}>
       {/* Banner */}
       <Banner 
         version={VERSION}
         isDarkMode={theme === 'dark'}
-        onThemeToggle={() => {
-          const newTheme = theme === 'dark' ? 'light' : 'dark';
-          localStorage.setItem('hextraTheme', newTheme);
-          setTheme(newTheme);
-          themeManager.applyTheme(newTheme);
-        }}
+        onThemeToggle={toggleTheme}
         isBatchMode={false}
         setIsBatchMode={() => {}}
         setShowSubscriptionTest={() => {}}
@@ -141,19 +156,22 @@ export default function SubscriptionPage() {
         maxWidth: '800px',
         margin: '0 auto',
         flex: 1,
-        fontFamily: "'Inter', sans-serif"
+        fontFamily: "'Inter', sans-serif",
+        color: 'var(--text-primary)',
+        backgroundColor: 'var(--bg-primary)'
       }}>
         <h1 style={{ 
           marginBottom: '30px', 
           textAlign: 'center',
           fontSize: window.innerWidth < 600 ? '1.8rem' : '2.5rem',
-          fontFamily: "'League Spartan', sans-serif"
+          fontFamily: "'League Spartan', sans-serif",
+          color: 'var(--text-primary)'
         }}>HEXTRA Subscription</h1>
       
       {/* Free Preview Button - Always visible at the top */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
         <GlowTextButton 
-          onClick={handleFreePreview}
+          onClick={() => startTransition(() => handleFreePreview())}
           variant="contained"
           sx={{ 
             fontSize: '1.2rem', 
@@ -176,8 +194,14 @@ export default function SubscriptionPage() {
       
       {/* Subscription Info Section */}
       <div style={{ marginBottom: '40px', textAlign: 'center' }}>
-        <h2 style={{ marginBottom: '15px' }}>Unlock HEXTRA's Full Potential</h2>
-        <p style={{ fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6' }}>
+        <h2 style={{ marginBottom: '15px', color: 'var(--text-primary)' }}>Unlock HEXTRA's Full Potential</h2>
+        <p style={{ 
+          fontSize: '1.1rem', 
+          maxWidth: '600px', 
+          margin: '0 auto', 
+          lineHeight: '1.6',
+          color: 'var(--text-secondary)'
+        }}>
           Subscribe to HEXTRA and gain access to advanced features like batch processing, 
           premium color management, and priority support. Choose the plan that fits your needs.
         </p>
@@ -186,15 +210,17 @@ export default function SubscriptionPage() {
       <div style={{ marginBottom: '30px' }}>
         <h2 style={{ 
           textAlign: 'center',
-          fontFamily: "'League Spartan', sans-serif"
+          fontFamily: "'League Spartan', sans-serif",
+          color: 'var(--text-primary)'
         }}>Subscription Status</h2>
         <div style={{ 
-          background: theme === 'dark' ? '#333333' : '#f5f5f5', 
+          background: 'var(--bg-secondary)', 
           padding: '25px',
           borderRadius: '8px',
           marginTop: '15px',
-          color: theme === 'dark' ? '#ffffff' : '#333333',
-          textAlign: 'center'
+          color: 'var(--text-primary)',
+          textAlign: 'center',
+          border: '1px solid var(--border-color)'
         }}>
           {subscriptionStatus?.isSubscribed ? (
             <div>
@@ -207,10 +233,10 @@ export default function SubscriptionPage() {
               }}>
                 Your Premium Access is Active!
               </p>
-              <p style={{ fontSize: '16px', marginBottom: '10px' }}>
+              <p style={{ fontSize: '16px', marginBottom: '10px', color: 'var(--text-primary)' }}>
                 Plan: {subscriptionStatus.tier === 'early-bird' ? 'Early-Bird' : 'Pro'} Plan
               </p>
-              <p style={{ fontSize: '14px', color: theme === 'dark' ? '#cccccc' : '#666666' }}>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                 Subscription ID: {subscriptionStatus.subscriptionId}
               </p>
             </div>
@@ -218,7 +244,8 @@ export default function SubscriptionPage() {
             <p style={{ 
               fontSize: '18px',
               marginBottom: '15px',
-              lineHeight: '1.5'
+              lineHeight: '1.5',
+              color: 'var(--text-primary)'
             }}>
               Upgrade now to unlock all premium features and supercharge your color workflow!
             </p>
@@ -226,116 +253,116 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
-      {!subscriptionStatus?.isSubscribed && (
-        <div style={{ textAlign: 'center', marginTop: '30px' }}>
-          <h3 style={{ marginBottom: '20px' }}>Available Plans</h3>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '20px',
-            flexWrap: 'wrap'
-          }}>
-            {/* Early Bird Plan */}
-            <div style={{
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              padding: '20px',
-              width: '300px',
-              textAlign: 'left',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '12px',
-                right: '-30px',
-                transform: 'rotate(45deg)',
-                backgroundColor: '#224D8F',
-                color: 'white',
-                padding: '5px 40px',
-                fontSize: '0.75rem',
-                fontWeight: 'bold'
-              }}>
-                POPULAR
+      {/* Always show Available Plans section */}
+      <div id="available-plans" style={{ textAlign: 'center', marginTop: '30px' }}>
+        <h3 style={{ 
+          marginBottom: '20px', 
+          color: 'var(--text-primary)', 
+          fontFamily: "'League Spartan', sans-serif",
+          fontSize: '1.5rem'
+        }}>Available Plans</h3>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '20px',
+          flexWrap: 'wrap'
+        }}>
+          {plans.map((plan, index) => (
+            <Paper
+              key={index}
+              elevation={3}
+              sx={{
+                bgcolor: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                width: { xs: '100%', sm: '45%', md: '300px' },
+                minHeight: '280px',
+                padding: '20px',
+                marginBottom: '20px',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-5px)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)'
+                }
+              }}
+            >
+              <div>
+                <h3 style={{ 
+                  marginBottom: '10px', 
+                  color: plan.name.includes('Pro') ? '#224D8F' : '#00805E',
+                  fontFamily: "'League Spartan', sans-serif",
+                  fontSize: '1.3rem'
+                }}>{plan.name}</h3>
+                <Typography variant="h5" sx={{ 
+                  marginBottom: '15px',
+                  fontWeight: 600
+                }}>
+                  {plan.price}
+                </Typography>
+                <Divider sx={{ marginBottom: '15px', borderColor: 'var(--border-color)' }} />
+                <div>
+                  {plan.features.map((feature, i) => (
+                    <Typography key={i} variant="body2" sx={{ 
+                      marginBottom: '8px',
+                      textAlign: 'left',
+                      paddingLeft: '20px',
+                      position: 'relative',
+                      '&::before': {
+                        content: '"✓"',
+                        position: 'absolute',
+                        left: '0',
+                        color: plan.name.includes('Pro') ? '#224D8F' : '#00805E',
+                      }
+                    }}>
+                      {feature}
+                    </Typography>
+                  ))}
+                </div>
               </div>
-              <h4 style={{ color: '#224D8F' }}>Early-Bird Plan</h4>
-              <p style={{ fontSize: '24px', fontWeight: 'bold', margin: '15px 0' }}>$5/month</p>
-              <ul style={{ marginBottom: '20px', paddingLeft: '20px' }}>
-                <li>Unlimited batch processing</li>
-                <li>Priority support</li>
-                <li>Early access to new features</li>
-                <li>Basic color management</li>
-              </ul>
-              <GlowButton 
-                onClick={() => handleSubscribe('Early-Bird Plan')}
-                style={{ 
-                  width: '100%',
-                  background: 'linear-gradient(45deg, #1565C0 30%, #42A5F5 90%)'
+              <Button
+                variant="contained"
+                onClick={() => startTransition(() => handleSubscribe(plan.name))}
+                sx={{
+                  marginTop: '15px',
+                  backgroundColor: plan.name.includes('Pro') ? '#224D8F' : '#00805E',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: plan.name.includes('Pro') ? '#1a3a6c' : '#00664b',
+                  }
                 }}
               >
-                Subscribe Now
-              </GlowButton>
-            </div>
-            
-            {/* Pro Plan */}
-            <div style={{
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              padding: '20px',
-              width: '300px',
-              textAlign: 'left',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '12px',
-                right: '-30px',
-                transform: 'rotate(45deg)',
-                backgroundColor: '#D50032',
-                color: 'white',
-                padding: '5px 40px',
-                fontSize: '0.75rem',
-                fontWeight: 'bold'
-              }}>
-                PREMIUM
-              </div>
-              <h4 style={{ color: '#D50032' }}>Pro Plan</h4>
-              <p style={{ fontSize: '24px', fontWeight: 'bold', margin: '15px 0' }}>$10/month</p>
-              <ul style={{ marginBottom: '20px', paddingLeft: '20px' }}>
-                <li>Everything in Early-Bird</li>
-                <li>Advanced color management</li>
-                <li>Custom export options</li>
-                <li>Dedicated support</li>
-                <li>Unlimited color catalogs</li>
-              </ul>
-              <GlowButton 
-                onClick={() => handleSubscribe('Pro Plan')}
-                style={{ 
-                  width: '100%',
-                  background: 'linear-gradient(45deg, #C62828 30%, #EF5350 90%)'
-                }}
-              >
-                Subscribe Now
-              </GlowButton>
-            </div>
-          </div>
+                {subscriptionStatus?.isSubscribed && 
+                 ((plan.name.includes('Early-Bird') && subscriptionStatus.tier === 'early-bird') || 
+                  (plan.name.includes('Pro') && subscriptionStatus.tier === 'pro')) 
+                  ? 'Current Plan' 
+                  : 'Subscribe Now'
+                }
+              </Button>
+            </Paper>
+          ))}
         </div>
-      )}
+      </div>
       
       {/* FAQ Section */}
-      <div style={{ marginTop: '60px', borderTop: '1px solid #e0e0e0', paddingTop: '40px' }}>
-        <h2 style={{ marginBottom: '30px', textAlign: 'center' }}>Frequently Asked Questions</h2>
+      <div style={{ 
+        marginTop: '60px', 
+        borderTop: '1px solid var(--border-color)', 
+        paddingTop: '40px',
+        color: 'var(--text-primary)'
+      }}>
+        <h2 style={{ marginBottom: '30px', textAlign: 'center', color: 'var(--text-primary)' }}>Frequently Asked Questions</h2>
         
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
           {/* FAQ Item 1 */}
           <div style={{ marginBottom: '25px' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#224D8F' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: 'var(--accent-color)' }}>
               What features are included in the free preview?
             </h3>
-            <p style={{ lineHeight: '1.5' }}>
+            <p style={{ lineHeight: '1.5', color: 'var(--text-secondary)' }}>
               The free preview includes basic image processing for single images, standard color selection, 
               and basic export options. Subscription plans unlock batch processing, advanced color management, 
               and premium support.
@@ -344,10 +371,10 @@ export default function SubscriptionPage() {
           
           {/* FAQ Item 2 */}
           <div style={{ marginBottom: '25px' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#224D8F' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: 'var(--accent-color)' }}>
               How do I cancel my subscription?
             </h3>
-            <p style={{ lineHeight: '1.5' }}>
+            <p style={{ lineHeight: '1.5', color: 'var(--text-secondary)' }}>
               You can cancel your subscription at any time from your account settings. Your subscription 
               benefits will continue until the end of your current billing period.
             </p>
@@ -355,10 +382,10 @@ export default function SubscriptionPage() {
           
           {/* FAQ Item 3 */}
           <div style={{ marginBottom: '25px' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#224D8F' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: 'var(--accent-color)' }}>
               Can I switch between subscription plans?
             </h3>
-            <p style={{ lineHeight: '1.5' }}>
+            <p style={{ lineHeight: '1.5', color: 'var(--text-secondary)' }}>
               Yes, you can upgrade or downgrade your subscription at any time. When upgrading, you'll 
               have immediate access to the new features. When downgrading, the change will take effect 
               at the start of your next billing cycle.
@@ -367,10 +394,10 @@ export default function SubscriptionPage() {
           
           {/* FAQ Item 4 */}
           <div style={{ marginBottom: '0' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#224D8F' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: 'var(--accent-color)' }}>
               Is there a discount for annual subscriptions?
             </h3>
-            <p style={{ lineHeight: '1.5' }}>
+            <p style={{ lineHeight: '1.5', color: 'var(--text-secondary)' }}>
               We're currently working on annual subscription options with special discounts. 
               Stay tuned for announcements about these new plans coming soon!
             </p>
