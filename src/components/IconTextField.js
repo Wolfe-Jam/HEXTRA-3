@@ -42,6 +42,7 @@ function IconTextField({
   isOptionEqualToValue,
   onOptionSelect,
   InputProps = {},
+  inputRef,
   ...rest
 }) {
   const handleReset = () => {
@@ -106,6 +107,7 @@ function IconTextField({
       renderInput={(params) => (
         <StyledTextField
           {...params}
+          inputRef={inputRef}
           placeholder={placeholder}
           onKeyDown={onKeyDown}
           InputProps={{
