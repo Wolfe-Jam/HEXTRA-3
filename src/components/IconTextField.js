@@ -16,6 +16,9 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
       'background-color',
       'box-shadow',
     ]),
+    '& input': {
+      color: theme.palette.mode === 'dark' ? '#FFFFFF' : 'rgba(0, 0, 0, 0.87)',
+    },
     '&:hover': {
       backgroundColor: theme.palette.mode === 'dark' ? '#1A1A1A' : '#FFFFFF', // Keep background
       borderColor: theme.palette.mode === 'dark' ? '#555555' : '#C0C0C0',
@@ -88,7 +91,7 @@ function IconTextField({
     <InputAdornment position="start">
       {React.cloneElement(startIcon, {
         sx: {
-          color: 'text.secondary',
+          color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
           marginRight: '8px',
         },
       })}
