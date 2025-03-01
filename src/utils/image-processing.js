@@ -4,6 +4,9 @@ import { Buffer } from 'buffer';
 // Handle different import formats
 const Jimp = JimpModule.default || JimpModule;
 
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+
 // Luminance calculation methods
 export const LUMINANCE_METHODS = {
   NATURAL: {
@@ -34,6 +37,12 @@ export const hexToRgb = (hex) => {
 
 // Process image with color
 export const processImage = async (imageUrl, color) => {
+  // Early return with mock data URL for non-browser environments (like during SSR/build)
+  if (!isBrowser) {
+    console.log('Image processing skipped - non-browser environment');
+    return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==`;
+  }
+
   const cacheKey = `${imageUrl}-${color}`;
   
   console.log(`Processing image with color: ${color}`);

@@ -47,7 +47,11 @@ const DEFAULT_COLORS = [
 // Improved color wheel with accurate selection and visual feedback - v2.2.3
 const VERSION = '2.2.3';
 
+// Browser environment check for SSR compatibility
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+
 function App() {
+  console.log('App: Starting initialization...');
   // 1. Basic hooks
   const navigate = useNavigate();
   // eslint-disable-next-line no-unused-vars
@@ -521,8 +525,7 @@ function App() {
         sx={{
           height: '100vh',
           display: 'flex',
-          alignItems: "center", justifyContent: "flex-start",
-          justifyContent: 'center',
+          alignItems: "center",
           background: '#000000'
         }}
       >
@@ -545,8 +548,7 @@ function App() {
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: "center", justifyContent: "flex-start",
-          justifyContent: 'center',
+          alignItems: "center",
           background: '#000000'
         }}
       >
@@ -695,7 +697,7 @@ function App() {
             {/* Section C: Grayscale Tool Bar */}
             <Box sx={{ 
               display: 'flex',
-              alignItems: "center", justifyContent: "flex-start",
+              alignItems: "center",
               gap: 2,
               width: '100%',
               mb: 1,
@@ -709,7 +711,7 @@ function App() {
                 whiteSpace: 'nowrap',
                 width: '120px',  
                 display: 'flex',
-                alignItems: "center", justifyContent: "flex-start",
+                alignItems: "center",
                 gap: 1
               }}>
                 <Box component="span" sx={{ flexShrink: 0 }}>GRAY Value:</Box>
@@ -733,7 +735,7 @@ function App() {
                 background: 'linear-gradient(to right, #000000, #FFFFFF)',
                 overflow: 'hidden',
                 display: 'flex',
-                alignItems: "center", justifyContent: "flex-start",
+                alignItems: "center",
                 px: 1
               }}>
                 <Slider
@@ -782,7 +784,7 @@ function App() {
               display: 'flex',
               flexWrap: 'wrap',  
               gap: 2,
-              alignItems: "center", justifyContent: "flex-start",
+              alignItems: "center",
               width: '100%',
               pl: '40px',  
               '@media (max-width: 532px)': {
@@ -803,7 +805,7 @@ function App() {
                 whiteSpace: 'nowrap',
                 width: '140px',  
                 display: 'flex',
-                alignItems: "center", justifyContent: "flex-start",
+                alignItems: "center",
                 gap: 1
               }}>
                 <Box component="span" sx={{ flexShrink: 0 }}>RGB:</Box>
@@ -932,14 +934,14 @@ function App() {
           <Box sx={{ 
             display: 'flex', 
             gap: 2,
-            alignItems: "center", justifyContent: "flex-start",
+            alignItems: "center",
             justifyContent: 'center', 
             mt: 1,
             mb: 2,
             width: '100%',
             '@media (max-width: 600px)': {
               flexDirection: 'column',
-              alignItems: "center", justifyContent: "flex-start", 
+              alignItems: "center",
               '& > button': {
                 width: '110px', 
                 alignSelf: 'center'
@@ -1006,7 +1008,7 @@ function App() {
             mt: 2,
             display: 'flex',
             justifyContent: 'center',
-            alignItems: "center", justifyContent: "flex-start",
+            alignItems: "center",
             minHeight: '200px',
             width: '100%',
             maxWidth: '800px', 
@@ -1036,7 +1038,7 @@ function App() {
                 borderRadius: '50%',
                 padding: 0,
                 display: 'flex',
-                alignItems: "center", justifyContent: "flex-start",
+                alignItems: "center",
                 justifyContent: 'center'
               }}
             >
@@ -1055,7 +1057,7 @@ function App() {
             <Box sx={{ 
               display: 'flex',
               justifyContent: 'flex-end',
-              alignItems: "center", justifyContent: "flex-start",
+              alignItems: "center",
               mb: 2
             }}>
               <Box sx={{ 
@@ -1089,7 +1091,7 @@ function App() {
               <Box sx={{ 
                 display: 'flex',
                 justifyContent: 'center',
-                alignItems: "center", justifyContent: "flex-start",
+                alignItems: "center",
                 gap: 4,
                 mb: 3
               }}>
@@ -1259,7 +1261,7 @@ function App() {
               display: 'flex',
               flexDirection: 'column',
               gap: 2,
-              alignItems: "center", justifyContent: "flex-start",
+              alignItems: "center",
               p: 3,
               borderRadius: '8px',
               bgcolor: 'var(--bg-secondary)',

@@ -3,8 +3,19 @@ import React, { useEffect } from 'react';
 // Pre-optimized default t-shirt image 
 const DEFAULT_TSHIRT_URL = '/images/default-tshirt.webp';
 
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+
 export default function DefaultTshirt({ onLoad }) {
   useEffect(() => {
+    // Skip in non-browser environments (SSR/build)
+    if (!isBrowser) {
+      console.log('DefaultTshirt: Skipping image load in non-browser environment');
+      // Still need to call onLoad with the URL to prevent UI from waiting
+      onLoad(DEFAULT_TSHIRT_URL);
+      return;
+    }
+    
     // Create a new image to test loading
     const img = new Image();
     
