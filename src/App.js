@@ -70,6 +70,7 @@ function App() {
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState(null);
   const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
@@ -154,9 +155,10 @@ function App() {
     }
   }, []);
 
-  const applyColor = useCallback((trigger = 'manual') => {
-    console.log(`APPLY COLOR TRIGGERED: ${trigger}`, {
-      selectedColor, 
+  const applyColor = useCallback((trigger) => {
+    console.log('applyColor called with:', {
+      trigger,
+      selectedColor,
       workingImageUrl: workingImageUrl?.substring(0, 30),
       imageLoaded
     });
@@ -171,38 +173,41 @@ function App() {
       return;
     }
     
-    // Show visual feedback
-    setColorApplied(true);
-    setTimeout(() => setColorApplied(false), 500);
-    
     // Set processing state
     setIsProcessing(true);
     
     // Force color to be the hex value, not the 'apply' trigger
     const colorToApply = selectedColor;
-    console.log('Applying color:', colorToApply);
+    console.log('Starting image processing with color:', colorToApply);
     
     // IMPORTANT: Use the direct processImage function, not the debounced version
     try {
+      console.log('Processing image with dimensions:', {
+        imageUrl: workingImageUrl ? 'present' : 'missing',
+        originalImageUrl: originalImageUrl ? 'present' : 'missing'
+      });
+      
       processImage(workingImageUrl, colorToApply)
         .then(processedUrl => {
           console.log('SUCCESS: Image processed with color', colorToApply);
           setWorkingProcessedUrl(processedUrl);
           setCanDownload(true);
-          setIsProcessing(false);
         })
         .catch(error => {
-          console.error('ERROR: Failed to process image with color', error);
+          console.error('ERROR: Image processing failed:', error);
+          // Don't reset to original image automatically, just keep current state
+          setCanDownload(true);
+        })
+        .finally(() => {
+          console.log('Processing complete (success or error)');
           setIsProcessing(false);
+          focusHexInput();
         });
-    } catch (error) {
-      console.error('CRITICAL ERROR in applyColor:', error);
+    } catch (e) {
+      console.error('FATAL ERROR in image processing:', e);
       setIsProcessing(false);
     }
-    
-    // Keep focus on hex input
-    focusHexInput();
-  }, [selectedColor, workingImageUrl, imageLoaded, focusHexInput]);
+  }, [selectedColor, workingImageUrl, originalImageUrl, imageLoaded, focusHexInput]);
 
   const handleColorWheelChange = useCallback((color) => {
     // Ensure we have a valid hex color with # prefix
@@ -300,21 +305,49 @@ function App() {
   }, [applyColor]);
 
   const handleImageUpload = useCallback(async (file) => {
-    if (!file) return;
+    if (!file) {
+      console.log('No file provided to handleImageUpload');
+      return;
+    }
+    
+    // Log file details for debugging
+    console.log('Image upload initiated with file:', {
+      name: file.name,
+      type: file.type,
+      size: `${(file.size / 1024).toFixed(2)} KB`
+    });
+    
+    // Set loading state first
+    setIsProcessing(true);
     
     try {
+      // Create object URL immediately
+      console.log('Creating object URL for uploaded file');
       const url = URL.createObjectURL(file);
+      
+      // Store both original and working image URLs
+      console.log('Setting image URLs in state');
+      setOriginalImageUrl(url);
       setWorkingImageUrl(url);
+      setWorkingProcessedUrl(null); // Clear any previous processed image
+      setCanDownload(false); // Reset download state for new image
+      
+      // Set image as loaded AFTER URLs are set
+      console.log('Image successfully loaded');
       setImageLoaded(true);
       
-      if (selectedColor) {
-        await applyColor(selectedColor);
-      }
+      // Do NOT automatically apply color
+      // if (selectedColor) {
+      //   await applyColor(selectedColor);
+      // }
     } catch (err) {
-      console.error('Failed to load image:', err);
+      console.error('ERROR in handleImageUpload:', err);
       setImageLoaded(false);
+    } finally {
+      // Always ensure processing state is reset
+      setIsProcessing(false);
     }
-  }, [applyColor, selectedColor]);
+  }, []);  // Remove dependencies on applyColor and selectedColor
 
   const handleLoadUrl = useCallback(async () => {
     if (!urlInput.trim()) {
@@ -322,14 +355,21 @@ function App() {
       return;
     }
 
+    console.log('Attempting to load image from URL:', urlInput);
+    setIsProcessing(true);
+
     try {
+      console.log('Fetching image from URL');
       const response = await fetch(urlInput);
       const blob = await response.blob();
-      const file = new File([blob], 'image.png', { type: blob.type });
+      const file = new File([blob], 'image-from-url.png', { type: blob.type });
+      
+      console.log('Image fetched successfully, creating file object');
+      // Since handleImageUpload now handles setting isProcessing false, we don't need to handle it here
       await handleImageUpload(file);
-      setUrlInput('');
     } catch (err) {
-      console.error('Failed to load image from URL:', err);
+      console.error('ERROR loading image from URL:', err);
+      setIsProcessing(false); // Make sure to reset processing state on error
     }
   }, [handleImageUpload, urlInput]);
 
@@ -493,6 +533,20 @@ function App() {
         setActiveCatalog('GILDAN_64000');
     }
   }, []);
+
+  // Function to reset image to original state
+  const handleResetImage = useCallback(() => {
+    console.log('Resetting image to original state');
+    if (originalImageUrl) {
+      console.log('Restoring original image');
+      setWorkingProcessedUrl(null);
+      setWorkingImageUrl(originalImageUrl);
+      // We don't need to set canDownload to false since the user might want to download 
+      // the original image too
+    } else {
+      console.log('No original image available to reset to');
+    }
+  }, [originalImageUrl]);
 
   // 6. Effect hooks
   useEffect(() => {
@@ -864,11 +918,11 @@ function App() {
                     return;
                   }
                   
-                  // Visual feedback
+                  // Visual feedback - only for Apply button
                   setColorApplied(true);
                   setTimeout(() => setColorApplied(false), 500);
                   
-                  // Set processing state
+                  // Set processing state - make this independent from other animations
                   setIsProcessing(true);
                   
                   // Direct image processing with proper error handling
@@ -902,6 +956,23 @@ function App() {
                 }}
               >
                 APPLY
+              </GlowTextButton>
+              {/* Reset Button */}
+              <GlowTextButton
+                id="reset-button"
+                variant="contained"
+                onClick={handleResetImage}
+                disabled={isProcessing || !imageLoaded || !originalImageUrl}
+                sx={{
+                  width: '110px',
+                  transition: 'all 0.2s ease',
+                  '@media (max-width: 532px)': {
+                    width: '110px',
+                    marginTop: '8px'
+                  }
+                }}
+              >
+                RESET
               </GlowTextButton>
             </Box>
           </Box>
@@ -996,8 +1067,7 @@ function App() {
               variant="contained"
               onClick={handleLoadUrl}
               sx={{ 
-                width: '110px',
-                flexShrink: 0
+                width: '110px'
               }}
             >
               USE URL
@@ -1017,6 +1087,55 @@ function App() {
             maxWidth: '800px', 
             overflow: 'hidden'
           }}>
+            {/* Processing overlay - positioned at the top of the main image */}
+            {isProcessing && (
+              <Box
+                position="absolute"
+                top="10px" 
+                left="50%"
+                sx={{
+                  transform: 'translateX(-50%)',
+                  bgcolor: 'rgba(0, 0, 0, 0.85)',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: "center",
+                  justifyContent: 'center',
+                  zIndex: 999,
+                  borderRadius: 2,
+                  padding: 2,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+                  maxWidth: '300px',
+                  minWidth: '200px',
+                }}
+              >
+                <CircularProgress size={30} thickness={4} sx={{ mr: 2 }} />
+                <Box>
+                  <Typography variant="body1" color="white">
+                    {batchStatus === 'processing' ? 'Processing Images...' : 'Applying Color...'}
+                  </Typography>
+                  {batchProgress > 0 && (
+                    <Box sx={{ width: '100%', mt: 1 }}>
+                      <Typography variant="caption" color="white">
+                        {batchProgress}% Complete
+                      </Typography>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={batchProgress} 
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: 'var(--border-subtle)',
+                          '& .MuiLinearProgress-bar': {
+                            backgroundColor: 'var(--glow-color)',
+                            borderRadius: 4
+                          }
+                        }}
+                      />
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            )}
             <DefaultTshirt onLoad={handleDefaultImageLoad} />
             <img
               src={workingProcessedUrl || workingImageUrl}
@@ -1568,53 +1687,6 @@ function App() {
           2025 HEXTRA Color System v. All rights reserved.
         </Typography>
       </Box>
-
-      {isProcessing && (
-        <Box
-          position="fixed"
-          top="auto"
-          left="auto"
-          right={20}
-          bottom={20}
-          bgcolor="rgba(0, 0, 0, 0.8)"
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          justifyContent="center"
-          zIndex={9999}
-          borderRadius={2}
-          padding={2}
-          boxShadow="0 4px 20px rgba(0,0,0,0.25)"
-          maxWidth="300px"
-        >
-          <CircularProgress size={30} thickness={4} sx={{ mr: 2 }} />
-          <Box>
-            <Typography variant="body1" color="white">
-              {batchStatus === 'processing' ? 'Processing Images...' : 'Applying Color...'}
-            </Typography>
-            {batchProgress > 0 && (
-              <Box sx={{ width: '100%', mt: 1 }}>
-                <Typography variant="caption" color="white">
-                  {batchProgress}% Complete
-                </Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={batchProgress} 
-                  sx={{
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: 'var(--border-subtle)',
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: 'var(--glow-color)',
-                      borderRadius: 4
-                    }
-                  }}
-                />
-              </Box>
-            )}
-          </Box>
-        </Box>
-      )}
     </Box>
   );
 
