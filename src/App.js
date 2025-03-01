@@ -10,7 +10,8 @@ import {
   CircularProgress, 
   Slider, 
   LinearProgress, 
-  Tooltip
+  Tooltip,
+  IconButton
 } from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -33,6 +34,10 @@ import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { useTheme } from './context/ThemeContext';
 import JSZip from 'jszip';
 import Wheel from './components/Wheel';
+import RestoreIcon from '@mui/icons-material/Restore';
+import GlowIconButton from './components/GlowIconButton';
+import SearchIcon from '@mui/icons-material/Search';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 // Constants
 const DEFAULT_COLOR = '#FED141';
@@ -74,7 +79,7 @@ function App() {
   const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
-  const [urlInput, setUrlInput] = useState('');
+  const [urlInput, setUrlInput] = useState('/images/default-tshirt.webp');
   const { theme, toggleTheme } = useTheme();
   const [lastClickColor, setLastClickColor] = useState(null);
   const [lastClickTime, setLastClickTime] = useState(0);
@@ -349,9 +354,12 @@ function App() {
     }
   }, []);  // Remove dependencies on applyColor and selectedColor
 
+  const handleSearchTshirts = useCallback(() => {
+    window.open('https://www.google.com/search?q=blank+white+t-shirt&tbm=isch', '_blank');
+  }, []);
+
   const handleLoadUrl = useCallback(async () => {
     if (!urlInput.trim()) {
-      window.open('https://www.google.com/search?q=blank+white+t-shirt&tbm=isch', '_blank');
       return;
     }
 
@@ -509,15 +517,17 @@ function App() {
     }
   }, []);
 
+  const DEFAULT_TSHIRT_URL = '/images/default-tshirt.webp';
+
   const handleDefaultImageLoad = useCallback((urlOrEvent) => {
     // Handle both event objects and direct URL strings
     const imageUrl = urlOrEvent?.target?.src || urlOrEvent;
     
     if (imageUrl) {
       setWorkingImageUrl(imageUrl);
-      setWorkingProcessedUrl(imageUrl);
+      setWorkingProcessedUrl(null); // Don't set processed URL for default image
       setImageLoaded(true);
-      setCanDownload(true);
+      setCanDownload(false); // Default image shouldn't be downloadable until processed
     }
   }, []);
 
@@ -534,19 +544,25 @@ function App() {
     }
   }, []);
 
-  // Function to reset image to original state
+  // Reset image to original (pre-color) state
   const handleResetImage = useCallback(() => {
     console.log('Resetting image to original state');
     if (originalImageUrl) {
       console.log('Restoring original image');
-      setWorkingProcessedUrl(null);
       setWorkingImageUrl(originalImageUrl);
-      // We don't need to set canDownload to false since the user might want to download 
-      // the original image too
+      setWorkingProcessedUrl(null);
+      console.log('Image reset to original');
+      setCanDownload(false);
+    } else if (imageLoaded) {
+      // Default image reset case - revert to default t-shirt
+      console.log('Resetting to default t-shirt');
+      setWorkingImageUrl(DEFAULT_TSHIRT_URL);
+      setWorkingProcessedUrl(null);
+      setCanDownload(false);
     } else {
       console.log('No original image available to reset to');
     }
-  }, [originalImageUrl]);
+  }, [originalImageUrl, imageLoaded]);
 
   // 6. Effect hooks
   useEffect(() => {
@@ -716,7 +732,7 @@ function App() {
           <Box sx={{ mb: 0 }}>
             {/* Section B: Title and RGB Color Disc */}
             <Typography 
-              variant="h6" 
+              variant="h5" 
               sx={{ 
                 textAlign: 'center', 
                 mb: 1,
@@ -957,23 +973,23 @@ function App() {
               >
                 APPLY
               </GlowTextButton>
-              {/* Reset Button */}
-              <GlowTextButton
-                id="reset-button"
-                variant="contained"
-                onClick={handleResetImage}
-                disabled={isProcessing || !imageLoaded || !originalImageUrl}
-                sx={{
-                  width: '110px',
-                  transition: 'all 0.2s ease',
-                  '@media (max-width: 532px)': {
-                    width: '110px',
-                    marginTop: '8px'
-                  }
-                }}
-              >
-                RESET
-              </GlowTextButton>
+              {/* Reset Button - now an arrow icon */}
+              <Tooltip title="Reset to original image">
+                <span>
+                  <GlowIconButton
+                    id="reset-button"
+                    size="medium"
+                    onClick={handleResetImage}
+                    disabled={isProcessing || !imageLoaded}
+                    sx={{
+                      ml: 1,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <RestoreIcon />
+                  </GlowIconButton>
+                </span>
+              </Tooltip>
             </Box>
           </Box>
 
@@ -988,7 +1004,7 @@ function App() {
 
           {/* Section D: Main Image Window Title */}
           <Typography 
-            variant="h2" 
+            variant="h6" 
             sx={{ 
               mb: 2,  
               textAlign: 'center',
@@ -1058,19 +1074,36 @@ function App() {
                 onKeyDown={handleUrlKeyPress}
                 startIcon={<LinkIcon />}
                 hasReset
-                onReset={() => setUrlInput('')}
+                onReset={() => setUrlInput(DEFAULT_TSHIRT_URL)}
                 sx={{ width: '100%' }}
+                InputProps={{
+                  endAdornment: (
+                    <IconButton 
+                      onClick={handleLoadUrl}
+                      size="small"
+                      sx={{ 
+                        color: theme => theme.palette.primary.main,
+                        '&:hover': {
+                          bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                        }
+                      }}
+                    >
+                      <ArrowForwardIcon />
+                    </IconButton>
+                  )
+                }}
               />
             </Box>
 
             <GlowTextButton
               variant="contained"
-              onClick={handleLoadUrl}
+              onClick={handleSearchTshirts}
               sx={{ 
                 width: '110px'
               }}
+              startIcon={<SearchIcon />}
             >
-              USE URL
+              FIND
             </GlowTextButton>
           </Box>
 
@@ -1139,11 +1172,20 @@ function App() {
             <DefaultTshirt onLoad={handleDefaultImageLoad} />
             <img
               src={workingProcessedUrl || workingImageUrl}
-              alt="Working"
+              alt={workingProcessedUrl ? "Processed Image" : "Original Image"}
               style={{
                 maxWidth: '100%',
                 height: 'auto',
                 display: 'block' 
+              }}
+              onError={(e) => {
+                console.error("Error loading image:", e);
+                // If there's an error, try to fall back to the default t-shirt
+                if (workingImageUrl !== DEFAULT_TSHIRT_URL) {
+                  console.log("Falling back to default t-shirt due to image load error");
+                  setWorkingImageUrl(DEFAULT_TSHIRT_URL);
+                  setWorkingProcessedUrl(null);
+                }
               }}
             />
             {/* Download button using GlowButton */}
@@ -1324,7 +1366,7 @@ function App() {
           }}>
             {/* MESMERIZE Section Title */}
             <Typography 
-              variant="h2" 
+              variant="h6" 
               sx={{ 
                 mb: 1, // Changed from mb: 4 to mb: 1
                 textAlign: 'center',
@@ -1590,7 +1632,7 @@ function App() {
                   maxWidth: '800px',
                   mt: 3
                 }}>
-                  <Typography variant="subtitle2" sx={{ 
+                  <Typography variant="h6" sx={{ 
                     mb: 2, 
                     textAlign: 'center',
                     color: 'var(--text-secondary)',
