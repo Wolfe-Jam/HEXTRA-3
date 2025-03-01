@@ -53,6 +53,7 @@ const SwatchDropdownField = forwardRef(({
   // Handle input change
   const handleInputChange = (event, newValue) => {
     if (event && event.type === 'change') {
+      console.log('Color input changed to:', newValue);
       setInputValue(newValue);
       onChange(event);
     }
@@ -61,7 +62,8 @@ const SwatchDropdownField = forwardRef(({
   // Handle key down events
   const handleKeyDown = (event) => {
     if (event.key === 'Enter' && onEnterPress) {
-      onEnterPress();
+      console.log('ENTER pressed in color input - applying color');
+      onEnterPress('enter');
       event.preventDefault();
     }
   };
@@ -71,6 +73,7 @@ const SwatchDropdownField = forwardRef(({
     if (!option) return;
     
     const color = typeof option === 'string' ? option : option;
+    console.log('Color selected from dropdown:', color);
     if (onDropdownSelect) {
       onDropdownSelect(color);
     }
@@ -78,6 +81,7 @@ const SwatchDropdownField = forwardRef(({
 
   // Handle reset
   const handleReset = () => {
+    console.log('Color reset requested');
     if (onReset) {
       onReset();
     }

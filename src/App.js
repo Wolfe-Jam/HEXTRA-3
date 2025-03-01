@@ -107,17 +107,24 @@ function App() {
   const debouncedProcessImage = useMemo(
     () => debounce(async (url, color) => {
       if (!url || !color) {
+        console.log('Missing URL or color for image processing', { url: !!url, color });
         setIsProcessing(false);
         return;
       }
+      
+      console.log(`Debounced processing: URL: ${url.substring(0, 30)}..., Color: ${color}`);
+      setIsProcessing(true);
+      
       try {
+        console.log('Calling processImage...');
         const processedUrl = await processImage(url, color);
+        console.log('Processing complete, updating UI');
         setWorkingProcessedUrl(processedUrl);
         setCanDownload(true);
+        setIsProcessing(false);
       } catch (error) {
-        console.error('Error processing image:', error);
+        console.error('Error in debouncedProcessImage:', error);
         setCanDownload(false);
-      } finally {
         setIsProcessing(false);
       }
     }, 150),
@@ -143,35 +150,55 @@ function App() {
     }
   }, []);
 
-  const applyColor = useCallback(() => {
-    try {
-      // Only apply color if we have a valid hex color
-      if (selectedColor && selectedColor.match(/^#[0-9A-F]{6}$/i) && workingImageUrl) {
-        console.log('Applying color:', selectedColor);
-        
-        // Trigger image processing with the selected color
-        setIsProcessing(true);
-        debouncedProcessImage(workingImageUrl, selectedColor);
-        
-        // Show visual feedback that color was applied
-        setColorApplied(true);
-        
-        // Reset the visual feedback after a delay
-        setTimeout(() => {
-          setColorApplied(false);
-        }, 500);
-        
-        // Ensure hex input stays focused
-        focusHexInput();
-      } else {
-        console.log('Cannot apply color:', selectedColor);
-      }
-    } catch (err) {
-      console.error('Error applying color:', err);
-      setIsProcessing(false);
-      setColorApplied(false);
+  const applyColor = useCallback((trigger = 'manual') => {
+    console.log(`APPLY COLOR TRIGGERED: ${trigger}`, {
+      selectedColor, 
+      workingImageUrl: workingImageUrl?.substring(0, 30),
+      imageLoaded
+    });
+    
+    // Only proceed if we have a color and an image
+    if (!selectedColor || !workingImageUrl || !imageLoaded) {
+      console.error('Cannot apply color - missing requirements', {
+        hasColor: !!selectedColor, 
+        hasImage: !!workingImageUrl,
+        imageLoaded
+      });
+      return;
     }
-  }, [debouncedProcessImage, focusHexInput, selectedColor, workingImageUrl]);
+    
+    // Show visual feedback
+    setColorApplied(true);
+    setTimeout(() => setColorApplied(false), 500);
+    
+    // Set processing state
+    setIsProcessing(true);
+    
+    // Force color to be the hex value, not the 'apply' trigger
+    const colorToApply = selectedColor;
+    console.log('Applying color:', colorToApply);
+    
+    // IMPORTANT: Use the direct processImage function, not the debounced version
+    try {
+      processImage(workingImageUrl, colorToApply)
+        .then(processedUrl => {
+          console.log('SUCCESS: Image processed with color', colorToApply);
+          setWorkingProcessedUrl(processedUrl);
+          setCanDownload(true);
+          setIsProcessing(false);
+        })
+        .catch(error => {
+          console.error('ERROR: Failed to process image with color', error);
+          setIsProcessing(false);
+        });
+    } catch (error) {
+      console.error('CRITICAL ERROR in applyColor:', error);
+      setIsProcessing(false);
+    }
+    
+    // Keep focus on hex input
+    focusHexInput();
+  }, [selectedColor, workingImageUrl, imageLoaded, focusHexInput]);
 
   const handleColorWheelChange = useCallback((color) => {
     // Ensure we have a valid hex color with # prefix
@@ -210,7 +237,7 @@ function App() {
     focusHexInput();
     
     if (!isDragging.current) {
-      applyColor();
+      applyColor('color-change');
     }
   }, [applyColor, focusHexInput]);
 
@@ -222,7 +249,7 @@ function App() {
     isDragging.current = false;
     
     // Apply the color when dragging ends
-    applyColor();
+    applyColor('drag-end');
   }, [applyColor]);
 
   const handleDropdownSelect = useCallback((color) => {
@@ -253,7 +280,7 @@ function App() {
     }
     
     // Apply the selected color immediately
-    applyColor();
+    applyColor('dropdown');
     
     // Try to focus the hex input
     try {
@@ -329,7 +356,7 @@ function App() {
     
     // If this is another click on the same color within the time window, apply the color
     if (lastClickColor === color && now - lastClickTime < 500) {
-      applyColor();
+      applyColor('wheel-double-click');
     }
     
     // Update the last click info
@@ -464,12 +491,6 @@ function App() {
   }, []);
 
   // 6. Effect hooks
-  useEffect(() => {
-    if (selectedColor && imageLoaded) {
-      applyColor(selectedColor);
-    }
-  }, [selectedColor, imageLoaded, applyColor]);
-
   useEffect(() => {
     console.log('Subscription check bypassed for local development');
   }, []);
@@ -664,7 +685,7 @@ function App() {
                 color={selectedColor}
                 onChange={handleColorWheelChange}
                 onClick={handleWheelClick}
-                onDoubleClick={() => applyColor()}
+                onDoubleClick={() => applyColor('double-click')}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 isDragging={isDragging.current}
@@ -813,7 +834,7 @@ function App() {
                 ref={hexInputRef}
                 value={selectedColor}
                 onChange={handleHexInputChange}
-                onEnterPress={applyColor}
+                onEnterPress={(trigger) => applyColor(trigger)}
                 onDropdownSelect={handleDropdownSelect}
                 onReset={resetColor}
                 label="HEX"
@@ -828,7 +849,41 @@ function App() {
               <GlowTextButton
                 id="apply-button"
                 variant="contained"
-                onClick={() => applyColor(selectedColor)}
+                onClick={() => {
+                  console.log('Apply button clicked with color:', selectedColor);
+                  
+                  // Validate requirements
+                  if (!selectedColor || !workingImageUrl || !imageLoaded) {
+                    console.error('Cannot apply color - missing requirements', {
+                      hasColor: !!selectedColor, 
+                      hasWorkingImage: !!workingImageUrl,
+                      imageLoaded
+                    });
+                    return;
+                  }
+                  
+                  // Visual feedback
+                  setColorApplied(true);
+                  setTimeout(() => setColorApplied(false), 500);
+                  
+                  // Set processing state
+                  setIsProcessing(true);
+                  
+                  // Direct image processing with proper error handling
+                  processImage(workingImageUrl, selectedColor)
+                    .then(processedUrl => {
+                      console.log('Image successfully processed with color:', selectedColor);
+                      setWorkingProcessedUrl(processedUrl);
+                      setCanDownload(true);
+                      setIsProcessing(false);
+                    })
+                    .catch(error => {
+                      console.error('ERROR processing image:', error);
+                      setIsProcessing(false);
+                      // Reset the processed URL to the original image as fallback
+                      setWorkingProcessedUrl(workingImageUrl);
+                    });
+                }}
                 disabled={isProcessing || !imageLoaded}
                 sx={{
                   width: '110px',
@@ -1043,7 +1098,7 @@ function App() {
                   onChange={(e) => {
                     setEnhanceEffect(e.target.checked);
                     if (imageLoaded) {
-                      applyColor();
+                      applyColor('enhance-toggle');
                     }
                   }}
                   label="Enhanced"
