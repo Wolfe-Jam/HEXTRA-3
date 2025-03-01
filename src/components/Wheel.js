@@ -55,12 +55,13 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     const value = max;
     
     // Convert HSV to wheel coordinates
-    const angle = (hue / 360) * (2 * Math.PI);
+    // Adjust angle to match the rotated color wheel (-90 degrees)
+    const angle = ((hue + 90) % 360 / 360) * (2 * Math.PI);
     const distance = saturation * radius;
     
     // Calculate x,y position on wheel
     const x = centerX + Math.cos(angle) * distance;
-    const y = centerY - Math.sin(angle) * distance;
+    const y = centerY + Math.sin(angle) * distance;
     
     // Set cursor position
     cursorPos.current = { x, y };
@@ -81,11 +82,11 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     // Draw color wheel
     drawWheel(ctx);
     
-    // Set the initial default color - always start with yellow (#FED141)
+    // Set the initial color - start with red (#FF0000) if no color is provided
     if (color && color.startsWith('#')) {
       setColor(color);
     } else {
-      setColor('#FED141');
+      setColor('#FF0000');
     }
   }, [width, height]);
 
@@ -94,23 +95,150 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     const centerY = height / 2;
     const radius = Math.min(width, height) / 2 - 5;
     
-    // Draw color wheel using HSL color space
-    for (let angle = 0; angle < 360; angle++) {
-      const startAngle = (angle - 0.5) * (Math.PI / 180);
-      const endAngle = (angle + 0.5) * (Math.PI / 180);
-      
-      for (let saturation = 0; saturation < 100; saturation++) {
-        const gradientRadius = saturation * (radius / 100);
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, gradientRadius, startAngle, endAngle);
-        ctx.lineWidth = 1.5;
+    // Create color wheel using image data for pixel-perfect results
+    const imageData = ctx.createImageData(width, height);
+    const data = imageData.data;
+    
+    // For each pixel in the canvas
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        // Calculate distance from center and angle
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Calculate color based on hue (angle) and saturation
-        const hue = angle;
-        const lightness = 50; // Fixed lightness for a balanced color wheel
-        ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-        ctx.stroke();
+        // Only color pixels within the wheel radius
+        if (distance <= radius) {
+          // Calculate angle in degrees (0-360)
+          let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+          angle = (angle + 360) % 360;
+          
+          // Rotate by 90 degrees to put red at 12 o'clock
+          // This moves red from 3 o'clock to 12 o'clock position
+          const hue = (angle + 90) % 360;
+          
+          // Saturation increases linearly with distance from center
+          const saturation = distance / radius;
+          
+          // Always full brightness/value
+          const value = 1.0;
+          
+          // Convert HSV to RGB
+          let [r, g, b] = hsvToRgb(hue, saturation, value);
+          
+          // Set the pixel in the image data
+          const pixelIndex = (y * width + x) * 4;
+          data[pixelIndex] = r;     // Red
+          data[pixelIndex + 1] = g; // Green
+          data[pixelIndex + 2] = b; // Blue
+          data[pixelIndex + 3] = 255; // Alpha (fully opaque)
+        }
       }
+    }
+    
+    // Put the image data onto the canvas
+    ctx.putImageData(imageData, 0, 0);
+  };
+  
+  // Efficient HSV to RGB conversion
+  const hsvToRgb = (h, s, v) => {
+    // Ensure valid input ranges
+    h = h % 360;
+    s = Math.max(0, Math.min(1, s));
+    v = Math.max(0, Math.min(1, v));
+    
+    if (s === 0) {
+      // Achromatic (grey)
+      const grey = Math.round(v * 255);
+      return [grey, grey, grey];
+    }
+    
+    h /= 60; // sector 0 to 5
+    const i = Math.floor(h);
+    const f = h - i; // factorial part of h
+    const p = v * (1 - s);
+    const q = v * (1 - s * f);
+    const t = v * (1 - s * (1 - f));
+    
+    let r, g, b;
+    switch (i % 6) {
+      case 0: r = v; g = t; b = p; break;
+      case 1: r = q; g = v; b = p; break;
+      case 2: r = p; g = v; b = t; break;
+      case 3: r = p; g = q; b = v; break;
+      case 4: r = t; g = p; b = v; break;
+      case 5: r = v; g = p; b = q; break;
+    }
+    
+    return [
+      Math.round(r * 255),
+      Math.round(g * 255),
+      Math.round(b * 255)
+    ];
+  };
+
+  const getColorFromPosition = (x, y) => {
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas) return '#FF0000'; // Default to red
+      
+      const ctx = canvas.getContext('2d');
+      
+      // Store current cursor position
+      cursorPos.current = { x, y };
+      
+      // Get the center of the wheel
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(width, height) / 2 - 5;
+      
+      // Calculate distance from center
+      let dx = x - centerX;
+      let dy = y - centerY;
+      let distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+      
+      // If outside the wheel radius, constrain to edge
+      if (distanceFromCenter > radius) {
+        // Normalize the vector and scale to radius
+        const angle = Math.atan2(dy, dx);
+        dx = Math.cos(angle) * radius;
+        dy = Math.sin(angle) * radius;
+        
+        // Update cursor position and distance
+        x = Math.round(centerX + dx);
+        y = Math.round(centerY + dy);
+        cursorPos.current = { x, y };
+        distanceFromCenter = radius;
+      }
+      
+      // Calculate angle in degrees (0-360)
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      angle = (angle + 360) % 360;
+      
+      // Rotate by 90 degrees to put red at 12 o'clock
+      const hue = (angle + 90) % 360;
+      
+      // Saturation is proportional to distance from center
+      const saturation = distanceFromCenter / radius;
+      
+      // Calculate color from HSV
+      const [r, g, b] = hsvToRgb(hue, saturation, 1.0);
+      
+      // Clear canvas and redraw wheel with cursor
+      ctx.clearRect(0, 0, width, height);
+      drawWheel(ctx);
+      drawCursor();
+      
+      // Format as HEX color
+      const hex = '#' +
+        r.toString(16).padStart(2, '0') +
+        g.toString(16).padStart(2, '0') +
+        b.toString(16).padStart(2, '0');
+      
+      return hex.toUpperCase();
+    } catch (err) {
+      console.error('Error getting color from position:', err);
+      return '#FF0000'; // Default to red on error
     }
   };
 
@@ -128,68 +256,6 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     ctx.stroke();
     ctx.fillStyle = '#FFFFFF';
     ctx.fill();
-  };
-
-  const getColorFromPosition = (x, y) => {
-    try {
-      const canvas = canvasRef.current;
-      if (!canvas) return '#FED141'; // Default to yellow
-      
-      const ctx = canvas.getContext('2d');
-      
-      // Store current cursor position
-      cursorPos.current = { x, y };
-      
-      // Get the center of the wheel
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const radius = Math.min(width, height) / 2 - 5;
-      
-      // Calculate distance from center
-      const distanceFromCenter = Math.sqrt(
-        Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
-      );
-      
-      // If outside the wheel radius, constrain to edge of wheel
-      if (distanceFromCenter > radius) {
-        // Calculate angle
-        const angle = Math.atan2(y - centerY, x - centerX);
-        
-        // Calculate point on circumference
-        const adjustedX = centerX + radius * Math.cos(angle);
-        const adjustedY = centerY + radius * Math.sin(angle);
-        
-        // Update cursor position to edge of wheel
-        cursorPos.current = { x: adjustedX, y: adjustedY };
-        x = adjustedX;
-        y = adjustedY;
-      }
-      
-      // Clear canvas and redraw wheel with cursor at new position
-      ctx.clearRect(0, 0, width, height);
-      drawWheel(ctx);
-      drawCursor();
-      
-      // Get pixel data at cursor position
-      const pixelData = ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data;
-      
-      // Convert RGB to HEX
-      const r = pixelData[0];
-      const g = pixelData[1];
-      const b = pixelData[2];
-      
-      // Format as HEX color
-      const hex = '#' +
-        r.toString(16).padStart(2, '0') +
-        g.toString(16).padStart(2, '0') +
-        b.toString(16).padStart(2, '0');
-      
-      // Return uppercase HEX color
-      return hex.toUpperCase();
-    } catch (err) {
-      console.error('Error getting color from position:', err);
-      return '#FED141'; // Default yellow as fallback
-    }
   };
 
   const handleMouseDown = (e) => {
@@ -280,8 +346,8 @@ Wheel.propTypes = {
 };
 
 Wheel.defaultProps = {
-  width: 200,
-  height: 200
+  width: 222,
+  height: 222
 };
 
 export default Wheel;
