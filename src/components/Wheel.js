@@ -55,8 +55,10 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     const value = max;
     
     // Convert HSV to wheel coordinates
-    // Adjust angle to match the rotated color wheel (-90 degrees)
-    const angle = ((hue + 90) % 360 / 360) * (2 * Math.PI);
+    // Adjust angle to match the rotated color wheel (90 degrees)
+    // FIX: The angle was incorrectly calculated, causing a 180-degree offset
+    // We need red (#FF0000) at 12 o'clock (90 degrees in the coordinate system)
+    const angle = (((hue + 270) % 360) / 360) * (2 * Math.PI);
     const distance = saturation * radius;
     
     // Calculate x,y position on wheel

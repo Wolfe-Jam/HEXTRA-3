@@ -352,6 +352,11 @@ function App() {
     const rgb = hexToRgb(hexColor);
     if (rgb) {
       setRgbColor(rgb);
+      
+      // Update the color wheel position to match the selected color
+      if (wheelRef.current && wheelRef.current.setColor) {
+        wheelRef.current.setColor(hexColor);
+      }
     }
     
     // Apply the selected color immediately
@@ -503,6 +508,11 @@ function App() {
         const rgb = hexToRgb(fullHex);
         if (rgb) {
           setRgbColor(rgb);
+          
+          // Update the color wheel position to match the new HEX code
+          if (wheelRef.current && wheelRef.current.setColor) {
+            wheelRef.current.setColor(fullHex);
+          }
         }
       }
     }
@@ -512,12 +522,22 @@ function App() {
   const resetColor = useCallback(() => {
     setSelectedColor(DEFAULT_COLOR);
     setRgbColor(hexToRgb(DEFAULT_COLOR));
+    
+    // Update the color wheel to the default color
+    if (wheelRef.current && wheelRef.current.setColor) {
+      wheelRef.current.setColor(DEFAULT_COLOR);
+    }
   }, []);
 
   // Clear color (set empty)
   const clearColor = useCallback(() => {
     setSelectedColor('');
     setRgbColor({ r: 0, g: 0, b: 0 });
+    
+    // Update the color wheel to black when cleared
+    if (wheelRef.current && wheelRef.current.setColor) {
+      wheelRef.current.setColor('#000000');
+    }
   }, []);
 
   const handleGrayscaleChange = useCallback((event, newValue) => {
@@ -1041,7 +1061,7 @@ function App() {
                   if (!selectedColor || !workingImageUrl || !imageLoaded) {
                     console.error('Cannot apply color - missing requirements', {
                       hasColor: !!selectedColor, 
-                      hasWorkingImage: !!workingImageUrl,
+                      hasImage: !!workingImageUrl,
                       imageLoaded
                     });
                     return;
@@ -1443,7 +1463,6 @@ function App() {
                 <Box sx={{ mb: 2 }}>
                   <Typography gutterBottom sx={{ 
                     fontFamily: "'Inter', sans-serif",
-                    letterSpacing: '0.05em',
                     color: 'var(--text-secondary)'
                   }}>
                     Matte Effect
@@ -1471,7 +1490,6 @@ function App() {
                 <Box>
                   <Typography gutterBottom sx={{ 
                     fontFamily: "'Inter', sans-serif",
-                    letterSpacing: '0.05em',
                     color: 'var(--text-secondary)'
                   }}>
                     Texture Effect
