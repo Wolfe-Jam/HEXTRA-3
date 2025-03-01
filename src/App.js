@@ -877,13 +877,16 @@ function App() {
                       console.log('Image successfully processed with color:', selectedColor);
                       setWorkingProcessedUrl(processedUrl);
                       setCanDownload(true);
-                      setIsProcessing(false);
                     })
                     .catch(error => {
                       console.error('ERROR processing image:', error);
-                      setIsProcessing(false);
                       // Reset the processed URL to the original image as fallback
                       setWorkingProcessedUrl(workingImageUrl);
+                    })
+                    .finally(() => {
+                      // Always ensure processing state is reset
+                      console.log('Image processing completed (success or error)');
+                      setIsProcessing(false);
                     });
                 }}
                 disabled={isProcessing || !imageLoaded}
@@ -1569,40 +1572,47 @@ function App() {
       {isProcessing && (
         <Box
           position="fixed"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bgcolor="rgba(0, 0, 0, 0.7)"
+          top="auto"
+          left="auto"
+          right={20}
+          bottom={20}
+          bgcolor="rgba(0, 0, 0, 0.8)"
           display="flex"
-          flexDirection="column"
+          flexDirection="row"
           alignItems="center"
           justifyContent="center"
           zIndex={9999}
+          borderRadius={2}
+          padding={2}
+          boxShadow="0 4px 20px rgba(0,0,0,0.25)"
+          maxWidth="300px"
         >
-          <CircularProgress size={60} thickness={4} />
-          <Typography variant="h6" color="white" mt={2}>
-            {batchStatus === 'processing' ? 'Processing Images...' : 'Preparing Download...'}
-          </Typography>
-          {batchProgress > 0 && (
-            <Box sx={{ width: '200px', mt: 2 }}>
-              <Typography variant="body2" color="white" align="center" mt={1}>
-                Processing: {batchProgress}%
-              </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={batchProgress} 
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  '& .MuiLinearProgress-bar': {
+          <CircularProgress size={30} thickness={4} sx={{ mr: 2 }} />
+          <Box>
+            <Typography variant="body1" color="white">
+              {batchStatus === 'processing' ? 'Processing Images...' : 'Applying Color...'}
+            </Typography>
+            {batchProgress > 0 && (
+              <Box sx={{ width: '100%', mt: 1 }}>
+                <Typography variant="caption" color="white">
+                  {batchProgress}% Complete
+                </Typography>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={batchProgress} 
+                  sx={{
+                    height: 8,
                     borderRadius: 4,
-                  }
-                }}
-              />
-            </Box>
-          )}
+                    backgroundColor: 'var(--border-subtle)',
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: 'var(--glow-color)',
+                      borderRadius: 4
+                    }
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
         </Box>
       )}
     </Box>
