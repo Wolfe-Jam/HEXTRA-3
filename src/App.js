@@ -42,17 +42,55 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import DownloadIcon from '@mui/icons-material/Download';
 
 // Constants
-const DEFAULT_COLOR = '#FED141';
+const DEFAULT_COLOR = '#FED141'; // Default yellow
+
+const COLOR_GROUPS = [
+  {
+    name: 'Recently Used',
+    colors: [] // This will be populated dynamically
+  },
+  {
+    name: 'Brand Colors',
+    colors: [
+      { value: '#FED141', label: 'Yellow', isDefault: true },
+      { value: '#D50032', label: 'Red' },
+      { value: '#00805E', label: 'Green' },
+      { value: '#224D8F', label: 'Blue' }
+    ]
+  },
+  {
+    name: 'Grayscale',
+    colors: [
+      { value: '#000000', label: 'Black' },
+      { value: '#333333', label: 'Dark Grey' },
+      { value: '#999999', label: 'Mid Grey' },
+      { value: '#CCCCCC', label: 'Light Grey' },
+      { value: '#FFFFFF', label: 'White' }
+    ]
+  },
+  {
+    name: 'Useful',
+    colors: [
+      { value: '#FF4400', label: 'Orange' },
+      { value: '#CABFAD', label: 'Stone' },
+      { value: '#9900CC', label: 'Purple' },
+      { value: '#00CCFF', label: 'Cyan' },
+      { value: '#FF00FF', label: 'Magenta' }
+    ]
+  }
+];
+
+// Keep backward compatibility with existing code that uses DEFAULT_COLORS
 const DEFAULT_COLORS = [
-  '#FED141',  // Default yellow
+  DEFAULT_COLOR,
   '#D50032',  // Red
   '#00805E',  // Green
   '#224D8F',  // Blue
   '#FF4400',  // Orange
   '#CABFAD',  // Beige
 ];
-// Improved color wheel with accurate selection and visual feedback - v2.2.3
-const VERSION = '2.2.3';
+// Improved color wheel with accurate selection and visual feedback - v2.2.4
+const VERSION = '2.2.4';
 
 // Browser environment check for SSR compatibility
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
@@ -75,6 +113,7 @@ function App() {
 
   // 3. State hooks
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [recentlyUsedColors, setRecentlyUsedColors] = useState([]);
   const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
   const [workingImageUrl, setWorkingImageUrl] = useState(null);
   const [originalImageUrl, setOriginalImageUrl] = useState(null);
@@ -115,6 +154,25 @@ function App() {
       setIsSubscribed(false);
     }
   }, [isAuthenticated, user]);
+
+  // Update recently used colors whenever a color is applied
+  useEffect(() => {
+    if (selectedColor && selectedColor !== DEFAULT_COLOR) {
+      setRecentlyUsedColors(prev => {
+        // Remove the color if it's already in the list
+        const filteredColors = prev.filter(color => color.value !== selectedColor);
+        
+        // Add the new color at the beginning
+        const newColor = { value: selectedColor, label: selectedColor.toUpperCase() };
+        const newColors = [newColor, ...filteredColors].slice(0, 4); // Keep only 4 colors
+        
+        // Update the COLOR_GROUPS with the new recently used colors
+        COLOR_GROUPS[0].colors = newColors;
+        
+        return newColors;
+      });
+    }
+  }, [selectedColor]);
 
   // 4. Memo hooks
   const debouncedProcessImage = useMemo(
@@ -420,7 +478,7 @@ function App() {
     // Update the last click info
     setLastClickColor(color);
     setLastClickTime(now);
-  }, [applyColor, focusHexInput, lastClickColor, lastClickTime]);
+  }, [applyColor, focusHexInput]);
 
   const handleHexInputChange = useCallback((event) => {
     if (!event || !event.target) return;
@@ -450,13 +508,16 @@ function App() {
     }
   }, []);
 
+  // Reset color to default yellow
   const resetColor = useCallback(() => {
-    const defaultRgb = hexToRgb(DEFAULT_COLOR);
     setSelectedColor(DEFAULT_COLOR);
-    setRgbColor(defaultRgb);
-    if (wheelRef.current) {
-      wheelRef.current.setColor(DEFAULT_COLOR);
-    }
+    setRgbColor(hexToRgb(DEFAULT_COLOR));
+  }, []);
+
+  // Clear color (set empty)
+  const clearColor = useCallback(() => {
+    setSelectedColor('');
+    setRgbColor({ r: 0, g: 0, b: 0 });
   }, []);
 
   const handleGrayscaleChange = useCallback((event, newValue) => {
@@ -896,10 +957,12 @@ function App() {
               gap: 2,
               alignItems: "center",
               width: '100%',
-              pl: '40px',  
-              '@media (max-width: 532px)': {
+              pl: '30px',  
+              pr: '30px',  
+              '@media (max-width: 600px)': { 
                 justifyContent: 'center',
-                pl: 2,  
+                pl: 2,
+                pr: 2,
                 '& #apply-button': {
                   width: '100%',  
                   maxWidth: '200px',
@@ -943,18 +1006,28 @@ function App() {
 
               {/* HEX Input with Reset Icon */}
               <SwatchDropdownField
-                ref={hexInputRef}
+                label="HEX Code"
                 value={selectedColor}
                 onChange={handleHexInputChange}
                 onEnterPress={(trigger) => applyColor(trigger)}
                 onDropdownSelect={handleDropdownSelect}
-                onReset={resetColor}
-                label="HEX"
-                options={DEFAULT_COLORS}
+                options={COLOR_GROUPS}
+                ref={hexInputRef}
+                onReset={() => resetColor()}
+                onClear={() => clearColor()}
                 sx={{ 
-                  width: '180px',
-                  marginLeft: '12px',
-                  marginRight: '12px'
+                  width: '225px', 
+                  '& .MuiAutocomplete-inputRoot': {
+                    paddingRight: '45px !important', 
+                    height: '42px'
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    padding: '9px 0px 9px 0', 
+                    fontFamily: '"Roboto Mono", monospace',
+                    letterSpacing: '0px',
+                    fontSize: '14.5px', 
+                    minWidth: '100px' 
+                  }
                 }}
               />
               {/* Apply Button */}
@@ -1565,7 +1638,7 @@ function App() {
                           const response = await fetch(processedUrl);
                           const blob = await response.blob();
                           
-                          const date = new Date().toISOString().split('T')[0];
+                          const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
                           const filename = `HEXTRA-${date}-${activeCatalog}_${color.hex.replace('#', '')}.png`;
                           folder.file(filename, blob);
                         }));
