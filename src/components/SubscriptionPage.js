@@ -404,6 +404,26 @@ export default function SubscriptionPage() {
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <Box 
+        component="footer" 
+        sx={{
+          width: '100%',
+          borderTop: '1px solid var(--border-color)',
+          bgcolor: 'var(--background-paper)',
+          p: 2,
+          mt: 4
+        }}
+      >
+        <Typography 
+          variant="body2" 
+          sx={{ color: 'var(--text-secondary)' }} 
+          align="center"
+        >
+          &copy; 2025 HEXTRA Color System - All rights reserved.
+        </Typography>
+      </Box>
     </div>
   </div>
   );

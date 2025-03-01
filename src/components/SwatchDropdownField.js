@@ -103,7 +103,7 @@ const SwatchDropdownField = forwardRef(({
         <li {...props}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <ColorSwatch color={option} />
-            <span>{option.replace(/^#/, '').toUpperCase()}</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{option.replace(/^#/, '').toUpperCase()}</span>
           </Box>
         </li>
       )}
@@ -116,13 +116,16 @@ const SwatchDropdownField = forwardRef(({
           onClick={onClick}
           onKeyDown={handleKeyDown}
           inputRef={ref}
+          InputLabelProps={{
+            style: { color: 'var(--text-secondary)' }  // Use light grey instead of primary text color
+          }}
           InputProps={{
             ...params.InputProps,
             startAdornment: (
               <InputAdornment position="start" sx={{ mr: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <ColorSwatch color={value} />
-                  <span style={{ marginRight: '4px' }}>#</span>
+                  <span style={{ color: 'var(--text-secondary)', marginRight: '4px' }}>#</span>
                 </Box>
               </InputAdornment>
             ),
