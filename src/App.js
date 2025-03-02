@@ -288,6 +288,10 @@ function App() {
     const rgb = hexToRgb(color);
     if (rgb) {
       setRgbColor(rgb);
+      
+      // Update grayscale value based on the average of RGB
+      const grayValue = Math.round((rgb.r + rgb.g + rgb.b) / 3);
+      setGrayscaleValue(grayValue);
     }
     
     // Focus the hex input field
@@ -352,6 +356,10 @@ function App() {
     const rgb = hexToRgb(hexColor);
     if (rgb) {
       setRgbColor(rgb);
+      
+      // Update grayscale value based on the average of RGB
+      const grayValue = Math.round((rgb.r + rgb.g + rgb.b) / 3);
+      setGrayscaleValue(grayValue);
       
       // Update the color wheel position to match the selected color
       if (wheelRef.current && wheelRef.current.setColor) {
@@ -509,6 +517,10 @@ function App() {
         if (rgb) {
           setRgbColor(rgb);
           
+          // Update grayscale value based on the average of RGB
+          const grayValue = Math.round((rgb.r + rgb.g + rgb.b) / 3);
+          setGrayscaleValue(grayValue);
+          
           // Update the color wheel position to match the new HEX code
           if (wheelRef.current && wheelRef.current.setColor) {
             wheelRef.current.setColor(fullHex);
@@ -546,7 +558,31 @@ function App() {
     setGrayscaleValue(grayValue);
     setSelectedColor(grayHex);
     setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
+    
+    // Update the color wheel position for the grayscale value
+    if (wheelRef.current && wheelRef.current.setColor) {
+      wheelRef.current.setColor(grayHex);
+    }
   }, []);
+
+  const handleGraySwatchClick = useCallback(() => {
+    // Calculate the current gray value
+    const grayValue = Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3);
+    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
+    
+    // Update application state
+    setSelectedColor(grayHex);
+    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
+    setGrayscaleValue(grayValue);
+    
+    // Update the color wheel
+    if (wheelRef.current && wheelRef.current.setColor) {
+      wheelRef.current.setColor(grayHex);
+    }
+    
+    // Focus the hex input
+    focusHexInput();
+  }, [rgbColor, focusHexInput]);
 
   const handleQuickDownload = useCallback(() => {
     // If there's no processed URL but there is a working image, set the working image as the URL to download
@@ -886,13 +922,17 @@ function App() {
             {/* Section 3.0 - Grayscale Tool Bar */}
             <Box sx={{ 
               display: 'flex',
-              alignItems: "center",
-              justifyContent: 'center',
               flexWrap: 'wrap',
-              gap: 1,
+              alignItems: "center",
+              width: '100%',
+              pl: '42px',
+              pr: '30px',
               mb: 2,
-              width: '222px',  
-              mx: 'auto'  
+              '@media (max-width: 600px)': { 
+                justifyContent: 'center',
+                pl: 2,
+                pr: 2
+              }
             }}>
               {/* GRAY Value Display */}
               <Typography sx={{ 
@@ -900,7 +940,7 @@ function App() {
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
                 whiteSpace: 'nowrap',
-                width: '120px',  
+                width: '140px',
                 display: 'flex',
                 alignItems: "center",
                 gap: 1
@@ -915,58 +955,87 @@ function App() {
                 </Box>
               </Typography>
 
-              {/* Slider */}
-              <Box sx={{
-                position: 'relative',
-                width: '200px',
-                height: '24px',
-                backgroundColor: 'transparent',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)',
-                background: 'linear-gradient(to right, #000000, #FFFFFF)',
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: "center",
-                px: 1
+              {/* Centered layout container for swatch and slider */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                gap: 2,
+                flex: 1,
+                pl: 1
               }}>
-                <Slider
-                  value={grayscaleValue}
-                  onChange={handleGrayscaleChange}
-                  min={0}
-                  max={255}
+                {/* Gray Swatch - Clickable */}
+                <Box 
+                  onClick={handleGraySwatchClick}
                   sx={{
-                    width: '100%',
-                    '& .MuiSlider-thumb': {
-                      width: 20,
-                      height: 20,
-                      backgroundColor: 'transparent',
-                      border: '2px solid var(--glow-color)',
-                      outline: '1px solid rgba(0, 0, 0, 0.3)',
-                      boxShadow: 'inset 0 0 4px var(--glow-color), 0 0 4px var(--glow-color)',
-                      '&:before': {
-                        content: '""',
-                        position: 'absolute',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        backgroundColor: 'transparent',
-                      },
-                      '&:hover, &.Mui-focusVisible': {
-                        outline: '1px solid rgba(0, 0, 0, 0.4)',
-                        boxShadow: 'inset 0 0 6px var(--glow-color), 0 0 8px var(--glow-color)',
-                      }
-                    },
-                    '& .MuiSlider-track': {
-                      display: 'none'
-                    },
-                    '& .MuiSlider-rail': {
-                      opacity: 0
+                    width: '40px',
+                    height: '40px',
+                    minWidth: '40px',
+                    minHeight: '40px',
+                    backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
+                    borderRadius: '50%',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      boxShadow: '0 0 5px rgba(255, 153, 0, 0.5)'
                     }
                   }}
                 />
+
+                {/* Slider */}
+                <Box sx={{
+                  position: 'relative',
+                  width: '225px',
+                  height: '24px',
+                  backgroundColor: 'transparent',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(to right, #000000, #FFFFFF)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: "center",
+                  px: 1,
+                  outline: '1px solid rgba(200, 200, 200, 0.2)'
+                }}>
+                  <Slider
+                    value={grayscaleValue}
+                    onChange={handleGrayscaleChange}
+                    min={0}
+                    max={255}
+                    sx={{
+                      width: '100%',
+                      '& .MuiSlider-thumb': {
+                        width: 20,
+                        height: 20,
+                        backgroundColor: 'transparent',
+                        border: '2px solid #FF9900',
+                        outline: '1px solid rgba(0, 0, 0, 0.2)',
+                        boxShadow: 'inset 0 0 4px #FF9900, 0 0 4px #FF9900',
+                        '&:before': {
+                          content: '""',
+                          position: 'absolute',
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          backgroundColor: 'transparent',
+                        },
+                        '&:hover, &.Mui-focusVisible': {
+                          outline: '1px solid rgba(0, 0, 0, 0.3)',
+                          boxShadow: 'inset 0 0 6px #FF9900, 0 0 8px #FF9900',
+                        }
+                      },
+                      '& .MuiSlider-track': {
+                        display: 'none'
+                      },
+                      '& .MuiSlider-rail': {
+                        opacity: 0
+                      }
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
 
@@ -977,7 +1046,7 @@ function App() {
               gap: 2,
               alignItems: "center",
               width: '100%',
-              pl: '30px',  
+              pl: '42px',  
               pr: '30px',  
               '@media (max-width: 600px)': { 
                 justifyContent: 'center',
@@ -1325,7 +1394,7 @@ function App() {
             mb: 2 // Reduced from mb: 3
           }}>
             <Box sx={{ 
-              display: 'flex', 
+              display: 'flex',
               alignItems: 'center',
               padding: '6px 12px',
               borderRadius: '8px',
