@@ -289,35 +289,24 @@ function App() {
     if (rgb) {
       setRgbColor(rgb);
       
-      // Update grayscale value based on the average of RGB
-      const grayValue = Math.round((rgb.r + rgb.g + rgb.b) / 3);
-      setGrayscaleValue(grayValue);
+      // Calculate the HSV values to extract value component
+      const max = Math.max(rgb.r, rgb.g, rgb.b) / 255;
+      
+      // Update grayscale value to match the brightness (value) of the selected color
+      const valueComponent = Math.round(max * 255);
+      setGrayscaleValue(valueComponent);
     }
     
-    // Focus the hex input field
+    // Log the change for debugging
+    console.log('Color wheel changed to:', color);
+    
+    // Apply the color immediately in double-click mode
+    if (isDragging.current) {
+      applyColor('double-click');
+    }
+    
+    // Focus the HEX input
     focusHexInput();
-  }, [focusHexInput]);
-
-  const handleColorChange = useCallback((color) => {
-    console.log("Color changed to:", color);
-    setSelectedColor(color);
-    
-    // Validate color and convert to RGB
-    const rgb = hexToRgb(color);
-    if (rgb) {
-      setRgbColor(rgb);
-    } else {
-      console.warn('Invalid color format received:', color);
-      // Use default RGB if conversion fails
-      setRgbColor(hexToRgb(DEFAULT_COLOR));
-    }
-    
-    // Focus the hex input field
-    focusHexInput();
-    
-    if (!isDragging.current) {
-      applyColor('color-change');
-    }
   }, [applyColor, focusHexInput]);
 
   const handleDragStart = useCallback(() => {
@@ -357,9 +346,12 @@ function App() {
     if (rgb) {
       setRgbColor(rgb);
       
-      // Update grayscale value based on the average of RGB
-      const grayValue = Math.round((rgb.r + rgb.g + rgb.b) / 3);
-      setGrayscaleValue(grayValue);
+      // Calculate the HSV values to extract value component
+      const max = Math.max(rgb.r, rgb.g, rgb.b) / 255;
+      
+      // Update grayscale value to match the brightness (value) of the selected color
+      const valueComponent = Math.round(max * 255);
+      setGrayscaleValue(valueComponent);
       
       // Update the color wheel position to match the selected color
       if (wheelRef.current && wheelRef.current.setColor) {
@@ -517,9 +509,12 @@ function App() {
         if (rgb) {
           setRgbColor(rgb);
           
-          // Update grayscale value based on the average of RGB
-          const grayValue = Math.round((rgb.r + rgb.g + rgb.b) / 3);
-          setGrayscaleValue(grayValue);
+          // Calculate the HSV values to extract value component
+          const max = Math.max(rgb.r, rgb.g, rgb.b) / 255;
+          
+          // Update grayscale value to match the brightness (value) of the selected color
+          const valueComponent = Math.round(max * 255);
+          setGrayscaleValue(valueComponent);
           
           // Update the color wheel position to match the new HEX code
           if (wheelRef.current && wheelRef.current.setColor) {
@@ -554,35 +549,108 @@ function App() {
 
   const handleGrayscaleChange = useCallback((event, newValue) => {
     const grayValue = newValue;
-    const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
     setGrayscaleValue(grayValue);
-    setSelectedColor(grayHex);
-    setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
     
-    // Update the color wheel position for the grayscale value
-    if (wheelRef.current && wheelRef.current.setColor) {
-      wheelRef.current.setColor(grayHex);
+    // If we're at 0, set to pure black
+    if (grayValue === 0) {
+      const grayHex = '#000000';
+      setSelectedColor(grayHex);
+      setRgbColor({ r: 0, g: 0, b: 0 });
+      
+      // Update the wheel - the wheel's internal brightness will handle the display
+      if (wheelRef.current && wheelRef.current.setColor) {
+        wheelRef.current.setColor(grayHex);
+      }
+      return;
     }
-  }, []);
+    
+    // For all other values, preserve the hue/saturation but apply the new brightness
+    const currentColor = selectedColor;
+    if (currentColor && currentColor.startsWith('#')) {
+      // Convert the current color to HSV
+      const rgb = hexToRgb(currentColor);
+      if (rgb) {
+        // Calculate the current HSV values
+        const max = Math.max(rgb.r, rgb.g, rgb.b) / 255;
+        const min = Math.min(rgb.r, rgb.g, rgb.b) / 255;
+        const delta = max - min;
+        
+        let hue = 0;
+        if (delta !== 0) {
+          if (max === rgb.r / 255) {
+            hue = ((rgb.g / 255 - rgb.b / 255) / delta) % 6;
+          } else if (max === rgb.g / 255) {
+            hue = (rgb.b / 255 - rgb.r / 255) / delta + 2;
+          } else {
+            hue = (rgb.r / 255 - rgb.g / 255) / delta + 4;
+          }
+        }
+        
+        hue = Math.round(hue * 60);
+        if (hue < 0) hue += 360;
+        
+        const saturation = max === 0 ? 0 : delta / max;
+        
+        // Apply new brightness level (0-1 scale)
+        const value = grayValue / 255;
+        
+        // Convert back to RGB
+        let r, g, b;
+        
+        if (saturation === 0) {
+          // Achromatic (gray)
+          r = g = b = Math.round(value * 255);
+        } else {
+          hue /= 60; // sector 0 to 5
+          const i = Math.floor(hue);
+          const f = hue - i; // factorial part of h
+          const p = value * (1 - saturation);
+          const q = value * (1 - saturation * f);
+          const t = value * (1 - saturation * (1 - f));
+          
+          switch (i % 6) {
+            case 0: r = value; g = t; b = p; break;
+            case 1: r = q; g = value; b = p; break;
+            case 2: r = p; g = value; b = t; break;
+            case 3: r = p; g = q; b = value; break;
+            case 4: r = t; g = p; b = value; break;
+            case 5: r = value; g = p; b = q; break;
+            default: r = value; g = 0; b = 0;
+          }
+          
+          r = Math.round(r * 255);
+          g = Math.round(g * 255);
+          b = Math.round(b * 255);
+        }
+        
+        // Create new hex color with preserved hue/saturation but new brightness
+        const newHex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
+        setSelectedColor(newHex);
+        setRgbColor({ r, g, b });
+        
+        // We don't need to call wheelRef.setColor here since the brightness prop will handle the wheel display
+      }
+    }
+  }, [selectedColor]);
 
   const handleGraySwatchClick = useCallback(() => {
     // Calculate the current gray value
     const grayValue = Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3);
     const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
     
-    // Update application state
+    // Update state
+    setGrayscaleValue(grayValue);
     setSelectedColor(grayHex);
     setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
-    setGrayscaleValue(grayValue);
     
-    // Update the color wheel
+    // Update the color wheel position to match this gray
     if (wheelRef.current && wheelRef.current.setColor) {
       wheelRef.current.setColor(grayHex);
     }
     
-    // Focus the hex input
-    focusHexInput();
-  }, [rgbColor, focusHexInput]);
+    // Apply the gray color immediately
+    applyColor('gray-swatch');
+  }, [rgbColor, applyColor]);
 
   const handleQuickDownload = useCallback(() => {
     // If there's no processed URL but there is a working image, set the working image as the URL to download
@@ -916,6 +984,7 @@ function App() {
                 isDragging={isDragging.current}
                 width={270}
                 height={270}
+                brightness={grayscaleValue}
               />
             </Box>
 
