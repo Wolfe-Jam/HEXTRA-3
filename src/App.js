@@ -42,7 +42,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import DownloadIcon from '@mui/icons-material/Download';
 
 // Constants
-const DEFAULT_COLOR = '#FED141'; // Default yellow
+const DEFAULT_COLOR = '#FFFFFF'; // White
 
 const COLOR_GROUPS = [
   {
@@ -52,10 +52,10 @@ const COLOR_GROUPS = [
   {
     name: 'Brand Colors',
     colors: [
-      { value: '#FED141', label: 'Yellow', isDefault: true },
-      { value: '#D50032', label: 'Red' },
+      { value: '#D50032', label: 'Dark Red' },
       { value: '#00805E', label: 'Green' },
-      { value: '#224D8F', label: 'Blue' }
+      { value: '#224D8F', label: 'Blue' },
+      { value: '#FED141', label: 'Daisy' }
     ]
   },
   {
@@ -72,10 +72,14 @@ const COLOR_GROUPS = [
     name: 'Useful',
     colors: [
       { value: '#FF4400', label: 'Orange' },
+      { value: '#FFAA00', label: 'Amber' },
       { value: '#CABFAD', label: 'Stone' },
       { value: '#9900CC', label: 'Purple' },
       { value: '#00CCFF', label: 'Cyan' },
-      { value: '#FF00FF', label: 'Magenta' }
+      { value: '#FF00FF', label: 'Magenta' },
+      { value: '#00FF00', label: 'Chroma Green' },
+      { value: '#0000FF', label: 'Chroma Blue' },
+      { value: '#FF0000', label: 'Bright Red' }
     ]
   }
 ];
@@ -83,11 +87,12 @@ const COLOR_GROUPS = [
 // Keep backward compatibility with existing code that uses DEFAULT_COLORS
 const DEFAULT_COLORS = [
   DEFAULT_COLOR,
-  '#D50032',  // Red
+  '#D50032',  // Dark Red
   '#00805E',  // Green
   '#224D8F',  // Blue
+  '#FED141',  // Daisy
   '#FF4400',  // Orange
-  '#CABFAD',  // Beige
+  '#CABFAD',  // Stone
 ];
 // Improved color wheel with accurate selection and visual feedback - v2.2.4
 const VERSION = '2.2.4';
@@ -104,31 +109,44 @@ function App() {
   
   // Force authentication and subscription to be true for localhost development
   const isAuthenticated = true; // Bypass authentication check
-  const [isSubscribed, setIsSubscribed] = useState(true); // Default to subscribed
+  const [isSubscribed, setIsSubscribed] = useState(false); // Default to subscribed
 
   // 2. Refs
   const wheelRef = useRef(null);
   const hexInputRef = useRef(null);
   const isDragging = useRef(false);
 
-  // 3. State hooks
-  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
-  const [recentlyUsedColors, setRecentlyUsedColors] = useState([]);
-  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
-  const [workingImageUrl, setWorkingImageUrl] = useState(null);
-  const [originalImageUrl, setOriginalImageUrl] = useState(null);
-  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
+  // 2. State hooks
+  const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [workingImageUrl, setWorkingImageUrl] = useState('');
+  const [originalImageUrl, setOriginalImageUrl] = useState('');
+  const [workingProcessedUrl, setWorkingProcessedUrl] = useState('');
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [recentlyUsedColors, setRecentlyUsedColors] = useState(
+    () => {
+      try {
+        const saved = localStorage.getItem('recentColors');
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        console.error('Error parsing recent colors from localStorage:', e);
+        return [];
+      }
+    }
+  );
+  const [rgbColor, setRgbColor] = useState({ r: 255, g: 255, b: 255 }); // Default to white
+  const [grayscaleValue, setGrayscaleValue] = useState(255); // Changed from 200 to 255 for maximum brightness
   const [canDownload, setCanDownload] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [showHexDropDown, setShowHexDropDown] = useState(false);
+  const [colorApplied, setColorApplied] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState('png'); // 'png' or 'webp'
+  const [autoApplyColors, setAutoApplyColors] = useState(false); // Default to OFF for better user control
   const [urlInput, setUrlInput] = useState('/images/default-tshirt.webp');
   const { theme, toggleTheme } = useTheme();
-  const [lastClickColor, setLastClickColor] = useState(null);
-  const [lastClickTime, setLastClickTime] = useState(0);
   const [enhanceEffect, setEnhanceEffect] = useState(true);
   const [showTooltips, setShowTooltips] = useState(true);
   const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [grayscaleValue, setGrayscaleValue] = useState(128);
   const [matteValue, setMatteValue] = useState(50);
   const [textureValue, setTextureValue] = useState(50);
   const [batchResults, setBatchResults] = useState([]);
@@ -141,8 +159,8 @@ function App() {
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [selectedColors, setSelectedColors] = useState([]);
   const [showSubscription, setShowSubscription] = useState(false);
-  const [colorApplied, setColorApplied] = useState(false);
-  const [selectedFormat, setSelectedFormat] = useState('png'); // 'png' or 'webp'
+  const [lastClickColor, setLastClickColor] = useState(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
 
   // Check subscription status when user is authenticated
   useEffect(() => {
@@ -155,24 +173,114 @@ function App() {
     }
   }, [isAuthenticated, user]);
 
-  // Update recently used colors whenever a color is applied
+  // Initialize the COLOR_GROUPS with the recent colors from localStorage
   useEffect(() => {
-    if (selectedColor && selectedColor !== DEFAULT_COLOR) {
-      setRecentlyUsedColors(prev => {
-        // Remove the color if it's already in the list
-        const filteredColors = prev.filter(color => color.value !== selectedColor);
-        
-        // Add the new color at the beginning
-        const newColor = { value: selectedColor, label: selectedColor.toUpperCase() };
-        const newColors = [newColor, ...filteredColors].slice(0, 4); // Keep only 4 colors
+    if (recentlyUsedColors && recentlyUsedColors.length > 0) {
+      COLOR_GROUPS[0].colors = recentlyUsedColors;
+    }
+  }, [recentlyUsedColors]);
+
+  // Function to save color to recent list, only on deliberate actions
+  const saveToRecentColors = useCallback((color) => {
+    if (!color || color === '#FFFFFF') return; // Don't store empty or pure white
+    
+    // Ensure color is properly formatted
+    let formattedColor = color.toUpperCase();
+    if (formattedColor.length < 7) {
+      console.warn('Invalid color format:', color);
+      return;
+    }
+    
+    // Add to local storage recent colors
+    setRecentlyUsedColors(prev => {
+      // Create the color object with value and label
+      const newColor = { value: formattedColor, label: formattedColor };
+      
+      // Check if we already have an identical color
+      const exactMatch = prev.find(c => c.value === formattedColor);
+      if (exactMatch) {
+        // Move it to the front without adding duplicate
+        const filtered = prev.filter(c => c.value !== formattedColor);
+        const updated = [newColor, ...filtered].slice(0, 4);
         
         // Update the COLOR_GROUPS with the new recently used colors
-        COLOR_GROUPS[0].colors = newColors;
+        COLOR_GROUPS[0].colors = updated;
         
-        return newColors;
+        // Save to localStorage
+        localStorage.setItem('recentColors', JSON.stringify(updated));
+        
+        return updated;
+      }
+      
+      // Check for similar colors - consider colors within 10% difference as similar
+      const rgbNew = hexToRgb(formattedColor);
+      
+      // Check if any existing color is too similar
+      const tooSimilar = prev.some(existing => {
+        const rgbExisting = hexToRgb(existing.value);
+        
+        // Calculate color distance (simple Euclidean distance)
+        const rDiff = Math.abs(rgbNew.r - rgbExisting.r);
+        const gDiff = Math.abs(rgbNew.g - rgbExisting.g);
+        const bDiff = Math.abs(rgbNew.b - rgbExisting.b);
+        
+        // If the total difference is less than 30 (out of 765 max), consider it too similar
+        return (rDiff + gDiff + bDiff) < 30;
       });
+      
+      // If too similar to existing color and we're in a dragging operation, don't add
+      if (tooSimilar && isDragging.current) {
+        return prev;
+      }
+      
+      // Filter out the color if it already exists
+      const filtered = prev.filter(c => c.value !== formattedColor);
+      
+      // Add to front of array and limit to 4 colors
+      const updated = [newColor, ...filtered].slice(0, 4);
+      
+      // Update the COLOR_GROUPS with the new recently used colors
+      COLOR_GROUPS[0].colors = updated;
+      
+      // Save to localStorage
+      localStorage.setItem('recentColors', JSON.stringify(updated));
+      
+      return updated;
+    });
+  }, []);
+
+  // Process the selected color - now used by multiple event handlers
+  const processColor = useCallback(() => {
+    if (!selectedColor || !workingImageUrl || !imageLoaded) {
+      console.error('Cannot process color - missing requirements', {
+        hasColor: !!selectedColor, 
+        hasImage: !!workingImageUrl,
+        imageLoaded
+      });
+      return;
     }
-  }, [selectedColor]);
+    
+    // Save to recent colors on application (deliberate user action)
+    saveToRecentColors(selectedColor);
+    
+    // Skip processing if auto-apply is off
+    if (!autoApplyColors) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      console.log('Calling processImage...');
+      const processedUrl = processImage(workingImageUrl, selectedColor);
+      console.log('Processing complete, updating UI');
+      setWorkingProcessedUrl(processedUrl);
+      setCanDownload(true);
+      setIsProcessing(false);
+    } catch (error) {
+      console.error('Error in processColor:', error);
+      setCanDownload(false);
+      setIsProcessing(false);
+    }
+  }, [selectedColor, workingImageUrl, imageLoaded, autoApplyColors, saveToRecentColors]);
 
   // 4. Memo hooks
   const debouncedProcessImage = useMemo(
@@ -258,15 +366,16 @@ function App() {
           console.log('SUCCESS: Image processed with color', colorToApply);
           setWorkingProcessedUrl(processedUrl);
           setCanDownload(true);
+          setIsProcessing(false);
         })
         .catch(error => {
           console.error('ERROR: Image processing failed:', error);
           // Don't reset to original image automatically, just keep current state
           setCanDownload(true);
+          setIsProcessing(false);
         })
         .finally(() => {
           console.log('Processing complete (success or error)');
-          setIsProcessing(false);
           focusHexInput();
         });
     } catch (e) {
@@ -276,38 +385,44 @@ function App() {
   }, [selectedColor, workingImageUrl, originalImageUrl, imageLoaded, focusHexInput]);
 
   const handleColorWheelChange = useCallback((color) => {
-    // Ensure we have a valid hex color with # prefix
-    if (!color || !color.startsWith('#')) {
-      return;
-    }
+    if (!color) return;
     
-    // Update the selected color
+    console.log('Color wheel changed to', color);
     setSelectedColor(color);
+    setShowHexDropDown(false);
     
-    // Convert to RGB
+    // Extract RGB
     const rgb = hexToRgb(color);
-    if (rgb) {
-      setRgbColor(rgb);
-      
-      // Calculate the HSV values to extract value component
-      const max = Math.max(rgb.r, rgb.g, rgb.b) / 255;
-      
-      // Update grayscale value to match the brightness (value) of the selected color
-      const valueComponent = Math.round(max * 255);
-      setGrayscaleValue(valueComponent);
-    }
+    setRgbColor({ r: rgb.r, g: rgb.g, b: rgb.b });
     
-    // Log the change for debugging
-    console.log('Color wheel changed to:', color);
-    
-    // Apply the color immediately in double-click mode
-    if (isDragging.current) {
-      applyColor('double-click');
-    }
-    
-    // Focus the HEX input
+    // Focus the HEX input (important for workflow)
     focusHexInput();
-  }, [applyColor, focusHexInput]);
+    
+    // Only apply color if auto-apply is enabled, but DON'T save to recent colors
+    // during wheel movement - only apply the color to preview
+    if (autoApplyColors) {
+      // Apply color without saving to recent
+      if (selectedColor && workingImageUrl && imageLoaded) {
+        setIsProcessing(true);
+        
+        try {
+          processImage(workingImageUrl, color)
+            .then(processedUrl => {
+              setWorkingProcessedUrl(processedUrl);
+              setCanDownload(true);
+              setIsProcessing(false);
+            })
+            .catch(error => {
+              console.error('Error during wheel movement preview:', error);
+              setIsProcessing(false);
+            });
+        } catch (error) {
+          console.error('Error processing color during wheel movement:', error);
+          setIsProcessing(false);
+        }
+      }
+    }
+  }, [focusHexInput, autoApplyColors, workingImageUrl, imageLoaded, setShowHexDropDown]);
 
   const handleDragStart = useCallback(() => {
     isDragging.current = true;
@@ -316,9 +431,32 @@ function App() {
   const handleDragEnd = useCallback(() => {
     isDragging.current = false;
     
-    // Apply the color when dragging ends
-    applyColor('drag-end');
-  }, [applyColor]);
+    // Now we save to recent when user releases the mouse (deliberate action)
+    if (selectedColor) {
+      saveToRecentColors(selectedColor);
+    }
+    
+    // Apply the color when dragging ends if autoApplyColors is enabled
+    if (autoApplyColors && selectedColor && workingImageUrl && imageLoaded) {
+      setIsProcessing(true);
+      
+      try {
+        processImage(workingImageUrl, selectedColor)
+          .then(processedUrl => {
+            setWorkingProcessedUrl(processedUrl);
+            setCanDownload(true);
+            setIsProcessing(false);
+          })
+          .catch(error => {
+            console.error('Error during color application at drag end:', error);
+            setIsProcessing(false);
+          });
+      } catch (error) {
+        console.error('Error processing color at drag end:', error);
+        setIsProcessing(false);
+      }
+    }
+  }, [selectedColor, autoApplyColors, saveToRecentColors, workingImageUrl, imageLoaded]);
 
   const handleDropdownSelect = useCallback((color) => {
     // Basic validation
@@ -359,8 +497,11 @@ function App() {
       }
     }
     
+    // Save to recent colors on dropdown select (deliberate user action)
+    saveToRecentColors(hexColor);
+    
     // Apply the selected color immediately
-    applyColor('dropdown');
+    processColor();
     
     // Try to focus the hex input
     try {
@@ -373,7 +514,7 @@ function App() {
     } catch (err) {
       console.log('Error focusing input:', err);
     }
-  }, [applyColor]);
+  }, [saveToRecentColors, processColor]);
 
   const handleImageUpload = useCallback(async (file) => {
     if (!file) {
@@ -457,33 +598,28 @@ function App() {
     }
   }, [handleLoadUrl]);
 
-  const handleWheelClick = useCallback((e, color) => {
-    // Update the selected color from the wheel click
-    if (color) {
-      setSelectedColor(color);
-      
-      // Convert to RGB
-      const rgb = hexToRgb(color);
-      if (rgb) {
-        setRgbColor(rgb);
-      }
-      
-      // Focus the hex input after clicking on the wheel
-      focusHexInput();
+  const handleWheelClick = useCallback((color) => {
+    if (!color) return;
+    
+    console.log('Color wheel clicked on', color);
+    setSelectedColor(color);
+    setShowHexDropDown(false);
+    
+    // Extract RGB
+    const rgb = hexToRgb(color);
+    setRgbColor({ r: rgb.r, g: rgb.g, b: rgb.b });
+    
+    // Focus the HEX input
+    focusHexInput();
+    
+    // Save to recent colors on click (deliberate user action)
+    saveToRecentColors(color);
+    
+    // Only apply color if auto-apply is enabled
+    if (autoApplyColors) {
+      processColor();
     }
-    
-    // Handle the click logic for possibly applying the color
-    const now = Date.now();
-    
-    // If this is another click on the same color within the time window, apply the color
-    if (lastClickColor === color && now - lastClickTime < 500) {
-      applyColor('wheel-double-click');
-    }
-    
-    // Update the last click info
-    setLastClickColor(color);
-    setLastClickTime(now);
-  }, [applyColor, focusHexInput]);
+  }, [focusHexInput, saveToRecentColors, autoApplyColors, processColor, setShowHexDropDown]);
 
   const handleHexInputChange = useCallback((event) => {
     if (!event || !event.target) return;
@@ -648,9 +784,17 @@ function App() {
       wheelRef.current.setColor(grayHex);
     }
     
-    // Apply the gray color immediately
-    applyColor('gray-swatch');
-  }, [rgbColor, applyColor]);
+    // Save to recent colors on gray swatch click (deliberate user action)
+    saveToRecentColors(grayHex);
+    
+    // Apply the gray color immediately only if autoApplyColors is enabled
+    if (autoApplyColors) {
+      processColor();
+    } else {
+      // If not auto-applying, make sure to focus the hex input
+      focusHexInput();
+    }
+  }, [rgbColor, saveToRecentColors, autoApplyColors, focusHexInput, processColor]);
 
   const handleQuickDownload = useCallback(() => {
     // If there's no processed URL but there is a working image, set the working image as the URL to download
@@ -935,7 +1079,7 @@ function App() {
           }
         }}>
           {/* Color Section */}
-          <Box sx={{ mb: 0 }}>
+          <Box sx={{ mb: 2 }}>
             {/* Catalog Title */}
             <Typography 
               variant="h5" 
@@ -976,15 +1120,16 @@ function App() {
               <Wheel
                 ref={wheelRef}
                 color={selectedColor}
+                initialColor={DEFAULT_COLOR}
+                initialBrightness={1.0}
+                brightness={grayscaleValue}
+                size={270}
                 onChange={handleColorWheelChange}
                 onClick={handleWheelClick}
                 onDoubleClick={() => applyColor('double-click')}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 isDragging={isDragging.current}
-                width={270}
-                height={270}
-                brightness={grayscaleValue}
               />
             </Box>
 
@@ -994,8 +1139,8 @@ function App() {
               flexWrap: 'wrap',
               alignItems: "center",
               width: '100%',
-              pl: '42px',
-              pr: '30px',
+              pl: '42px',  
+              pr: '30px',  
               mb: 2,
               '@media (max-width: 600px)': { 
                 justifyContent: 'center',
@@ -1009,7 +1154,7 @@ function App() {
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
                 whiteSpace: 'nowrap',
-                width: '140px',
+                width: '140px',  
                 display: 'flex',
                 alignItems: "center",
                 gap: 1
@@ -1038,11 +1183,9 @@ function App() {
                   sx={{
                     width: '40px',
                     height: '40px',
-                    minWidth: '40px',
-                    minHeight: '40px',
                     backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
                     borderRadius: '50%',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    border: '1px solid var(--border-color)',
                     cursor: 'pointer',
                     transition: 'transform 0.2s ease',
                     '&:hover': {
@@ -1060,22 +1203,25 @@ function App() {
                   backgroundColor: 'transparent',
                   borderRadius: '12px',
                   background: 'linear-gradient(to right, #000000, #FFFFFF)',
-                  overflow: 'hidden',
+                  overflow: 'visible', 
                   display: 'flex',
                   alignItems: "center",
                   px: 1,
+                  mt: 2.5, // Reduced from 3.5px since we removed the text labels
+                  mb: 0.5,
                   outline: '1px solid rgba(200, 200, 200, 0.2)'
                 }}>
                   {/* Grayscale Markers */}
                   <Box sx={{
                     position: 'absolute',
-                    top: '-12px',
+                    top: '-14px', 
                     left: 0,
                     right: 0,
                     display: 'flex',
                     justifyContent: 'space-between',
                     px: 1.5,
-                    pointerEvents: 'none'
+                    pointerEvents: 'none',
+                    zIndex: 5 // Increased z-index to ensure markers are always visible
                   }}>
                     {[
                       { color: '#000000', position: '0%' },
@@ -1087,24 +1233,105 @@ function App() {
                       <Box 
                         key={index}
                         sx={{
-                          width: '2px',
-                          height: '8px',
-                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
                           position: 'relative',
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            bottom: '-1px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            width: '4px',
-                            height: '2px',
-                            backgroundColor: marker.color,
-                            border: '1px solid rgba(128, 128, 128, 0.3)',
-                            borderRadius: '1px'
-                          }
+                          pointerEvents: 'auto' // Enable pointer events for entire box
                         }}
-                      />
+                      >
+                        {/* Circle marker with tooltip */}
+                        <Tooltip 
+                          title={marker.color.toUpperCase()}
+                          placement="top"
+                          arrow
+                          enterDelay={100}
+                          leaveDelay={200}
+                          componentsProps={{
+                            tooltip: {
+                              sx: {
+                                bgcolor: theme === 'dark' ? '#333' : '#fff',
+                                color: theme === 'dark' ? '#fff' : '#333',
+                                border: theme === 'dark' ? '1px solid #555' : '1px solid #ddd',
+                                fontFamily: '"Roboto Mono", monospace',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                padding: '4px 8px',
+                                filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.2))'
+                              }
+                            },
+                            arrow: {
+                              sx: {
+                                color: theme === 'dark' ? '#333' : '#fff'
+                              }
+                            }
+                          }}
+                        >
+                          <div> {/* Wrapping in a regular DOM element for tooltip to attach properly */}
+                            <Box 
+                              component="button" // Make it a button element for better accessibility
+                              sx={{
+                                width: '12px',
+                                height: '12px',
+                                backgroundColor: marker.color,
+                                borderRadius: '50%',
+                                border: theme === 'dark' 
+                                  ? (marker.color === '#000000' ? '1.5px solid rgba(255, 255, 255, 0.9)' : '1px solid rgba(180, 180, 180, 0.7)')
+                                  : (marker.color === '#FFFFFF' ? '1.5px solid rgba(0, 0, 0, 0.8)' : '1px solid rgba(100, 100, 100, 0.7)'),
+                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                                position: 'relative',
+                                transform: 'translateY(-2px)', // Slightly raised to be more visible
+                                cursor: 'pointer !important', // Force pointer cursor
+                                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                                padding: 0, // Remove default button padding
+                                margin: 0,  // Remove default button margin
+                                outline: 'none', // Remove default focus outline
+                                '&:hover': {
+                                  transform: 'translateY(-4px) scale(1.15)', // Elevate and enlarge slightly on hover
+                                  boxShadow: '0 3px 5px rgba(0, 0, 0, 0.4)', // Enhanced shadow on hover
+                                  borderColor: '#FF9900', // Highlight with app's orange accent color
+                                  zIndex: 2
+                                }
+                              }} 
+                              onClick={() => {
+                                // Convert from hex to RGB
+                                const hexToRgb = (hex) => {
+                                  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                                  return result ? {
+                                    r: parseInt(result[1], 16),
+                                    g: parseInt(result[2], 16),
+                                    b: parseInt(result[3], 16)
+                                  } : null;
+                                };
+                                
+                                // Get the marker's color (HEX-ready mode - populates the HEX input but doesn't apply)
+                                const hexColor = marker.color.toUpperCase();
+                                const rgb = hexToRgb(hexColor);
+                                
+                                if (rgb) {
+                                  // Set grayscale value for slider position
+                                  const grayValue = Math.round((rgb.r + rgb.g + rgb.b) / 3);
+                                  setGrayscaleValue(grayValue);
+                                  
+                                  // Update HEX input with the selected color (HEX-ready behavior)
+                                  setSelectedColor(hexColor);
+                                  setRgbColor({ r: rgb.r, g: rgb.g, b: rgb.b });
+                                  
+                                  // Update the wheel - the wheel's internal brightness will handle the display
+                                  if (wheelRef && wheelRef.current && wheelRef.current.setColor) {
+                                    wheelRef.current.setColor(hexColor);
+                                  }
+                                  
+                                  // Focus the HEX input after setting the value (maintaining workflow)
+                                  if (hexInputRef && hexInputRef.current) {
+                                    hexInputRef.current.focus();
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                        </Tooltip>
+                      </Box>
                     ))}
                   </Box>
                   <Slider
@@ -1158,15 +1385,11 @@ function App() {
               width: '100%',
               pl: '42px',  
               pr: '30px',  
+              mb: 2,
               '@media (max-width: 600px)': { 
                 justifyContent: 'center',
                 pl: 2,
-                pr: 2,
-                '& #apply-button': {
-                  width: '100%',  
-                  maxWidth: '200px',
-                  marginTop: '8px'
-                }
+                pr: 2
               }
             }}>
               {/* RGB Display */}
@@ -1203,12 +1426,15 @@ function App() {
                 }}
               />
 
-              {/* HEX Input with Reset Icon */}
               <SwatchDropdownField
                 label="HEX Code"
                 value={selectedColor}
                 onChange={handleHexInputChange}
-                onEnterPress={(trigger) => applyColor(trigger)}
+                onEnterPress={(trigger) => {
+                  handleHexInputChange(trigger);
+                  saveToRecentColors(selectedColor);
+                  processColor();
+                }}
                 onDropdownSelect={handleDropdownSelect}
                 options={COLOR_GROUPS}
                 ref={hexInputRef}
@@ -1229,80 +1455,177 @@ function App() {
                   }
                 }}
               />
-              {/* Apply Button */}
-              <GlowTextButton
-                id="apply-button"
-                variant="contained"
-                onClick={() => {
-                  console.log('Apply button clicked with color:', selectedColor);
-                  
-                  // Validate requirements
-                  if (!selectedColor || !workingImageUrl || !imageLoaded) {
-                    console.error('Cannot apply color - missing requirements', {
-                      hasColor: !!selectedColor, 
-                      hasImage: !!workingImageUrl,
-                      imageLoaded
-                    });
-                    return;
-                  }
-                  
-                  // Visual feedback - only for Apply button
-                  setColorApplied(true);
-                  setTimeout(() => setColorApplied(false), 500);
-                  
-                  // Set processing state - make this independent from other animations
-                  setIsProcessing(true);
-                  
-                  // Direct image processing with proper error handling
-                  processImage(workingImageUrl, selectedColor)
-                    .then(processedUrl => {
-                      console.log('Image successfully processed with color:', selectedColor);
-                      setWorkingProcessedUrl(processedUrl);
-                      setCanDownload(true);
-                    })
-                    .catch(error => {
-                      console.error('ERROR processing image:', error);
-                      // Reset the processed URL to the original image as fallback
-                      setWorkingProcessedUrl(workingImageUrl);
-                    })
-                    .finally(() => {
-                      // Always ensure processing state is reset
-                      console.log('Image processing completed (success or error)');
-                      setIsProcessing(false);
-                    });
-                }}
-                disabled={isProcessing || !imageLoaded}
+
+              {/* Custom square container for controls with precise spacing */}
+              <Box
                 sx={{
-                  width: '110px',
-                  transition: 'all 0.2s ease',
-                  transform: colorApplied ? 'scale(1.05)' : 'scale(1)',
-                  background: colorApplied ? `linear-gradient(135deg, ${selectedColor}, #FFFFFF, ${selectedColor})` : undefined,
-                  '@media (max-width: 532px)': {
-                    width: '110px',
-                    marginTop: '8px'
-                  }
+                  display: 'flex',
+                  flexDirection: 'column',
+                  width: '110px', 
+                  height: '78px', 
+                  ml: '16px', // Use same spacing as between HEX and color swatch
+                  mr: 0,
+                  mb: 0, 
+                  mt: 0, 
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--background-paper)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                  overflow: 'hidden',
+                  alignSelf: 'center', // Vertically center with other elements
                 }}
               >
-                APPLY
-              </GlowTextButton>
-              {/* Reset Button - now an arrow icon */}
-              <Tooltip title="Reset to original image">
-                <span>
-                  <GlowIconButton
-                    id="reset-button"
-                    size="medium"
-                    onClick={handleResetImage}
-                    disabled={isProcessing || !imageLoaded}
+                {/* Top section - APPLY button */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flex: 1,
+                    alignItems: 'stretch', 
+                    justifyContent: 'center',
+                    borderBottom: '1px solid var(--border-color)',
+                    position: 'relative',
+                    p: 0, 
+                    m: 0, 
+                    overflow: 'hidden' 
+                  }}
+                >
+                  <GlowTextButton
+                    id="apply-button"
+                    variant="contained"
+                    onClick={() => {
+                      console.log('Apply button clicked with color:', selectedColor);
+                      
+                      // Validate requirements
+                      if (!selectedColor || !workingImageUrl || !imageLoaded) {
+                        console.error('Cannot apply color - missing requirements', {
+                          hasColor: !!selectedColor, 
+                          hasImage: !!workingImageUrl,
+                          imageLoaded
+                        });
+                        return;
+                      }
+                      
+                      // Save to recent colors when APPLY is clicked (deliberate action)
+                      saveToRecentColors(selectedColor);
+                      
+                      // Visual feedback - only for Apply button
+                      setColorApplied(true);
+                      setTimeout(() => setColorApplied(false), 500);
+                      
+                      // Set processing state - make this independent from other animations
+                      setIsProcessing(true);
+                      
+                      // Process the image with the selected color
+                      processImage(workingImageUrl, selectedColor)
+                        .then(processedUrl => {
+                          console.log('Image successfully processed with color:', selectedColor);
+                          setWorkingProcessedUrl(processedUrl);
+                          setCanDownload(true);
+                          setIsProcessing(false);
+                        })
+                        .catch(error => {
+                          console.error('ERROR processing image:', error);
+                          // Reset the processed URL to the original image as fallback
+                          setWorkingProcessedUrl(workingImageUrl);
+                          setIsProcessing(false);
+                        });
+                    }}
                     sx={{
-                      ml: 1,
-                      color: 'var(--text-primary)',
+                      height: '100%', 
+                      fontSize: '13px', 
+                      fontWeight: 'bold',
+                      boxShadow: 'none',
+                      width: '100%', 
+                      borderRadius: 0, 
+                      m: 0, 
+                      transition: 'all 0.3s ease',
+                      background: colorApplied ? `linear-gradient(135deg, ${selectedColor}, #FFFFFF, ${selectedColor})` : undefined,
+                      backgroundSize: colorApplied ? '300% 300%' : undefined,
+                      animation: colorApplied ? 'gradient-animation 2s ease infinite' : undefined,
                     }}
                   >
-                    <RestoreIcon />
-                  </GlowIconButton>
-                </span>
-              </Tooltip>
+                    APPLY
+                  </GlowTextButton>
+                </Box>
+
+                {/* Bottom section - Auto toggle and Reset */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    px: 1.5,
+                    py: 0.5,
+                    backgroundColor: 'var(--bg-paper-secondary)',
+                    border: 'none',
+                    borderTop: '1px solid var(--border-color)',
+                    minHeight: '36px'
+                  }}
+                >
+                  {/* Auto toggle with tooltip */}
+                  <Tooltip 
+                    title={autoApplyColors ? "Auto mode - colors apply immediately (click to disable)" : "Manual mode - requires APPLY button (recommended)"}
+                    placement="bottom"
+                    arrow
+                    enterDelay={400}
+                  >
+                    <Box 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        cursor: 'pointer',
+                        userSelect: 'none'
+                      }}
+                      onClick={() => setAutoApplyColors(!autoApplyColors)}
+                    >
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          mr: 0, // Reduce margin between text and toggle
+                          fontSize: '10px',
+                          color: 'var(--text-secondary)',
+                          userSelect: 'none'
+                        }}
+                      >
+                        Auto
+                      </Typography>
+                      <GlowSwitch
+                        checked={autoApplyColors}
+                        onChange={(e) => setAutoApplyColors(e.target.checked)}
+                        size="small"
+                        sx={{
+                          '& .MuiSwitch-track': {
+                            backgroundColor: 'var(--border-color)',
+                          },
+                          transform: 'scale(0.65)', // Slightly smaller scale
+                          my: -0.5,
+                          ml: -0.5 // Negative margin to pull closer to text
+                        }}
+                      />
+                    </Box>
+                  </Tooltip>
+                  
+                  {/* Reset Button - moved to the right with auto-margin */}
+                  <Tooltip title="Reset to original image">
+                    <GlowIconButton
+                      id="reset-button"
+                      size="small"
+                      onClick={handleResetImage}
+                      disabled={isProcessing || !imageLoaded}
+                      sx={{
+                        color: 'var(--text-primary)',
+                        padding: '4px',
+                        ml: 'auto', 
+                        mr: 0.5 
+                      }}
+                    >
+                      <RestoreIcon fontSize="small" />
+                    </GlowIconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
             </Box>
+
           </Box>
 
           {/* === Separator === */}
@@ -1335,7 +1658,7 @@ function App() {
 
           {/* Section 6.0 - Main Image Window (with integrated download button) */}
           <Box sx={{ 
-            display: 'flex', 
+            display: 'flex',
             gap: 2,
             alignItems: "center",
             justifyContent: 'center', 
@@ -1429,7 +1752,7 @@ function App() {
             justifyContent: 'center',
             alignItems: 'center',
             margin: '0 auto',
-            mb: 1, // Reduced from mb: 2 to bring format toggle closer
+            mb: 1, 
             position: 'relative'
           }}>
             {workingProcessedUrl || workingImageUrl ? (
@@ -1443,12 +1766,8 @@ function App() {
                     maxWidth: '720px',
                     maxHeight: '720px',
                     objectFit: 'contain',
-                    border: theme => theme.palette.mode === 'dark' 
-                      ? '1px solid rgba(150, 150, 150, 0.2)' 
-                      : '1px solid rgba(128, 128, 128, 0.15)',
-                    boxShadow: theme => theme.palette.mode === 'dark' 
-                      ? '0 0 5px rgba(255, 255, 255, 0.1)' 
-                      : '0 0 2px rgba(0, 0, 0, 0.1)'
+                    border: theme => theme.palette.mode === 'dark' ? '1px solid rgba(150, 150, 150, 0.2)' : '1px solid rgba(128, 128, 128, 0.15)',
+                    boxShadow: theme => theme.palette.mode === 'dark' ? '0 0 5px rgba(255, 255, 255, 0.1)' : '0 0 2px rgba(0, 0, 0, 0.1)'
                   }}
                 />
                 
@@ -1500,8 +1819,8 @@ function App() {
             width: '100%',
             maxWidth: '720px',
             margin: '0 auto',
-            mt: 0.5, // Add small top margin
-            mb: 2 // Reduced from mb: 3
+            mt: 0.5, 
+            mb: 2 
           }}>
             <Box sx={{ 
               display: 'flex',
@@ -1528,18 +1847,16 @@ function App() {
                 </Typography>
               </Tooltip>
               
-              <Tooltip title="Toggle between PNG and WebP formats">
-                <GlowSwitch
-                  checked={selectedFormat === 'webp'}
-                  onChange={(e) => setSelectedFormat(e.target.checked ? 'webp' : 'png')}
-                  size="small"
-                  sx={{
-                    '& .MuiSwitch-track': {
-                      backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(150, 150, 150, 0.5) !important' : undefined
-                    }
-                  }}
-                />
-              </Tooltip>
+              <GlowSwitch
+                checked={selectedFormat === 'webp'}
+                onChange={(e) => setSelectedFormat(e.target.checked ? 'webp' : 'png')}
+                size="small"
+                sx={{
+                  '& .MuiSwitch-track': {
+                    backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(150, 150, 150, 0.5) !important' : undefined
+                  }
+                }}
+              />
               
               <Tooltip title="Choose WebP format (smaller file size, good compatibility)">
                 <Typography
@@ -1917,7 +2234,6 @@ function App() {
                     coming soon
                   </Typography>
                 </GlowTextButton>
-
               </Box>
 
               {/* CSV Upload Button */}

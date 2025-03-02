@@ -1,12 +1,37 @@
-import React, { forwardRef, useEffect, useRef } from 'react';
+import React, { forwardRef, useEffect, useRef, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
 import { Box } from '@mui/material';
 
-const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart, onDragEnd, width, height, brightness = 255 }, ref) => {
+const Wheel = forwardRef(({ 
+  color, 
+  onChange, 
+  onClick, 
+  onDoubleClick, 
+  onDragStart, 
+  onDragEnd, 
+  width = 270, 
+  height = 270, 
+  brightness = 255,  
+  initialColor,
+  initialBrightness = 1.0,
+  size
+}, ref) => {
+  // Use size prop for both width and height if provided
+  const actualWidth = size || width;
+  const actualHeight = size || height;
+  
   const canvasRef = useRef(null);
   const isDragging = useRef(false);
   const cursorPos = useRef({ x: null, y: null });
   const brightnessRef = useRef(brightness);
+  const mounted = useRef(true);
+
+  // Initialize with initialColor if provided
+  useEffect(() => {
+    if (initialColor && canvasRef.current) {
+      setColor(initialColor);
+    }
+  }, []);
 
   // Update brightness reference when prop changes
   useEffect(() => {
@@ -38,12 +63,12 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = Math.min(width, height) / 2 - 5;
+    const centerX = actualWidth / 2;
+    const centerY = actualHeight / 2;
+    const radius = Math.min(actualWidth, actualHeight) / 2 - 5;
     
     // Clear and redraw the wheel
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, actualWidth, actualHeight);
     drawWheel(ctx);
     
     // Convert RGB to HSV for better mapping to wheel position
@@ -70,24 +95,34 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     
     // Convert HSV to wheel coordinates
     // Adjust angle to match the rotated color wheel (90 degrees)
-    // FIX: The angle was incorrectly calculated, causing a 180-degree offset
-    // We need red (#FF0000) at 12 o'clock (90 degrees in the coordinate system)
-    const angle = (((hue + 270) % 360) / 360) * (2 * Math.PI);
-    const distance = saturation * radius;
+    // For grayscale markers (when r=g=b), we need special handling
+    let angle;
     
-    // Calculate x,y position on wheel
-    const x = centerX + Math.cos(angle) * distance;
-    const y = centerY + Math.sin(angle) * distance;
-    
-    // Set cursor position
-    cursorPos.current = { x, y };
+    if (r === g && g === b) {
+      // For grayscale colors, place them at appropriate positions based on brightness 
+      // This ensures grayscale markers position the cursor correctly
+      angle = Math.PI / 2; // 90 degrees, top position (12 o'clock)
+      // For grayscale, distance is 0 (center of wheel)
+      cursorPos.current = { x: centerX, y: centerY };
+    } else {
+      // For non-grayscale colors, calculate position normally
+      angle = (((hue + 270) % 360) / 360) * (2 * Math.PI);
+      const distance = saturation * radius;
+      
+      // Calculate x,y position on wheel
+      const x = centerX + Math.cos(angle) * distance;
+      const y = centerY + Math.sin(angle) * distance;
+      
+      // Set cursor position
+      cursorPos.current = { x, y };
+    }
     
     // Draw cursor
     drawCursor();
   };
 
   // Expose the setColor method through ref
-  React.useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     setColor
   }));
 
@@ -104,24 +139,24 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     } else {
       setColor('#FF0000');
     }
-  }, [width, height]);
+  }, [actualWidth, actualHeight]);
 
   const drawWheel = (ctx) => {
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = Math.min(width, height) / 2 - 5;
+    const centerX = actualWidth / 2;
+    const centerY = actualHeight / 2;
+    const radius = Math.min(actualWidth, actualHeight) / 2 - 5;
     
     // Get current brightness level (0-255)
     const brightnessLevel = brightnessRef.current;
     const brightnessRatio = brightnessLevel / 255;
     
     // Create color wheel using image data for pixel-perfect results
-    const imageData = ctx.createImageData(width, height);
+    const imageData = ctx.createImageData(actualWidth, actualHeight);
     const data = imageData.data;
     
     // For each pixel in the canvas
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
+    for (let y = 0; y < actualHeight; y++) {
+      for (let x = 0; x < actualWidth; x++) {
         // Calculate distance from center and angle
         const dx = x - centerX;
         const dy = y - centerY;
@@ -147,7 +182,7 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
           let [r, g, b] = hsvToRgb(hue, saturation, value);
           
           // Set the pixel in the image data
-          const pixelIndex = (y * width + x) * 4;
+          const pixelIndex = (y * actualWidth + x) * 4;
           data[pixelIndex] = r;     // Red
           data[pixelIndex + 1] = g; // Green
           data[pixelIndex + 2] = b; // Blue
@@ -200,8 +235,8 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
   const getColorFromPosition = (x, y) => {
     try {
       // Calculate distance from center
-      const centerX = width / 2;
-      const centerY = height / 2;
+      const centerX = actualWidth / 2;
+      const centerY = actualHeight / 2;
       const dx = x - centerX;
       const dy = y - centerY;
       let distance = Math.sqrt(dx * dx + dy * dy);
@@ -211,7 +246,7 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
       if (angle < 0) angle += 360;
       
       // Constrain to wheel boundaries if cursor is outside valid wheel radius
-      const radius = width / 2;
+      const radius = actualWidth / 2;
       let isOutsideWheel = distance > radius;
       
       // If outside wheel, keep the angle but constrain to edge for color sampling
@@ -250,7 +285,7 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     const ctx = canvas.getContext('2d');
     
     // Clear the previous cursor by redrawing the wheel
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, actualWidth, actualHeight);
     drawWheel(ctx);
     
     // Get current brightness level to adapt cursor visibility
@@ -258,9 +293,9 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     const isDarkWheel = brightnessLevel < 80;
     
     // Get center and radius of wheel
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = width / 2;
+    const centerX = actualWidth / 2;
+    const centerY = actualHeight / 2;
+    const radius = actualWidth / 2;
     
     // Calculate whether cursor is outside valid wheel radius
     const dx = cursorPos.current.x - centerX;
@@ -307,8 +342,8 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     const rect = canvasRef.current.getBoundingClientRect();
     const canvasLeft = rect.left;
     const canvasTop = rect.top;
-    const centerX = width / 2;
-    const centerY = height / 2;
+    const centerX = actualWidth / 2;
+    const centerY = actualHeight / 2;
     
     // Event position relative to canvas edge
     const eventX = e.clientX - canvasLeft;
@@ -320,9 +355,9 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     
     // If clicking in the extended interaction area, adjust coordinates
     if (eventX < 0) x = 0;
-    if (eventX > width) x = width;
+    if (eventX > actualWidth) x = actualWidth;
     if (eventY < 0) y = 0;
-    if (eventY > height) y = height;
+    if (eventY > actualHeight) y = actualHeight;
     
     // Store position for drawing
     cursorPos.current = { x: eventX, y: eventY };
@@ -383,8 +418,8 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
       ref={ref}
       sx={{
         position: 'relative',
-        width: width,
-        height: height,
+        width: actualWidth,
+        height: actualHeight,
         borderRadius: '50%',
         cursor: 'crosshair',
         overflow: 'visible', // Allow cursor to be visible outside main wheel
@@ -401,8 +436,8 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
           position: 'absolute',
           top: '-10px',
           left: '-10px',
-          width: width + 20,
-          height: height + 20,
+          width: actualWidth + 20,
+          height: actualHeight + 20,
           borderRadius: '50%',
           cursor: 'crosshair',
           zIndex: 1
@@ -415,8 +450,8 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
       />
       <canvas
         ref={canvasRef}
-        width={width}
-        height={height}
+        width={actualWidth}
+        height={actualHeight}
         style={{
           display: 'block',
           width: '100%',
@@ -442,8 +477,8 @@ Wheel.propTypes = {
 };
 
 Wheel.defaultProps = {
-  width: 300,
-  height: 300,
+  width: 270,
+  height: 270,
   brightness: 255
 };
 

@@ -13,6 +13,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A1A1A' : '#FFFFFF',
     fontSize: 14.5, 
     width: '100%',
+    cursor: 'pointer', // Add pointer cursor to entire input
     '& input': {
       paddingLeft: '2px !important', 
       textTransform: 'uppercase',
@@ -107,25 +108,39 @@ const SwatchDropdownField = forwardRef(({
   // Update the input value when the value prop changes
   useEffect(() => {
     if (typeof value === 'string') {
-      // Remove # prefix for display if present
-      const displayValue = value.startsWith('#') ? value.substring(1) : value;
-      let finalValue = displayValue.toUpperCase();
-      // Only add asterisk if it's actually the default value
-      const isDefault = value === '#FED141';
-      if (isDefault) {
-        finalValue += '*';
+      // Remove # prefix for display if present and ensure it contains only valid hex characters
+      let displayValue = value.startsWith('#') ? value.substring(1) : value;
+      
+      // Filter to valid HEX characters and uppercase
+      displayValue = displayValue.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
+      
+      // Limit to 6 characters
+      if (displayValue.length > 6) {
+        displayValue = displayValue.substring(0, 6);
       }
-      setInputValue(finalValue);
+      
+      setInputValue(displayValue);
     }
   }, [value]);
   
   // Handle input change
   const handleInputChange = (event, newValue) => {
     if (event) {
-      // Remove asterisk if present
-      const cleanValue = newValue.replace(/\*$/, '');
-      const hexValue = cleanValue.startsWith('#') ? cleanValue : `#${cleanValue}`;
-      setInputValue(newValue);
+      // Filter to valid HEX characters (0-9, A-F) and limit to 6 characters
+      let cleanValue = newValue.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
+      
+      // Limit to 6 characters (standard HEX color)
+      if (cleanValue.length > 6) {
+        cleanValue = cleanValue.substring(0, 6);
+      }
+      
+      // Add the # prefix for the actual value
+      const hexValue = `#${cleanValue}`;
+      
+      // Update the input field without the # for better UX
+      setInputValue(cleanValue);
+      
+      // Pass the complete value with # to onChange handler
       onChange && onChange({ target: { value: hexValue } });
     }
   };
@@ -143,9 +158,24 @@ const SwatchDropdownField = forwardRef(({
     if (!option) return;
     
     // For grouped options, we receive the hex value directly
-    const hexValue = option.startsWith('#') ? option : `#${option}`;
+    // Clean the value to ensure it contains only valid hex characters
+    let cleanValue = option.replace(/[^0-9A-Fa-f#]/g, '').toUpperCase();
     
-    setInputValue(hexValue.substring(1).toUpperCase());
+    // Remove # if present
+    if (cleanValue.startsWith('#')) {
+      cleanValue = cleanValue.substring(1);
+    }
+    
+    // Limit to 6 characters
+    if (cleanValue.length > 6) {
+      cleanValue = cleanValue.substring(0, 6);
+    }
+    
+    // Add # prefix for the actual value
+    const hexValue = `#${cleanValue}`;
+    
+    // Set the input value (without #)
+    setInputValue(cleanValue);
     
     if (onDropdownSelect) {
       onDropdownSelect(hexValue);
@@ -183,6 +213,12 @@ const SwatchDropdownField = forwardRef(({
       onInputChange={handleInputChange}
       onChange={handleOptionSelect}
       sx={sx}
+      filterOptions={(options) => options} // Always show all options regardless of input value
+      openOnFocus={true} // Always open dropdown when field receives focus
+      blurOnSelect={false} // Don't blur on selection
+      clearOnBlur={false} // Don't clear on blur
+      disableCloseOnSelect={true} // Keep dropdown open after selection
+      selectOnFocus={false} // Don't auto-select on focus - helps with dropdown always showing all options
       groupBy={isGrouped ? () => null : undefined} // Disabled default grouping
       renderOption={(props, option) => {
         // Find the color object if we're using grouped colors
@@ -212,7 +248,6 @@ const SwatchDropdownField = forwardRef(({
                     letterSpacing: '0px'
                   }}>
                     {option.replace(/^#/, '').toUpperCase()}
-                    {colorObj && colorObj.isDefault && "*"}
                   </Typography>
                 </Box>
               </Box>
@@ -220,72 +255,85 @@ const SwatchDropdownField = forwardRef(({
           </li>
         );
       }}
-      renderInput={(params) => (
-        <StyledTextField
-          {...params}
-          label={label}
-          variant="outlined"
-          size="small"
-          onClick={onClick}
-          onKeyDown={handleKeyDown}
-          inputRef={ref}
-          InputLabelProps={{
-            style: { color: 'var(--text-secondary)' }  // Use light grey instead of primary text color
-          }}
-          InputProps={{
-            ...params.InputProps,
-            // Layout: O_#_ABC456_X_@
-            startAdornment: (
-              <InputAdornment position="start" sx={{ mr: 0, ml: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mr: 0 }}>
-                  <ColorSwatch color={value} />
-                  <span style={{ color: 'var(--text-secondary)' }}>#</span>
-                </Box>
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end" sx={{ 
-                ml: 0, 
-                display: 'flex', 
-                alignItems: 'center', 
-                width: 'auto',
-                position: 'absolute',
-                right: '6px', // Slight adjustment for positioning
-                gap: '1px' // Add small gap between buttons
-              }}>
-                {hasClear && (
-                  <Tooltip title="Clear">
-                    <IconButton
-                      onClick={handleClear}
-                      edge="end"
-                      size="medium"
-                      sx={{ padding: '2px', margin: 0 }}
-                    >
-                      <ClearIcon sx={{ fontSize: '16px' }} />
-                    </IconButton>
-                  </Tooltip>
-                )}
-                {hasReset && (
-                  <Tooltip title="Reset to default">
-                    <IconButton
-                      onClick={handleReset}
-                      edge="end"
-                      size="medium"
-                      sx={{ 
-                        padding: '2px',
-                        margin: 0
-                      }}
-                    >
-                      <ResetIcon sx={{ fontSize: '16px' }} />
-                    </IconButton>
-                  </Tooltip>
-                )}
-                {/* Removed the asterisk from here */}
-              </InputAdornment>
-            )
-          }}
-        />
-      )}
+      renderInput={(params) => {
+        // Create a merged onClick handler to ensure clicks anywhere in the input area open the dropdown
+        const handleInputClick = (e) => {
+          // This will expand the dropdown if it's clicked anywhere in the field
+          if (onClick) onClick(e);
+          
+          // Keep focus on the input element
+          if (ref && ref.current) {
+            ref.current.focus();
+          }
+        };
+        
+        return (
+          <StyledTextField
+            {...params}
+            label={label}
+            variant="outlined"
+            size="small"
+            onClick={handleInputClick} // Use enhanced click handler
+            onKeyDown={handleKeyDown}
+            inputRef={ref}
+            InputLabelProps={{
+              style: { color: 'var(--text-secondary)' }  // Use light grey instead of primary text color
+            }}
+            InputProps={{
+              ...params.InputProps,
+              // Layout: O_#_ABC456_X_@
+              startAdornment: (
+                <InputAdornment position="start" sx={{ mr: 0, ml: 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 0 }}>
+                    <ColorSwatch color={value} />
+                    <span style={{ color: 'var(--text-secondary)' }}>#</span>
+                  </Box>
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end" sx={{ 
+                  ml: 0, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  width: 'auto',
+                  position: 'absolute',
+                  right: '6px', // Slight adjustment for positioning
+                  gap: '1px' // Add small gap between buttons
+                }}>
+                  {hasClear && (
+                    <Tooltip title="Clear">
+                      <IconButton
+                        onClick={handleClear}
+                        edge="end"
+                        size="medium"
+                        sx={{ padding: '2px', margin: 0 }}
+                      >
+                        <ClearIcon sx={{ fontSize: '16px' }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  {hasReset && (
+                    <Tooltip title="Reset to default">
+                      <IconButton
+                        onClick={handleReset}
+                        edge="end"
+                        size="medium"
+                        sx={{ 
+                          padding: '2px',
+                          margin: 0
+                        }}
+                      >
+                        <ResetIcon sx={{ fontSize: '16px' }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  {/* Removed the asterisk from here */}
+                </InputAdornment>
+              )
+            }}
+          />
+        );
+      }}
       ListboxProps={{
         sx: {
           maxHeight: '300px',
