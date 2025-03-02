@@ -199,48 +199,41 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
 
   const getColorFromPosition = (x, y) => {
     try {
-      const canvas = canvasRef.current;
-      if (!canvas) return '#FF0000'; // Default to red
-      
-      const ctx = canvas.getContext('2d');
-      
-      // Store current cursor position
-      cursorPos.current = { x, y };
-      
-      // Get the center of the wheel
+      // Calculate distance from center
       const centerX = width / 2;
       const centerY = height / 2;
-      const radius = Math.min(width, height) / 2 - 5;
+      const dx = x - centerX;
+      const dy = y - centerY;
+      let distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Calculate distance from center
-      let dx = x - centerX;
-      let dy = y - centerY;
-      let distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+      // Calculate angle
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      if (angle < 0) angle += 360;
       
-      // Clamp to wheel radius
-      if (distanceFromCenter > radius) {
-        // Normalize vector and multiply by radius
-        let ratio = radius / distanceFromCenter;
-        dx *= ratio;
-        dy *= ratio;
-        x = centerX + dx;
-        y = centerY + dy;
-        distanceFromCenter = radius;
-        cursorPos.current = { x, y };
+      // Store current cursor position (for drawing)
+      cursorPos.current = { x, y };
+      
+      // Constrain to wheel boundaries if cursor is outside valid wheel radius
+      const radius = width / 2;
+      const isOutsideWheel = distance > radius;
+      
+      if (isOutsideWheel) {
+        // Keep the cursor position where it is (for dragging), but
+        // constrain the color sampling to the wheel's edge
+        distance = radius;
       }
       
-      // Calculate saturation (0 at center, 1 at edge)
-      const saturation = distanceFromCenter / radius;
+      // Normalize distance for saturation (0 to 1)
+      const maxDistance = width / 2; // Radius
+      const normalizedDistance = Math.min(distance / maxDistance, 1);
       
-      // Calculate angle in degrees (0-360)
-      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
-      angle = (angle + 360) % 360;
-      
-      // Rotate by 90 degrees to put red at 12 o'clock
+      // Convert to HSV
+      // Adjust angle to place red (0 degrees) at top
       const hue = (angle + 90) % 360;
+      const saturation = normalizedDistance;
       
       // Get current brightness level (0-1 range)
-      const brightnessRatio = brightnessRef.current / 255;
+      const brightnessRatio = brightness / 255;
       
       // Convert HSV to RGB
       const [r, g, b] = hsvToRgb(hue, saturation, brightnessRatio);
@@ -269,16 +262,41 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     const brightnessLevel = brightnessRef.current;
     const isDarkWheel = brightnessLevel < 80;
     
+    // Get center and radius of wheel
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = width / 2;
+    
+    // Calculate whether cursor is outside valid wheel radius
+    const dx = cursorPos.current.x - centerX;
+    const dy = cursorPos.current.y - centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const isOutsideWheel = distance > radius;
+    
+    // Calculate cursor position for drawing
+    // If outside wheel, constrain to edge while maintaining angle
+    let cursorDrawX = cursorPos.current.x;
+    let cursorDrawY = cursorPos.current.y;
+    
+    if (isOutsideWheel) {
+      // Calculate angle
+      const angle = Math.atan2(dy, dx);
+      
+      // Constrain to wheel edge
+      cursorDrawX = centerX + Math.cos(angle) * radius;
+      cursorDrawY = centerY + Math.sin(angle) * radius;
+    }
+    
     // Draw outer ring - brighter for dark wheels
     ctx.beginPath();
-    ctx.arc(cursorPos.current.x, cursorPos.current.y, 8, 0, 2 * Math.PI, false);
+    ctx.arc(cursorDrawX, cursorDrawY, 8, 0, 2 * Math.PI, false);
     ctx.strokeStyle = isDarkWheel ? 'rgba(255, 255, 255, 0.85)' : 'white';
     ctx.lineWidth = 2;
     ctx.stroke();
     
     // Inner ring - color inverted for visibility
     ctx.beginPath();
-    ctx.arc(cursorPos.current.x, cursorPos.current.y, 6, 0, 2 * Math.PI, false);
+    ctx.arc(cursorDrawX, cursorDrawY, 6, 0, 2 * Math.PI, false);
     ctx.strokeStyle = isDarkWheel ? 'rgba(0, 0, 0, 0.7)' : 'black';
     ctx.lineWidth = 1;
     ctx.stroke();
@@ -293,8 +311,11 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     
     // Calculate position relative to canvas
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = e.clientX - rect.left + 10; // Adjust for padding
+    const y = e.clientY - rect.top + 10; // Adjust for padding
+    
+    // Store current cursor position
+    cursorPos.current = { x, y };
     
     // Get color at the position
     const selectedColor = getColorFromPosition(x, y);
@@ -316,8 +337,11 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     
     // Calculate position relative to canvas
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = e.clientX - rect.left + 10; // Adjust for padding
+    const y = e.clientY - rect.top + 10; // Adjust for padding
+    
+    // Store current cursor position
+    cursorPos.current = { x, y };
     
     // Get color at the position
     const selectedColor = getColorFromPosition(x, y);
@@ -345,16 +369,19 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
       ref={ref}
       sx={{
         position: 'relative',
-        width: width,
-        height: height,
+        width: width + 20, // Extra 20px for interaction area (10px on each side)
+        height: height + 20, // Extra 20px for interaction area (10px on each side)
         borderRadius: '50%',
         cursor: 'crosshair',
-        overflow: 'hidden',
+        overflow: 'visible', // Allow cursor to be visible outside main wheel
         boxShadow: brightness < 50 ? 
           '0 0 1px rgba(255, 255, 255, 0.2), 0 0 3px rgba(255, 255, 255, 0.1), inset 0 0 2px rgba(255, 255, 255, 0.05)' : 
           '0 0 8px rgba(0, 0, 0, 0.08)',
         border: 'none',
-        display: 'inline-block'
+        display: 'inline-block',
+        padding: '10px', // Creates space for the interaction area
+        boxSizing: 'border-box',
+        background: 'transparent'
       }}
     >
       <canvas
@@ -369,7 +396,11 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
         style={{
           display: 'block',
           width: '100%',
-          height: '100%'
+          height: '100%',
+          transform: 'translate(-10px, -10px)', // Offset by padding to center
+          position: 'absolute',
+          top: '10px',
+          left: '10px'
         }}
       />
     </Box>
