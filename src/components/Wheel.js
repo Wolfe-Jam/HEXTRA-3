@@ -206,29 +206,24 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
       const dy = y - centerY;
       let distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Calculate angle
+      // Calculate angle in degrees
       let angle = Math.atan2(dy, dx) * (180 / Math.PI);
       if (angle < 0) angle += 360;
       
-      // Store current cursor position (for drawing)
-      cursorPos.current = { x, y };
-      
       // Constrain to wheel boundaries if cursor is outside valid wheel radius
       const radius = width / 2;
-      const isOutsideWheel = distance > radius;
+      let isOutsideWheel = distance > radius;
       
+      // If outside wheel, keep the angle but constrain to edge for color sampling
       if (isOutsideWheel) {
-        // Keep the cursor position where it is (for dragging), but
-        // constrain the color sampling to the wheel's edge
         distance = radius;
       }
       
       // Normalize distance for saturation (0 to 1)
-      const maxDistance = width / 2; // Radius
-      const normalizedDistance = Math.min(distance / maxDistance, 1);
+      const normalizedDistance = Math.min(distance / radius, 1);
       
       // Convert to HSV
-      // Adjust angle to place red (0 degrees) at top
+      // Adjust angle to place red (0 degrees) at top (12 o'clock position)
       const hue = (angle + 90) % 360;
       const saturation = normalizedDistance;
       
@@ -249,7 +244,7 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
   };
 
   const drawCursor = () => {
-    if (!cursorPos.current.x || !cursorPos.current.y) return;
+    if (!cursorPos.current.x && !cursorPos.current.y) return;
     
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -274,15 +269,14 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     const isOutsideWheel = distance > radius;
     
     // Calculate cursor position for drawing
-    // If outside wheel, constrain to edge while maintaining angle
     let cursorDrawX = cursorPos.current.x;
     let cursorDrawY = cursorPos.current.y;
     
     if (isOutsideWheel) {
-      // Calculate angle
+      // Calculate angle in radians
       const angle = Math.atan2(dy, dx);
       
-      // Constrain to wheel edge
+      // Constrain to wheel edge while maintaining the angle
       cursorDrawX = centerX + Math.cos(angle) * radius;
       cursorDrawY = centerY + Math.sin(angle) * radius;
     }
@@ -309,16 +303,32 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     isDragging.current = true;
     if (onDragStart) onDragStart();
     
-    // Calculate position relative to canvas
+    // Calculate position relative to wheel center
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left + 10; // Adjust for padding
-    const y = e.clientY - rect.top + 10; // Adjust for padding
+    const canvasLeft = rect.left;
+    const canvasTop = rect.top;
+    const centerX = width / 2;
+    const centerY = height / 2;
     
-    // Store current cursor position
-    cursorPos.current = { x, y };
+    // Event position relative to canvas edge
+    const eventX = e.clientX - canvasLeft;
+    const eventY = e.clientY - canvasTop;
     
-    // Get color at the position
-    const selectedColor = getColorFromPosition(x, y);
+    // Adjust for the interaction area offset
+    let x = eventX;
+    let y = eventY;
+    
+    // If clicking in the extended interaction area, adjust coordinates
+    if (eventX < 0) x = 0;
+    if (eventX > width) x = width;
+    if (eventY < 0) y = 0;
+    if (eventY > height) y = height;
+    
+    // Store position for drawing
+    cursorPos.current = { x: eventX, y: eventY };
+    
+    // Get color at the position (constrains to valid wheel area)
+    const selectedColor = getColorFromPosition(eventX, eventY);
     
     // Update the color and trigger onChange
     onChange(selectedColor);
@@ -335,16 +345,20 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     
     e.preventDefault();
     
-    // Calculate position relative to canvas
+    // Calculate position relative to wheel center
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left + 10; // Adjust for padding
-    const y = e.clientY - rect.top + 10; // Adjust for padding
+    const canvasLeft = rect.left;
+    const canvasTop = rect.top;
     
-    // Store current cursor position
-    cursorPos.current = { x, y };
+    // Event position relative to canvas edge
+    const eventX = e.clientX - canvasLeft;
+    const eventY = e.clientY - canvasTop;
     
-    // Get color at the position
-    const selectedColor = getColorFromPosition(x, y);
+    // Store position for drawing
+    cursorPos.current = { x: eventX, y: eventY };
+    
+    // Get color at the position (constrains to valid wheel area)
+    const selectedColor = getColorFromPosition(eventX, eventY);
     
     // Update the color
     onChange(selectedColor);
@@ -369,8 +383,8 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
       ref={ref}
       sx={{
         position: 'relative',
-        width: width + 20, // Extra 20px for interaction area (10px on each side)
-        height: height + 20, // Extra 20px for interaction area (10px on each side)
+        width: width,
+        height: height,
         borderRadius: '50%',
         cursor: 'crosshair',
         overflow: 'visible', // Allow cursor to be visible outside main wheel
@@ -378,29 +392,37 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
           '0 0 1px rgba(255, 255, 255, 0.2), 0 0 3px rgba(255, 255, 255, 0.1), inset 0 0 2px rgba(255, 255, 255, 0.05)' : 
           '0 0 8px rgba(0, 0, 0, 0.08)',
         border: 'none',
-        display: 'inline-block',
-        padding: '10px', // Creates space for the interaction area
-        boxSizing: 'border-box',
-        background: 'transparent'
+        display: 'inline-block'
       }}
     >
-      <canvas
-        ref={canvasRef}
-        width={width}
-        height={height}
+      {/* Invisible interaction area */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '-10px',
+          left: '-10px',
+          width: width + 20,
+          height: height + 20,
+          borderRadius: '50%',
+          cursor: 'crosshair',
+          zIndex: 1
+        }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onDoubleClick={handleDoubleClick}
+      />
+      <canvas
+        ref={canvasRef}
+        width={width}
+        height={height}
         style={{
           display: 'block',
           width: '100%',
           height: '100%',
-          transform: 'translate(-10px, -10px)', // Offset by padding to center
-          position: 'absolute',
-          top: '10px',
-          left: '10px'
+          position: 'relative',
+          zIndex: 0
         }}
       />
     </Box>
