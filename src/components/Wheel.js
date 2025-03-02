@@ -265,17 +265,21 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
     ctx.clearRect(0, 0, width, height);
     drawWheel(ctx);
     
-    // Draw cursor at the current position
+    // Get current brightness level to adapt cursor visibility
+    const brightnessLevel = brightnessRef.current;
+    const isDarkWheel = brightnessLevel < 80;
+    
+    // Draw outer ring - brighter for dark wheels
     ctx.beginPath();
     ctx.arc(cursorPos.current.x, cursorPos.current.y, 8, 0, 2 * Math.PI, false);
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = isDarkWheel ? 'rgba(255, 255, 255, 0.85)' : 'white';
     ctx.lineWidth = 2;
     ctx.stroke();
     
-    // Inner ring in black for visibility
+    // Inner ring - color inverted for visibility
     ctx.beginPath();
     ctx.arc(cursorPos.current.x, cursorPos.current.y, 6, 0, 2 * Math.PI, false);
-    ctx.strokeStyle = 'black';
+    ctx.strokeStyle = isDarkWheel ? 'rgba(0, 0, 0, 0.7)' : 'black';
     ctx.lineWidth = 1;
     ctx.stroke();
   };
@@ -346,8 +350,10 @@ const Wheel = forwardRef(({ color, onChange, onClick, onDoubleClick, onDragStart
         borderRadius: '50%',
         cursor: 'crosshair',
         overflow: 'hidden',
-        boxShadow: '0 0 15px rgba(0, 0, 0, 0.1)',
-        border: '1px solid var(--border-color)',
+        boxShadow: brightness < 50 ? 
+          '0 0 1px rgba(255, 255, 255, 0.2), 0 0 3px rgba(255, 255, 255, 0.1), inset 0 0 2px rgba(255, 255, 255, 0.05)' : 
+          '0 0 8px rgba(0, 0, 0, 0.08)',
+        border: 'none',
         display: 'inline-block'
       }}
     >
