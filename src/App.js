@@ -1066,6 +1066,47 @@ function App() {
                   px: 1,
                   outline: '1px solid rgba(200, 200, 200, 0.2)'
                 }}>
+                  {/* Grayscale Markers */}
+                  <Box sx={{
+                    position: 'absolute',
+                    top: '-12px',
+                    left: 0,
+                    right: 0,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    px: 1.5,
+                    pointerEvents: 'none'
+                  }}>
+                    {[
+                      { color: '#000000', position: '0%' },
+                      { color: '#333333', position: '25%' },
+                      { color: '#999999', position: '50%' },
+                      { color: '#CCCCCC', position: '75%' },
+                      { color: '#FFFFFF', position: '100%' }
+                    ].map((marker, index) => (
+                      <Box 
+                        key={index}
+                        sx={{
+                          width: '2px',
+                          height: '8px',
+                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                          position: 'relative',
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: '-1px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: '4px',
+                            height: '2px',
+                            backgroundColor: marker.color,
+                            border: '1px solid rgba(128, 128, 128, 0.3)',
+                            borderRadius: '1px'
+                          }
+                        }}
+                      />
+                    ))}
+                  </Box>
                   <Slider
                     value={grayscaleValue}
                     onChange={handleGrayscaleChange}
