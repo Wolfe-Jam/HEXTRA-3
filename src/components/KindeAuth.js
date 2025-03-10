@@ -1,9 +1,5 @@
 /**
-<<<<<<< HEAD
- * KindeAuth Component (v2.2.0)
-=======
- * KindeAuth Component (v2.2.1)
->>>>>>> subscription-integration
+ * KindeAuth Component (v2.2.4)
  * 
  * Provides authentication wrapper for the application using Kinde Auth.
  * Handles the OAuth2 PKCE flow and redirects.
@@ -14,10 +10,6 @@
  * 3. Redirects back to callback URL
  * 4. Processes tokens and redirects to /app
  * 
-<<<<<<< HEAD
- * @version 2.2.0
- * @lastUpdated 2025-03-10
-=======
  * This version includes support for both:
  * - KINDE_* variables (standard pattern)
  * - REACT_APP_KINDE_* variables (CRA pattern)
@@ -28,9 +20,8 @@
  * KINDE_POST_LOGIN_REDIRECT_URL or REACT_APP_KINDE_REDIRECT_URI
  * KINDE_POST_LOGOUT_REDIRECT_URL or REACT_APP_KINDE_LOGOUT_URI
  * 
- * @version 2.2.1
- * @lastUpdated 2025-02-27
->>>>>>> subscription-integration
+ * @version 2.2.4
+ * @lastUpdated 2025-03-10
  */
 
 import React from 'react';
