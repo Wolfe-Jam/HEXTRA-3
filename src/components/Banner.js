@@ -30,16 +30,38 @@ const Banner = ({
   const location = useLocation();
   const isSubscriptionPage = location.pathname === '/subscription' || location.pathname === '/';
   const [isPending, startTransition] = useTransition();
+  const [emailUser, setEmailUser] = useState(null);
+
+  // Load email user from localStorage if available
+  useEffect(() => {
+    const savedEmailUser = localStorage.getItem('hextra_email_user');
+    if (savedEmailUser) {
+      try {
+        setEmailUser(JSON.parse(savedEmailUser));
+      } catch (error) {
+        console.error('Failed to parse saved email user data:', error);
+      }
+    }
+  }, []);
 
   const userInitial = useMemo(() => {
-    return user?.given_name ? user.given_name[0].toUpperCase() : '?';
-  }, [user?.given_name]);
+    if (isAuthenticated && user?.given_name) {
+      return user.given_name[0].toUpperCase();
+    } else if (emailUser?.email) {
+      return emailUser.email[0].toUpperCase();
+    }
+    return 'F'; // F for Free user
+  }, [isAuthenticated, user?.given_name, emailUser?.email]);
 
   const userColor = useMemo(() => {
-    if (!user?.email) return BRAND_COLORS[0];
-    const index = user.email.length % BRAND_COLORS.length;
-    return BRAND_COLORS[index];
-  }, [user?.email]);
+    if (isAuthenticated && user?.email) {
+      const index = user.email.length % BRAND_COLORS.length;
+      return BRAND_COLORS[1]; // Green for authenticated users
+    } else if (emailUser?.email) {
+      return BRAND_COLORS[0]; // Red for email-only users
+    }
+    return BRAND_COLORS[0]; // Red for anonymous users
+  }, [isAuthenticated, user?.email, emailUser?.email]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -299,29 +321,57 @@ const Banner = ({
             </IconButton>
           </Tooltip>
 
-          {/* Account Button (always visible) */}
-          <Tooltip title={isAuthenticated ? user?.email : "Free Version"}>
-            {isAuthenticated ? (
+          {/* Account Button with different badge types based on user status */}
+          {isAuthenticated ? (
+            <Tooltip title={user?.email || "Authenticated User"}>
               <IconButton
                 onClick={() => startTransition(() => navigate('/profile'))}
                 sx={{
                   width: '32px',
                   height: '32px',
-                  color: isDarkMode ? COLORS.textLight : COLORS.textDark,
+                  backgroundColor: BRAND_COLORS[1], // Green for authenticated users
+                  color: '#FFFFFF',
+                  fontFamily: "'League Spartan', sans-serif",
+                  fontSize: '1rem',
+                  fontWeight: 600,
                   '&:hover': {
-                    color: '#FED141',
+                    backgroundColor: '#006F51', // Darker green on hover
+                    transform: 'scale(1.05)'
                   }
                 }}
               >
-                <AccountCircleIcon />
+                {userInitial}
               </IconButton>
-            ) : (
+            </Tooltip>
+          ) : emailUser ? (
+            <Tooltip title={emailUser.email || "Email User"}>
               <GlowIconButton
                 onClick={() => startTransition(() => login())}
                 sx={{
                   width: '32px',
                   height: '32px',
-                  backgroundColor: '#D50032', // HEXTRA Red
+                  backgroundColor: BRAND_COLORS[0], // Red for email-only users
+                  color: '#FFFFFF',
+                  fontFamily: "'League Spartan', sans-serif",
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  '&:hover': {
+                    backgroundColor: '#B3002B',
+                    transform: 'scale(1.05)'
+                  }
+                }}
+              >
+                {userInitial}
+              </GlowIconButton>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Free Version">  
+              <GlowIconButton
+                onClick={() => startTransition(() => login())}
+                sx={{
+                  width: '32px',
+                  height: '32px',
+                  backgroundColor: BRAND_COLORS[0], // Red for anonymous
                   color: '#FFFFFF',
                   fontFamily: "'League Spartan', sans-serif",
                   fontSize: '1rem',
@@ -334,8 +384,8 @@ const Banner = ({
               >
                 F
               </GlowIconButton>
-            )}
-          </Tooltip>
+            </Tooltip>
+          );
         </Box>
       </Box>
 

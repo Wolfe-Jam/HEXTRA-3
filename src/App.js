@@ -1,3 +1,12 @@
+/**
+ * HEXTRA-3 App Component (v2.2.4)
+ * Main application component integrating color selection, image processing, and user tier management.
+ * 
+ * VERSION: 2.2.4
+ * BUILD_ID: HEXTRA-2025-03-10-AD2241
+ * BUILD_DATE: 2025-03-10
+ */
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   Box, 
@@ -40,6 +49,7 @@ import GlowIconButton from './components/GlowIconButton';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import DownloadIcon from '@mui/icons-material/Download';
+import EmailCollectionDialog from './components/EmailCollectionDialog';
 
 // Constants
 const DEFAULT_COLOR = '#FFFFFF'; // White
@@ -121,6 +131,10 @@ function App() {
   // Force authentication and subscription to be true for localhost development
   const isAuthenticated = true; // Bypass authentication check
   const [isSubscribed, setIsSubscribed] = useState(false); // Default to subscribed
+  
+  // Email user state for handling email-only users
+  const [emailUser, setEmailUser] = useState(null);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   // 2. Refs
   const wheelRef = useRef(null);
@@ -183,6 +197,18 @@ function App() {
       setIsSubscribed(false);
     }
   }, [isAuthenticated, user]);
+
+  // Load email user data from localStorage on app initialization
+  useEffect(() => {
+    const savedEmailUser = localStorage.getItem('hextra_email_user');
+    if (savedEmailUser) {
+      try {
+        setEmailUser(JSON.parse(savedEmailUser));
+      } catch (error) {
+        console.error('Failed to parse saved email user data:', error);
+      }
+    }
+  }, []);
 
   // Initialize the COLOR_GROUPS with the recent colors from localStorage
   useEffect(() => {
@@ -807,7 +833,8 @@ function App() {
     }
   }, [rgbColor, saveToRecentColors, autoApplyColors, focusHexInput, processColor]);
 
-  const handleQuickDownload = useCallback(() => {
+  // Function to perform the actual download
+  const performDownload = useCallback(() => {
     // If there's no processed URL but there is a working image, set the working image as the URL to download
     const urlToDownload = workingProcessedUrl || (imageLoaded ? workingImageUrl : null);
     
@@ -828,7 +855,42 @@ function App() {
     if (urlToDownload.startsWith('blob:')) {
       URL.revokeObjectURL(urlToDownload);
     }
-  }, [canDownload, selectedColor, workingProcessedUrl, selectedFormat, workingImageUrl, imageLoaded]);
+  }, [selectedColor, workingProcessedUrl, selectedFormat, workingImageUrl, imageLoaded]);
+  
+  // Handle email submission from dialog
+  const handleEmailSubmit = useCallback((email) => {
+    if (!email) return;
+    
+    // Create user info object
+    const userInfo = {
+      email,
+      timestamp: Date.now()
+    };
+    
+    // Save to localStorage for persistence across sessions
+    try {
+      localStorage.setItem('hextra_email_user', JSON.stringify(userInfo));
+    } catch (error) {
+      console.error('Failed to save email user data to localStorage:', error);
+    }
+    
+    // Update state
+    setEmailUser(userInfo);
+    
+    // Proceed with download after collecting email
+    performDownload();
+  }, [performDownload]);
+  
+  // Main download handler - checks user state and shows dialog if needed
+  const handleQuickDownload = useCallback(() => {
+    // If user is authenticated or has already provided email, proceed with download
+    if (isAuthenticated || emailUser) {
+      performDownload();
+    } else {
+      // Show email collection dialog for anonymous users
+      setEmailDialogOpen(true);
+    }
+  }, [isAuthenticated, emailUser, performDownload]);
 
   const handleCSVUpload = useCallback(async (e) => {
     const file = e.target.files[0];
@@ -919,6 +981,20 @@ function App() {
   }, [originalImageUrl, imageLoaded]);
 
   // 6. Effect hooks
+  
+  // Load email user data from localStorage
+  useEffect(() => {
+    const savedEmailUser = localStorage.getItem('hextra_email_user');
+    if (savedEmailUser) {
+      try {
+        setEmailUser(JSON.parse(savedEmailUser));
+        console.log('Loaded email user data from localStorage');
+      } catch (error) {
+        console.error('Failed to parse saved email user data:', error);
+      }
+    }
+  }, []);
+  
   useEffect(() => {
     console.log('Subscription check bypassed for local development');
   }, []);
@@ -2423,9 +2499,14 @@ function App() {
         </Box>
       </Box>
     </Box>
+    
+    {/* Email Collection Dialog */}
+    <EmailCollectionDialog 
+      open={emailDialogOpen} 
+      onClose={() => setEmailDialogOpen(false)}
+      onSubmit={handleEmailSubmit}
+    />
   );
-
-  return mainContent;
 }
 
 export default App;
