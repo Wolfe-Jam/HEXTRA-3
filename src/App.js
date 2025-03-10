@@ -94,8 +94,19 @@ const DEFAULT_COLORS = [
   '#FF4400',  // Orange
   '#CABFAD',  // Stone
 ];
-// Improved color wheel with accurate selection and visual feedback - v2.2.4
+/**
+ * HEXTRA-3 - v2.2.4
+ * Build Date: 2025-03-10
+ * Build ID: HEXTRA-2025-03-10-AD2241
+ * 
+ * Features:
+ * - Complete image processing pipeline
+ * - Kinde authentication
+ * - Stripe subscription system (Early-Bird $5/mo, Pro $10/mo)
+ * - Color management & visualization
+ */
 const VERSION = '2.2.4';
+const BUILD_ID = 'HEXTRA-2025-03-10-AD2241';
 
 // Browser environment check for SSR compatibility
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';

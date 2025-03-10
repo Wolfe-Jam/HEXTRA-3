@@ -16,7 +16,7 @@ const leagueSpartanStyle = {
   letterSpacing: '0.1em'
 };
 
-const AboutDialog = ({ open, onClose, version }) => {
+const AboutDialog = ({ open, onClose, version, buildId, buildDate }) => {
   return (
     <Dialog 
       open={open} 
@@ -88,6 +88,12 @@ const AboutDialog = ({ open, onClose, version }) => {
             </Typography>
             <Typography variant="body2">
               {version}
+            </Typography>
+            <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: '#666' }}>
+              Build ID: {buildId || 'Not specified'}
+            </Typography>
+            <Typography variant="caption" sx={{ display: 'block', color: '#666' }}>
+              Built on: {buildDate || 'Not specified'}
             </Typography>
           </Box>
           
