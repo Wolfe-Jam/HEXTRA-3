@@ -1,5 +1,5 @@
 /**
- * KindeAuth Component (v2.2.2)
+ * KindeAuth Component (v2.2.0)
  * 
  * Provides authentication wrapper for the application using Kinde Auth.
  * Handles the OAuth2 PKCE flow and redirects.
@@ -10,8 +10,8 @@
  * 3. Redirects back to callback URL
  * 4. Processes tokens and redirects to /batch
  * 
- * @version 2.2.2
- * @lastUpdated 2025-02-10
+ * @version 2.2.0
+ * @lastUpdated 2025-03-10
  */
 
 import React from 'react';

@@ -12,7 +12,7 @@
 
 ## Current Version Status
 
-The project is currently at **v2.1.5** with the following status:
+The project is currently at **v2.2.0** with the following status:
 
 ### Key Achievements to Date
 - ✅ Complete image processing pipeline (single & batch)
@@ -21,11 +21,11 @@ The project is currently at **v2.1.5** with the following status:
 - ✅ Robust file management with standardized naming
 - ✅ Initial Kinde authentication framework
 
-### Version Inconsistencies
-- package.json: "2.1.5" ✓
-- src/version.js: '2.1.5' ✓
-- App.js: Corrected to 'v2.1.5' ✓
-- KindeAuth.js: Comments show "2.2.2" (needs update)
+### Version Status
+- package.json: "2.2.0" ✓
+- src/version.js: '2.2.0' ✓ (BUILD_DATE: '2025-03-10')
+- KindeAuth.js: Updated to "2.2.0" ✓
+- App.js: Uses VERSION from version.js ✓
 
 ### Implementation Status
 
