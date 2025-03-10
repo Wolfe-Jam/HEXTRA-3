@@ -1,3 +1,27 @@
+:root {
+    --bg-primary: #ffffff;
+    --text-primary: rgb(20, 20, 20);
+    --text-secondary: #666666;
+    --button-bg: rgb(20, 20, 20);
+    --button-text: #ffffff;
+    --button-hover: #333333;
+    --border-color: rgb(20, 20, 20);
+    --primary-color: rgb(20, 20, 20);
+    --primary-hover: #333333;
+    --disabled-bg: #e0e0e0;
+    --disabled-text: #888888;
+    --hover-bg: #f5f5f5;
+    --glow-color: #FED141;
+    --glow-subtle: rgba(254, 209, 65, 0.3);
+    --bg-secondary: #f0f0f0;
+    --element-bg: #ffffff;
+    --accent-color: #224D8F;
+    --accent-secondary: #D50032;
+    --gradient-primary: linear-gradient(45deg, #1565C0 30%, #42A5F5 90%);
+    --gradient-secondary: linear-gradient(45deg, #C62828 30%, #EF5350 90%);
+    --box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
 :root[data-theme="light"] {
     --bg-primary: #ffffff;
     --text-primary: rgb(20, 20, 20);
@@ -11,6 +35,15 @@
     --disabled-bg: #e0e0e0;
     --disabled-text: #888888;
     --hover-bg: #f5f5f5;
+    --glow-color: #FED141;
+    --glow-subtle: rgba(254, 209, 65, 0.3);
+    --bg-secondary: #f0f0f0;
+    --element-bg: #ffffff;
+    --accent-color: #224D8F;
+    --accent-secondary: #D50032;
+    --gradient-primary: linear-gradient(45deg, #1565C0 30%, #42A5F5 90%);
+    --gradient-secondary: linear-gradient(45deg, #C62828 30%, #EF5350 90%);
+    --box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 :root[data-theme="dark"] {
@@ -26,6 +59,15 @@
     --disabled-bg: #333333;
     --disabled-text: #666666;
     --hover-bg: #333333;
+    --glow-color: #FED141;
+    --glow-subtle: rgba(254, 209, 65, 0.3);
+    --bg-secondary: #2a2a2a;
+    --element-bg: #2a2a2a;
+    --accent-color: #4f7ecc;
+    --accent-secondary: #ff5252;
+    --gradient-primary: linear-gradient(45deg, #42A5F5 30%, #90CAF9 90%);
+    --gradient-secondary: linear-gradient(45deg, #EF5350 30%, #FFCDD2 90%);
+    --box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 /* Base styles */
@@ -34,6 +76,7 @@ html, body {
     padding: 0;
     height: 100%;
     min-height: 100vh;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 body {
@@ -44,6 +87,8 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
+    align-items: stretch;
+    justify-content: flex-start;
 }
 
 #root {

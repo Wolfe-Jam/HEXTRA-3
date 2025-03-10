@@ -16,11 +16,15 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
       'background-color',
       'box-shadow',
     ]),
+    '& input': {
+      color: theme.palette.mode === 'dark' ? '#FFFFFF' : 'rgba(0, 0, 0, 0.87)',
+    },
     '&:hover': {
-      backgroundColor: 'transparent',
+      backgroundColor: theme.palette.mode === 'dark' ? '#1A1A1A' : '#FFFFFF', // Keep background
+      borderColor: theme.palette.mode === 'dark' ? '#555555' : '#C0C0C0',
     },
     '&.Mui-focused': {
-      backgroundColor: 'transparent',
+      backgroundColor: theme.palette.mode === 'dark' ? '#1A1A1A' : '#FFFFFF',
       boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
       borderColor: theme.palette.primary.main,
     },
@@ -42,6 +46,8 @@ function IconTextField({
   isOptionEqualToValue,
   onOptionSelect,
   InputProps = {},
+  inputRef,
+  endAdornment,
   ...rest
 }) {
   const handleReset = () => {
@@ -50,7 +56,7 @@ function IconTextField({
     }
   };
 
-  const endAdornment = hasReset ? (
+  const resetButton = hasReset ? (
     <InputAdornment position="end">
       <IconButton
         onClick={handleReset}
@@ -62,13 +68,30 @@ function IconTextField({
         <ResetIcon />
       </IconButton>
     </InputAdornment>
-  ) : InputProps.endAdornment;
+  ) : null;
+
+  // If we have both a custom endAdornment and reset button, combine them
+  const finalEndAdornment = InputProps.endAdornment && resetButton ? (
+    <InputAdornment position="end">
+      {InputProps.endAdornment}
+      <IconButton
+        onClick={handleReset}
+        edge="end"
+        sx={{
+          visibility: value ? 'visible' : 'hidden',
+          ml: 0.5
+        }}
+      >
+        <ResetIcon />
+      </IconButton>
+    </InputAdornment>
+  ) : (InputProps.endAdornment || resetButton || InputProps.endAdornment);
 
   const startAdornment = startIcon ? (
     <InputAdornment position="start">
       {React.cloneElement(startIcon, {
         sx: {
-          color: 'text.secondary',
+          color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
           marginRight: '8px',
         },
       })}
@@ -98,26 +121,27 @@ function IconTextField({
       onInputChange={handleInputChange}
       selectOnFocus
       handleHomeEndKeys
-      autoSelect
+      clearOnBlur={false}
       options={options}
       renderOption={renderOption}
-      getOptionLabel={getOptionLabel}
+      getOptionLabel={getOptionLabel || (option => option)}
       isOptionEqualToValue={isOptionEqualToValue}
       renderInput={(params) => (
         <StyledTextField
           {...params}
+          {...rest}
           placeholder={placeholder}
+          inputRef={inputRef}
           onKeyDown={onKeyDown}
           InputProps={{
             ...params.InputProps,
             ...InputProps,
             startAdornment: startAdornment || params.InputProps.startAdornment,
-            endAdornment: endAdornment || params.InputProps.endAdornment,
+            endAdornment: finalEndAdornment || params.InputProps.endAdornment,
           }}
           sx={{
             ...sx,
           }}
-          {...rest}
         />
       )}
     />

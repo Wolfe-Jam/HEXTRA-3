@@ -1,0 +1,5 @@
+Deployment trigger file for Vercel
+Version: 2.2.4
+Date: 2025-03-02
+Description: Enhanced color system with expanded palette, fixed grayscale slider, and improved selection interface
+Commit: Deployed new version with expanded color palette including Amber and Chroma colors

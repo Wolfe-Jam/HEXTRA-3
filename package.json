@@ -1,6 +1,10 @@
 {
   "name": "hextra-3",
+<<<<<<< HEAD
   "version": "2.2.0",
+=======
+  "version": "2.2.4",
+>>>>>>> subscription-integration
   "private": true,
   "engines": {
     "node": "18.x",
@@ -74,6 +78,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "dev": "PORT=3000 react-scripts start",
+    "dev:force": "kill -9 $(lsof -ti:3000) 2>/dev/null || true && PORT=3000 react-scripts start",
     "build": "cross-env NODE_OPTIONS='--openssl-legacy-provider' react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",

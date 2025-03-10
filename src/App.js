@@ -1,12 +1,25 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Box, Button, Slider, Typography, CircularProgress, LinearProgress, Tooltip } from '@mui/material';
-import { hexToRgb } from './utils/image-processing';
-import { processImage } from './utils/image-processing';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { 
+  Box, 
+  Button, 
+  Container, 
+  Grid, 
+  TextField, 
+  Typography, 
+  Paper, 
+  CircularProgress, 
+  Slider, 
+  LinearProgress, 
+  Tooltip,
+  IconButton
+} from '@mui/material';
 import TagIcon from '@mui/icons-material/Tag';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { LinkRounded as LinkIcon } from '@mui/icons-material';
-import { Wheel } from '@uiw/react-color';
-import JSZip from 'jszip';
+import { styled } from '@mui/material/styles';
+import { debounce } from 'lodash';
+import { hexToRgb } from './utils/colorUtils';
+import { processImage } from './utils/image-processing';
 import SwatchDropdownField from './components/SwatchDropdownField';
 import GlowTextButton from './components/GlowTextButton';
 import GlowButton from './components/GlowButton';
@@ -16,95 +29,400 @@ import Banner from './components/Banner';
 import { useNavigate } from 'react-router-dom';
 import DefaultTshirt from './components/DefaultTshirt';
 import GILDAN_64000 from './data/catalogs/gildan64000.js';
+import CUSTOM_21 from './data/catalogs/gildan3000.js';
 import './theme.css';
-import { debounce } from 'lodash';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
+import { useTheme } from './context/ThemeContext';
+import JSZip from 'jszip';
+import Wheel from './components/Wheel';
+import RestoreIcon from '@mui/icons-material/Restore';
+import GlowIconButton from './components/GlowIconButton';
+import SearchIcon from '@mui/icons-material/Search';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import DownloadIcon from '@mui/icons-material/Download';
 
 // Constants
-const DEFAULT_COLOR = '#FED141';
-const VERSION = 'v2.2.0';
+const DEFAULT_COLOR = '#FFFFFF'; // White
+
+const COLOR_GROUPS = [
+  {
+    name: 'Recently Used',
+    colors: [] // This will be populated dynamically
+  },
+  {
+    name: 'Brand Colors',
+    colors: [
+      { value: '#D50032', label: 'Dark Red' },
+      { value: '#00805E', label: 'Green' },
+      { value: '#224D8F', label: 'Blue' },
+      { value: '#FED141', label: 'Daisy' }
+    ]
+  },
+  {
+    name: 'Grayscale',
+    colors: [
+      { value: '#000000', label: 'Black' },
+      { value: '#333333', label: 'Dark Grey' },
+      { value: '#999999', label: 'Mid Grey' },
+      { value: '#CCCCCC', label: 'Light Grey' },
+      { value: '#FFFFFF', label: 'White' }
+    ]
+  },
+  {
+    name: 'Useful',
+    colors: [
+      { value: '#FF4400', label: 'Orange' },
+      { value: '#FFAA00', label: 'Amber' },
+      { value: '#CABFAD', label: 'Stone' },
+      { value: '#9900CC', label: 'Purple' },
+      { value: '#00CCFF', label: 'Cyan' },
+      { value: '#FF00FF', label: 'Magenta' },
+      { value: '#00FF00', label: 'Chroma Green' },
+      { value: '#0000FF', label: 'Chroma Blue' },
+      { value: '#FF0000', label: 'Bright Red' }
+    ]
+  }
+];
+
+// Keep backward compatibility with existing code that uses DEFAULT_COLORS
+const DEFAULT_COLORS = [
+  DEFAULT_COLOR,
+  '#D50032',  // Dark Red
+  '#00805E',  // Green
+  '#224D8F',  // Blue
+  '#FED141',  // Daisy
+  '#FF4400',  // Orange
+  '#CABFAD',  // Stone
+];
+// Improved color wheel with accurate selection and visual feedback - v2.2.4
+const VERSION = '2.2.4';
+
+// Browser environment check for SSR compatibility
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
 function App() {
+  console.log('App: Starting initialization...');
   // 1. Basic hooks
-  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   // eslint-disable-next-line no-unused-vars
-  const { user } = useKindeAuth();
+  const { isAuthenticated: kindeAuthenticated, user } = useKindeAuth();
+  
+  // Force authentication and subscription to be true for localhost development
+  const isAuthenticated = true; // Bypass authentication check
+  const [isSubscribed, setIsSubscribed] = useState(false); // Default to subscribed
 
   // 2. Refs
   const wheelRef = useRef(null);
   const hexInputRef = useRef(null);
   const isDragging = useRef(false);
 
-  // 3. State hooks
-  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
-  const [rgbColor, setRgbColor] = useState(hexToRgb(DEFAULT_COLOR));
-  const [workingImageUrl, setWorkingImageUrl] = useState(null);
-  const [workingProcessedUrl, setWorkingProcessedUrl] = useState(null);
+  // 2. State hooks
+  const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [workingImageUrl, setWorkingImageUrl] = useState('');
+  const [originalImageUrl, setOriginalImageUrl] = useState('');
+  const [workingProcessedUrl, setWorkingProcessedUrl] = useState('');
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [recentlyUsedColors, setRecentlyUsedColors] = useState(
+    () => {
+      try {
+        const saved = localStorage.getItem('recentColors');
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        console.error('Error parsing recent colors from localStorage:', e);
+        return [];
+      }
+    }
+  );
+  const [rgbColor, setRgbColor] = useState({ r: 255, g: 255, b: 255 }); // Default to white
+  const [grayscaleValue, setGrayscaleValue] = useState(255); // Changed from 200 to 255 for maximum brightness
   const [canDownload, setCanDownload] = useState(false);
-  const [urlInput, setUrlInput] = useState('');
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('hextraTheme');
-    return savedTheme || 'dark';
-  });
-  const [lastClickColor, setLastClickColor] = useState(null);
-  const [lastClickTime, setLastClickTime] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [showHexDropDown, setShowHexDropDown] = useState(false);
+  const [colorApplied, setColorApplied] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState('png'); // 'png' or 'webp'
+  const [autoApplyColors, setAutoApplyColors] = useState(false); // Default to OFF for better user control
+  const [urlInput, setUrlInput] = useState('/images/default-tshirt.webp');
+  const { theme, toggleTheme } = useTheme();
   const [enhanceEffect, setEnhanceEffect] = useState(true);
   const [showTooltips, setShowTooltips] = useState(true);
-  // eslint-disable-next-line no-unused-vars
   const [showSubscriptionTest, setShowSubscriptionTest] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [grayscaleValue, setGrayscaleValue] = useState(128);
   const [matteValue, setMatteValue] = useState(50);
   const [textureValue, setTextureValue] = useState(50);
   const [batchResults, setBatchResults] = useState([]);
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchStatus, setBatchStatus] = useState('idle');
-  const [selectedColors, setSelectedColors] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
   const [activeCatalog, setActiveCatalog] = useState('GILDAN_64000');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isBatchMode, setIsBatchMode] = useState(false);
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [showSubscription, setShowSubscription] = useState(false);
+  const [lastClickColor, setLastClickColor] = useState(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
+
+  // Check subscription status when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      // For now, we'll just mock the subscription check
+      // In production, this would call your API
+      console.log("Checking subscription status for user:", user.id);
+      // Mock response - set to true to test subscription features
+      setIsSubscribed(false);
+    }
+  }, [isAuthenticated, user]);
+
+  // Initialize the COLOR_GROUPS with the recent colors from localStorage
+  useEffect(() => {
+    if (recentlyUsedColors && recentlyUsedColors.length > 0) {
+      COLOR_GROUPS[0].colors = recentlyUsedColors;
+    }
+  }, [recentlyUsedColors]);
+
+  // Function to save color to recent list, only on deliberate actions
+  const saveToRecentColors = useCallback((color) => {
+    if (!color || color === '#FFFFFF') return; // Don't store empty or pure white
+    
+    // Ensure color is properly formatted
+    let formattedColor = color.toUpperCase();
+    if (formattedColor.length < 7) {
+      console.warn('Invalid color format:', color);
+      return;
+    }
+    
+    // Add to local storage recent colors
+    setRecentlyUsedColors(prev => {
+      // Create the color object with value and label
+      const newColor = { value: formattedColor, label: formattedColor };
+      
+      // Check if we already have an identical color
+      const exactMatch = prev.find(c => c.value === formattedColor);
+      if (exactMatch) {
+        // Move it to the front without adding duplicate
+        const filtered = prev.filter(c => c.value !== formattedColor);
+        const updated = [newColor, ...filtered].slice(0, 4);
+        
+        // Update the COLOR_GROUPS with the new recently used colors
+        COLOR_GROUPS[0].colors = updated;
+        
+        // Save to localStorage
+        localStorage.setItem('recentColors', JSON.stringify(updated));
+        
+        return updated;
+      }
+      
+      // Check for similar colors - consider colors within 10% difference as similar
+      const rgbNew = hexToRgb(formattedColor);
+      
+      // Check if any existing color is too similar
+      const tooSimilar = prev.some(existing => {
+        const rgbExisting = hexToRgb(existing.value);
+        
+        // Calculate color distance (simple Euclidean distance)
+        const rDiff = Math.abs(rgbNew.r - rgbExisting.r);
+        const gDiff = Math.abs(rgbNew.g - rgbExisting.g);
+        const bDiff = Math.abs(rgbNew.b - rgbExisting.b);
+        
+        // If the total difference is less than 30 (out of 765 max), consider it too similar
+        return (rDiff + gDiff + bDiff) < 30;
+      });
+      
+      // If too similar to existing color and we're in a dragging operation, don't add
+      if (tooSimilar && isDragging.current) {
+        return prev;
+      }
+      
+      // Filter out the color if it already exists
+      const filtered = prev.filter(c => c.value !== formattedColor);
+      
+      // Add to front of array and limit to 4 colors
+      const updated = [newColor, ...filtered].slice(0, 4);
+      
+      // Update the COLOR_GROUPS with the new recently used colors
+      COLOR_GROUPS[0].colors = updated;
+      
+      // Save to localStorage
+      localStorage.setItem('recentColors', JSON.stringify(updated));
+      
+      return updated;
+    });
+  }, []);
+
+  // Process the selected color - now used by multiple event handlers
+  const processColor = useCallback(() => {
+    if (!selectedColor || !workingImageUrl || !imageLoaded) {
+      console.error('Cannot process color - missing requirements', {
+        hasColor: !!selectedColor, 
+        hasImage: !!workingImageUrl,
+        imageLoaded
+      });
+      return;
+    }
+    
+    // Save to recent colors on application (deliberate user action)
+    saveToRecentColors(selectedColor);
+    
+    // Skip processing if auto-apply is off
+    if (!autoApplyColors) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      console.log('Calling processImage...');
+      const processedUrl = processImage(workingImageUrl, selectedColor);
+      console.log('Processing complete, updating UI');
+      setWorkingProcessedUrl(processedUrl);
+      setCanDownload(true);
+      setIsProcessing(false);
+    } catch (error) {
+      console.error('Error in processColor:', error);
+      setCanDownload(false);
+      setIsProcessing(false);
+    }
+  }, [selectedColor, workingImageUrl, imageLoaded, autoApplyColors, saveToRecentColors]);
 
   // 4. Memo hooks
   const debouncedProcessImage = useMemo(
     () => debounce(async (url, color) => {
-      if (!url || !color) return;
+      if (!url || !color) {
+        console.log('Missing URL or color for image processing', { url: !!url, color });
+        setIsProcessing(false);
+        return;
+      }
+      
+      console.log(`Debounced processing: URL: ${url.substring(0, 30)}..., Color: ${color}`);
+      setIsProcessing(true);
+      
       try {
+        console.log('Calling processImage...');
         const processedUrl = await processImage(url, color);
+        console.log('Processing complete, updating UI');
         setWorkingProcessedUrl(processedUrl);
         setCanDownload(true);
+        setIsProcessing(false);
       } catch (error) {
-        console.error('Error processing image:', error);
+        console.error('Error in debouncedProcessImage:', error);
         setCanDownload(false);
+        setIsProcessing(false);
       }
     }, 150),
-    []
+    [] // No dependencies needed here
   );
 
   // 5. Callback hooks
-  const applyColor = useCallback(async (color) => {
-    if (!workingImageUrl) return;
-    
+  const focusHexInput = useCallback(() => {
     try {
-      setIsProcessing(true);
-      await debouncedProcessImage(workingImageUrl, color);
+      // Try using the provided ref first
+      if (hexInputRef.current && hexInputRef.current.focus) {
+        hexInputRef.current.focus();
+        return;
+      }
+      
+      // If ref approach fails, try DOM selection
+      const inputElement = document.querySelector('.color-picker-container input');
+      if (inputElement) {
+        inputElement.focus();
+      }
     } catch (err) {
-      console.error('Failed to process image:', err);
-      setCanDownload(false);
-    } finally {
+      console.error('Error focusing hex input:', err);
+    }
+  }, []);
+
+  const applyColor = useCallback((trigger) => {
+    console.log('applyColor called with:', {
+      trigger,
+      selectedColor,
+      workingImageUrl: workingImageUrl?.substring(0, 30),
+      imageLoaded
+    });
+    
+    // Only proceed if we have a color and an image
+    if (!selectedColor || !workingImageUrl || !imageLoaded) {
+      console.error('Cannot apply color - missing requirements', {
+        hasColor: !!selectedColor, 
+        hasImage: !!workingImageUrl,
+        imageLoaded
+      });
+      return;
+    }
+    
+    // Set processing state
+    setIsProcessing(true);
+    
+    // Force color to be the hex value, not the 'apply' trigger
+    const colorToApply = selectedColor;
+    console.log('Starting image processing with color:', colorToApply);
+    
+    // IMPORTANT: Use the direct processImage function, not the debounced version
+    try {
+      console.log('Processing image with dimensions:', {
+        imageUrl: workingImageUrl ? 'present' : 'missing',
+        originalImageUrl: originalImageUrl ? 'present' : 'missing'
+      });
+      
+      processImage(workingImageUrl, colorToApply)
+        .then(processedUrl => {
+          console.log('SUCCESS: Image processed with color', colorToApply);
+          setWorkingProcessedUrl(processedUrl);
+          setCanDownload(true);
+          setIsProcessing(false);
+        })
+        .catch(error => {
+          console.error('ERROR: Image processing failed:', error);
+          // Don't reset to original image automatically, just keep current state
+          setCanDownload(true);
+          setIsProcessing(false);
+        })
+        .finally(() => {
+          console.log('Processing complete (success or error)');
+          focusHexInput();
+        });
+    } catch (e) {
+      console.error('FATAL ERROR in image processing:', e);
       setIsProcessing(false);
     }
-  }, [workingImageUrl, debouncedProcessImage]);
+  }, [selectedColor, workingImageUrl, originalImageUrl, imageLoaded, focusHexInput]);
 
-  const handleColorChange = useCallback((color) => {
+  const handleColorWheelChange = useCallback((color) => {
+    if (!color) return;
+    
+    console.log('Color wheel changed to', color);
     setSelectedColor(color);
-    if (!isDragging.current) {
-      applyColor(color);
+    setShowHexDropDown(false);
+    
+    // Extract RGB
+    const rgb = hexToRgb(color);
+    setRgbColor({ r: rgb.r, g: rgb.g, b: rgb.b });
+    
+    // Focus the HEX input (important for workflow)
+    focusHexInput();
+    
+    // Only apply color if auto-apply is enabled, but DON'T save to recent colors
+    // during wheel movement - only apply the color to preview
+    if (autoApplyColors) {
+      // Apply color without saving to recent
+      if (selectedColor && workingImageUrl && imageLoaded) {
+        setIsProcessing(true);
+        
+        try {
+          processImage(workingImageUrl, color)
+            .then(processedUrl => {
+              setWorkingProcessedUrl(processedUrl);
+              setCanDownload(true);
+              setIsProcessing(false);
+            })
+            .catch(error => {
+              console.error('Error during wheel movement preview:', error);
+              setIsProcessing(false);
+            });
+        } catch (error) {
+          console.error('Error processing color during wheel movement:', error);
+          setIsProcessing(false);
+        }
+      }
     }
-  }, [applyColor]);
+  }, [focusHexInput, autoApplyColors, workingImageUrl, imageLoaded, setShowHexDropDown]);
 
   const handleDragStart = useCallback(() => {
     isDragging.current = true;
@@ -112,48 +430,164 @@ function App() {
 
   const handleDragEnd = useCallback(() => {
     isDragging.current = false;
-    debouncedProcessImage(workingImageUrl, selectedColor);
-  }, [workingImageUrl, selectedColor, debouncedProcessImage]);
+    
+    // Now we save to recent when user releases the mouse (deliberate action)
+    if (selectedColor) {
+      saveToRecentColors(selectedColor);
+    }
+    
+    // Apply the color when dragging ends if autoApplyColors is enabled
+    if (autoApplyColors && selectedColor && workingImageUrl && imageLoaded) {
+      setIsProcessing(true);
+      
+      try {
+        processImage(workingImageUrl, selectedColor)
+          .then(processedUrl => {
+            setWorkingProcessedUrl(processedUrl);
+            setCanDownload(true);
+            setIsProcessing(false);
+          })
+          .catch(error => {
+            console.error('Error during color application at drag end:', error);
+            setIsProcessing(false);
+          });
+      } catch (error) {
+        console.error('Error processing color at drag end:', error);
+        setIsProcessing(false);
+      }
+    }
+  }, [selectedColor, autoApplyColors, saveToRecentColors, workingImageUrl, imageLoaded]);
 
   const handleDropdownSelect = useCallback((color) => {
-    setSelectedColor(color.hex);
-    setRgbColor(hexToRgb(color.hex));
-    if (hexInputRef.current) {
-      hexInputRef.current.focus();
+    // Basic validation
+    if (!color) {
+      console.log('Invalid color from dropdown:', color);
+      return;
     }
-  }, []);
+    
+    // Make sure color is a string
+    const hexColor = typeof color === 'string' ? color : 
+                     (color.hex ? color.hex : null);
+    
+    if (!hexColor) {
+      console.log('Could not extract hex color from:', color);
+      return;
+    }
+    
+    console.log('Selected color from dropdown:', hexColor);
+    
+    // Update the selected color
+    setSelectedColor(hexColor);
+    
+    // Convert to RGB
+    const rgb = hexToRgb(hexColor);
+    if (rgb) {
+      setRgbColor(rgb);
+      
+      // Calculate the HSV values to extract value component
+      const max = Math.max(rgb.r, rgb.g, rgb.b) / 255;
+      
+      // Update grayscale value to match the brightness (value) of the selected color
+      const valueComponent = Math.round(max * 255);
+      setGrayscaleValue(valueComponent);
+      
+      // Update the color wheel position to match the selected color
+      if (wheelRef.current && wheelRef.current.setColor) {
+        wheelRef.current.setColor(hexColor);
+      }
+    }
+    
+    // Save to recent colors on dropdown select (deliberate user action)
+    saveToRecentColors(hexColor);
+    
+    // Apply the selected color immediately
+    processColor();
+    
+    // Try to focus the hex input
+    try {
+      setTimeout(() => {
+        const inputElement = document.querySelector('.color-picker-container input');
+        if (inputElement) {
+          inputElement.focus();
+        }
+      }, 100);
+    } catch (err) {
+      console.log('Error focusing input:', err);
+    }
+  }, [saveToRecentColors, processColor]);
 
   const handleImageUpload = useCallback(async (file) => {
-    if (!file) return;
+    if (!file) {
+      console.log('No file provided to handleImageUpload');
+      return;
+    }
+    
+    // Log file details for debugging
+    console.log('Image upload initiated with file:', {
+      name: file.name,
+      type: file.type,
+      size: `${(file.size / 1024).toFixed(2)} KB`
+    });
+    
+    // Set loading state first
+    setIsProcessing(true);
     
     try {
+      // Create object URL immediately
+      console.log('Creating object URL for uploaded file');
       const url = URL.createObjectURL(file);
+      
+      // Store both original and working image URLs
+      console.log('Setting image URLs in state');
+      setOriginalImageUrl(url);
       setWorkingImageUrl(url);
+      setWorkingProcessedUrl(null); // Clear any previous processed image
+      setCanDownload(false); // Reset download state for new image
+      
+      // Set image as loaded AFTER URLs are set
+      console.log('Image successfully loaded');
       setImageLoaded(true);
       
-      if (selectedColor) {
-        await applyColor(selectedColor);
-      }
+      // Do NOT automatically apply color
+      // if (selectedColor) {
+      //   await applyColor(selectedColor);
+      // }
     } catch (err) {
-      console.error('Failed to load image:', err);
+      console.error('ERROR in handleImageUpload:', err);
       setImageLoaded(false);
+    } finally {
+      // Always ensure processing state is reset
+      setIsProcessing(false);
     }
-  }, [applyColor, selectedColor]);
+  }, []);  // Remove dependencies on applyColor and selectedColor
 
-  const handleLoadUrl = useCallback(async () => {
-    if (!urlInput.trim()) {
-      window.open('https://www.google.com/search?q=blank+white+t-shirt&tbm=isch', '_blank');
+  const handleSearchTshirts = useCallback(() => {
+    window.open('https://www.google.com/search?q=blank+white+t-shirt&tbm=isch', '_blank');
+  }, []);
+
+  const handleLoadUrl = useCallback(async (directUrl) => {
+    // Use either the provided directUrl or the urlInput state
+    const urlToLoad = directUrl || urlInput.trim();
+    
+    if (!urlToLoad) {
       return;
     }
 
+    console.log('Attempting to load image from URL:', urlToLoad);
+    setIsProcessing(true);
+
     try {
-      const response = await fetch(urlInput);
+      console.log('Fetching image from URL');
+      const response = await fetch(urlToLoad);
       const blob = await response.blob();
-      const file = new File([blob], 'image.png', { type: blob.type });
+      const file = new File([blob], 'image-from-url.png', { type: blob.type });
+      
+      console.log('Image fetched successfully, creating file object');
+      // Since handleImageUpload now handles setting isProcessing false, we don't need to handle it here
       await handleImageUpload(file);
-      setUrlInput('');
     } catch (err) {
-      console.error('Failed to load image from URL:', err);
+      console.error('ERROR loading image from URL:', err);
+      setIsProcessing(false); // Make sure to reset processing state on error
     }
   }, [handleImageUpload, urlInput]);
 
@@ -164,65 +598,226 @@ function App() {
     }
   }, [handleLoadUrl]);
 
-  const handleWheelClick = useCallback((e) => {
-    const now = Date.now();
-    const timeDiff = now - lastClickTime;
+  const handleWheelClick = useCallback((color) => {
+    if (!color) return;
     
-    if (timeDiff < 300 && lastClickColor === selectedColor) {
-      applyColor(selectedColor);
-    }
+    console.log('Color wheel clicked on', color);
+    setSelectedColor(color);
+    setShowHexDropDown(false);
     
-    setLastClickColor(selectedColor);
-    setLastClickTime(now);
-  }, [applyColor, lastClickColor, lastClickTime, selectedColor]);
-
-  const handleHexInputChange = useCallback((e) => {
-    const value = e.target.value;
-    if (!value && selectedColor) {
-      e.target.value = selectedColor;
-      return;
+    // Extract RGB
+    const rgb = hexToRgb(color);
+    setRgbColor({ r: rgb.r, g: rgb.g, b: rgb.b });
+    
+    // Focus the HEX input
+    focusHexInput();
+    
+    // Save to recent colors on click (deliberate user action)
+    saveToRecentColors(color);
+    
+    // Only apply color if auto-apply is enabled
+    if (autoApplyColors) {
+      processColor();
     }
+  }, [focusHexInput, saveToRecentColors, autoApplyColors, processColor, setShowHexDropDown]);
 
-    if (value) {
-      if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
-        setSelectedColor(value);
-        setRgbColor(hexToRgb(value));
-        applyColor();
+  const handleHexInputChange = useCallback((event) => {
+    if (!event || !event.target) return;
+    
+    // Get the input value
+    let inputValue = event.target.value || '';
+    
+    // Don't add # here - this is just the raw input change
+    // The full hex with # will be managed by the component state
+    
+    // Update the selected color with # prefix
+    let fullHex = inputValue.startsWith('#') ? inputValue : '#' + inputValue;
+    fullHex = fullHex.toUpperCase(); // Ensure uppercase
+    
+    // Basic validation
+    const validHex = /^#[0-9A-F]{0,6}$/i.test(fullHex);
+    if (validHex || fullHex === '#') {
+      setSelectedColor(fullHex);
+      
+      // Only convert to RGB if we have a valid 6-digit hex code
+      if (/^#[0-9A-F]{6}$/i.test(fullHex)) {
+        const rgb = hexToRgb(fullHex);
+        if (rgb) {
+          setRgbColor(rgb);
+          
+          // Calculate the HSV values to extract value component
+          const max = Math.max(rgb.r, rgb.g, rgb.b) / 255;
+          
+          // Update grayscale value to match the brightness (value) of the selected color
+          const valueComponent = Math.round(max * 255);
+          setGrayscaleValue(valueComponent);
+          
+          // Update the color wheel position to match the new HEX code
+          if (wheelRef.current && wheelRef.current.setColor) {
+            wheelRef.current.setColor(fullHex);
+          }
+        }
       }
     }
-  }, [applyColor, selectedColor]);
+  }, []);
 
+  // Reset color to default yellow
   const resetColor = useCallback(() => {
-    const defaultRgb = hexToRgb(DEFAULT_COLOR);
     setSelectedColor(DEFAULT_COLOR);
-    setRgbColor(defaultRgb);
-    if (wheelRef.current) {
+    setRgbColor(hexToRgb(DEFAULT_COLOR));
+    
+    // Update the color wheel to the default color
+    if (wheelRef.current && wheelRef.current.setColor) {
       wheelRef.current.setColor(DEFAULT_COLOR);
+    }
+  }, []);
+
+  // Clear color (set empty)
+  const clearColor = useCallback(() => {
+    setSelectedColor('');
+    setRgbColor({ r: 0, g: 0, b: 0 });
+    
+    // Update the color wheel to black when cleared
+    if (wheelRef.current && wheelRef.current.setColor) {
+      wheelRef.current.setColor('#000000');
     }
   }, []);
 
   const handleGrayscaleChange = useCallback((event, newValue) => {
     const grayValue = newValue;
+    setGrayscaleValue(grayValue);
+    
+    // If we're at 0, set to pure black
+    if (grayValue === 0) {
+      const grayHex = '#000000';
+      setSelectedColor(grayHex);
+      setRgbColor({ r: 0, g: 0, b: 0 });
+      
+      // Update the wheel - the wheel's internal brightness will handle the display
+      if (wheelRef.current && wheelRef.current.setColor) {
+        wheelRef.current.setColor(grayHex);
+      }
+      return;
+    }
+    
+    // For all other values, preserve the hue/saturation but apply the new brightness
+    const currentColor = selectedColor;
+    if (currentColor && currentColor.startsWith('#')) {
+      // Convert the current color to HSV
+      const rgb = hexToRgb(currentColor);
+      if (rgb) {
+        // Calculate the current HSV values
+        const max = Math.max(rgb.r, rgb.g, rgb.b) / 255;
+        const min = Math.min(rgb.r, rgb.g, rgb.b) / 255;
+        const delta = max - min;
+        
+        let hue = 0;
+        if (delta !== 0) {
+          if (max === rgb.r / 255) {
+            hue = ((rgb.g / 255 - rgb.b / 255) / delta) % 6;
+          } else if (max === rgb.g / 255) {
+            hue = (rgb.b / 255 - rgb.r / 255) / delta + 2;
+          } else {
+            hue = (rgb.r / 255 - rgb.g / 255) / delta + 4;
+          }
+        }
+        
+        hue = Math.round(hue * 60);
+        if (hue < 0) hue += 360;
+        
+        const saturation = max === 0 ? 0 : delta / max;
+        
+        // Apply new brightness level (0-1 scale)
+        const value = grayValue / 255;
+        
+        // Convert back to RGB
+        let r, g, b;
+        
+        if (saturation === 0) {
+          // Achromatic (gray)
+          r = g = b = Math.round(value * 255);
+        } else {
+          hue /= 60; // sector 0 to 5
+          const i = Math.floor(hue);
+          const f = hue - i; // factorial part of h
+          const p = value * (1 - saturation);
+          const q = value * (1 - saturation * f);
+          const t = value * (1 - saturation * (1 - f));
+          
+          switch (i % 6) {
+            case 0: r = value; g = t; b = p; break;
+            case 1: r = q; g = value; b = p; break;
+            case 2: r = p; g = value; b = t; break;
+            case 3: r = p; g = q; b = value; break;
+            case 4: r = t; g = p; b = value; break;
+            case 5: r = value; g = p; b = q; break;
+            default: r = value; g = 0; b = 0;
+          }
+          
+          r = Math.round(r * 255);
+          g = Math.round(g * 255);
+          b = Math.round(b * 255);
+        }
+        
+        // Create new hex color with preserved hue/saturation but new brightness
+        const newHex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
+        setSelectedColor(newHex);
+        setRgbColor({ r, g, b });
+        
+        // We don't need to call wheelRef.setColor here since the brightness prop will handle the wheel display
+      }
+    }
+  }, [selectedColor]);
+
+  const handleGraySwatchClick = useCallback(() => {
+    // Calculate the current gray value
+    const grayValue = Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3);
     const grayHex = `#${grayValue.toString(16).padStart(2, '0').repeat(3)}`.toUpperCase();
+    
+    // Update state
     setGrayscaleValue(grayValue);
     setSelectedColor(grayHex);
     setRgbColor({ r: grayValue, g: grayValue, b: grayValue });
-  }, []);
+    
+    // Update the color wheel position to match this gray
+    if (wheelRef.current && wheelRef.current.setColor) {
+      wheelRef.current.setColor(grayHex);
+    }
+    
+    // Save to recent colors on gray swatch click (deliberate user action)
+    saveToRecentColors(grayHex);
+    
+    // Apply the gray color immediately only if autoApplyColors is enabled
+    if (autoApplyColors) {
+      processColor();
+    } else {
+      // If not auto-applying, make sure to focus the hex input
+      focusHexInput();
+    }
+  }, [rgbColor, saveToRecentColors, autoApplyColors, focusHexInput, processColor]);
 
   const handleQuickDownload = useCallback(() => {
-    if (!workingProcessedUrl || !canDownload) return;
+    // If there's no processed URL but there is a working image, set the working image as the URL to download
+    const urlToDownload = workingProcessedUrl || (imageLoaded ? workingImageUrl : null);
+    
+    if (!urlToDownload) {
+      console.log('No image available to download');
+      return;
+    }
     
     const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.png`;
+    const filename = `HEXTRA-${currentDate}-${selectedColor.replace('#', '')}.${selectedFormat}`;
     
     const link = document.createElement('a');
-    link.href = workingProcessedUrl;
+    link.href = urlToDownload;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(workingProcessedUrl);
-  }, [canDownload, selectedColor, workingProcessedUrl]);
+    if (urlToDownload.startsWith('blob:')) {
+      URL.revokeObjectURL(urlToDownload);
+    }
+  }, [canDownload, selectedColor, workingProcessedUrl, selectedFormat, workingImageUrl, imageLoaded]);
 
   const handleCSVUpload = useCallback(async (e) => {
     const file = e.target.files[0];
@@ -265,34 +860,84 @@ function App() {
     }
   }, []);
 
-  const handleDefaultImageLoad = useCallback((e) => {
-    if (e.target.src) {
-      setWorkingImageUrl(e.target.src);
-      setWorkingProcessedUrl(e.target.src);
+  const DEFAULT_TSHIRT_URL = '/images/default-tshirt.webp';
+
+  const handleDefaultImageLoad = useCallback((urlOrEvent) => {
+    // Handle both event objects and direct URL strings
+    const imageUrl = urlOrEvent?.target?.src || urlOrEvent;
+    
+    if (imageUrl) {
+      setWorkingImageUrl(imageUrl);
+      setWorkingProcessedUrl(null); // Don't set processed URL for default image
       setImageLoaded(true);
-      setCanDownload(true);
+      setCanDownload(false); // Default image shouldn't be downloadable until processed
     }
   }, []);
 
-  const handleCatalogSwitch = useCallback((catalogName) => {
-    switch(catalogName) {
+  const handleCatalogSwitch = useCallback((catalog) => {
+    switch (catalog) {
       case 'GILDAN_64000':
         setActiveCatalog('GILDAN_64000');
         break;
-      case 'GILDAN_3000':
-        setActiveCatalog('GILDAN_3000');
+      case 'CUSTOM_21':
+        setActiveCatalog('CUSTOM_21');
         break;
       default:
         setActiveCatalog('GILDAN_64000');
     }
   }, []);
 
+  // Reset image to original (pre-color) state
+  const handleResetImage = useCallback(() => {
+    console.log('Resetting image to original state');
+    if (originalImageUrl) {
+      console.log('Restoring original image');
+      setWorkingImageUrl(originalImageUrl);
+      setWorkingProcessedUrl(null);
+      console.log('Image reset to original');
+      setCanDownload(false);
+    } else if (imageLoaded) {
+      // Default image reset case - revert to default t-shirt
+      console.log('Resetting to default t-shirt');
+      setWorkingImageUrl(DEFAULT_TSHIRT_URL);
+      setWorkingProcessedUrl(null);
+      setCanDownload(false);
+    } else {
+      console.log('No original image available to reset to');
+    }
+  }, [originalImageUrl, imageLoaded]);
+
   // 6. Effect hooks
   useEffect(() => {
-    if (selectedColor && imageLoaded) {
-      applyColor(selectedColor);
+    console.log('Subscription check bypassed for local development');
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'true') {
+      setShowSubscription(true);
     }
-  }, [selectedColor, imageLoaded, applyColor]);
+  }, []);
+
+  useEffect(() => {
+    // Removed themeManager.applyTheme(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    if (!workingImageUrl && !originalImageUrl) {
+      console.log('Setting default T-shirt image');
+      setUrlInput(DEFAULT_TSHIRT_URL);
+      handleLoadUrl(DEFAULT_TSHIRT_URL);
+    }
+  }, [workingImageUrl, originalImageUrl, handleLoadUrl, DEFAULT_TSHIRT_URL]);
+
+  // Add a button to toggle subscription view for testing
+  const toggleSubscriptionView = () => {
+    setShowSubscription(!showSubscription);
+  };
+
+  // Import the subscription page component lazily
+  const SubscriptionPage = React.lazy(() => import('./components/SubscriptionPage'));
 
   // Handle loading state
   if (false) {
@@ -301,8 +946,7 @@ function App() {
         sx={{
           height: '100vh',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          alignItems: "center",
           background: '#000000'
         }}
       >
@@ -325,8 +969,7 @@ function App() {
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+          alignItems: "center",
           background: '#000000'
         }}
       >
@@ -351,38 +994,49 @@ function App() {
     );
   }
 
+  // Show subscription page if subscription is required
+  if (showSubscription) {
+    return (
+      <React.Suspense fallback={<CircularProgress />}>
+        <SubscriptionPage />
+      </React.Suspense>
+    );
+  }
+
   const mainContent = (
-    <Box className={`app ${theme}`}>
-      {/* Section A: Banner */}
+    <Box className={`app ${theme}`} sx={{ 
+      width: '100%', 
+      overflowX: 'hidden',
+      boxSizing: 'border-box',
+      backgroundColor: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+      minHeight: '100vh'
+    }}>
+      {/* Section 1.0 - Banner */}
       <Banner 
         version={VERSION}
         isDarkMode={theme === 'dark'}
-        onThemeToggle={() => setTheme(prevTheme => {
-          const newTheme = prevTheme === 'dark' ? 'light' : 'dark';
-          localStorage.setItem('hextraTheme', newTheme);
-          return newTheme;
-        })}
+        onThemeToggle={toggleTheme}
         isBatchMode={isBatchMode}
         setIsBatchMode={setIsBatchMode}
         setShowSubscriptionTest={setShowSubscriptionTest}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <GlowTextButton 
-            disabled={true} 
-            sx={{ 
-              opacity: 0.5,
-              cursor: 'not-allowed',
-              '&:hover': {
-                opacity: 0.5
-              }
-            }}
-          >
-            Login (Coming in v2.2.0)
-          </GlowTextButton>
+          {/* Subscription button removed */}
         </Box>
       </Banner>
       
-      <Box className="app-content">
+      <Box className="app-content" sx={{ 
+        pt: '25px',
+        width: '100%',
+        maxWidth: '1200px',
+        boxSizing: 'border-box',
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        backgroundColor: 'var(--bg-primary)'
+      }}>
         <Typography 
           variant="h2" 
           sx={{ 
@@ -392,10 +1046,11 @@ function App() {
             letterSpacing: '0.25em',
             textTransform: 'uppercase',
             color: 'var(--text-secondary)',
-            mb: 5,  
-            '@media (max-width: 532px)': {
-              fontSize: '0.7rem'
-            }
+            height: '0px',
+            padding: 0,
+            margin: 0,
+            overflow: 'hidden',
+            visibility: 'hidden'
           }}
         >
           <Box component="span">COLORIZE</Box> | <Box component="span">VISUALIZE</Box> | <Box component="span">MESMERIZE</Box>
@@ -405,46 +1060,93 @@ function App() {
         <Box sx={{ 
           display: 'flex',
           flexDirection: 'column',
-          gap: 4,
+          gap: 2,
           width: '100%',
           maxWidth: '800px',  
-          mx: 'auto',
-          p: 3,
+          margin: '0 auto',
+          p: 2,
+          pt: 2,
+          paddingLeft: 'calc(2 * 8px + 15px)', // 2 for p:2 + 15px offset
           alignItems: 'center',
+          textAlign: 'center',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
           '@media (max-width: 832px)': { 
-            maxWidth: 'calc(100% - 32px)', 
-            p: 2
+            maxWidth: '100%', 
+            p: 1,
+            pt: 1,
+            paddingLeft: 'calc(1 * 8px + 15px)' // 1 for p:1 + 15px offset
           }
         }}>
           {/* Color Section */}
-          <Box sx={{ mb: 1 }}>
-            {/* Section B: RGB Color Disc */}
-            <Box sx={{ 
-              display: 'flex',
-              justifyContent: 'center',
-              mb: 3
-            }}>
+          <Box sx={{ mb: 2 }}>
+            {/* Catalog Title */}
+            <Typography 
+              variant="h5" 
+              component="h2" 
+              sx={{ 
+                textAlign: 'center', 
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: 500,
+                mb: 3,
+                mt: 0,  
+                color: 'var(--text-primary)'
+              }}
+            >
+              Apparel Base Mockups | Bulk Image Generation
+            </Typography>
+            {/* Section 2.0 - Title and RGB Color Disc */}
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                textAlign: 'center', 
+                mb: 1,
+                fontFamily: "'League Spartan', sans-serif",
+                color: 'var(--text-primary)'
+              }}
+            >
+              Pick a Color, or Enter a HEX code
+            </Typography>
+            <Box 
+              className="color-picker-container"
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                mb: 2,
+                width: '100%'
+              }}
+            >
               <Wheel
                 ref={wheelRef}
                 color={selectedColor}
-                onChange={handleColorChange}
+                initialColor={DEFAULT_COLOR}
+                initialBrightness={1.0}
+                brightness={grayscaleValue}
+                size={270}
+                onChange={handleColorWheelChange}
                 onClick={handleWheelClick}
-                onDoubleClick={() => applyColor()}
+                onDoubleClick={() => applyColor('double-click')}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
-                width={240}
-                height={240}
+                isDragging={isDragging.current}
               />
             </Box>
 
-            {/* Section C: Grayscale Tool Bar */}
+            {/* Section 3.0 - Grayscale Tool Bar */}
             <Box sx={{ 
               display: 'flex',
-              alignItems: 'center',
-              gap: 2,
+              flexWrap: 'wrap',
+              alignItems: "center",
               width: '100%',
-              mb: 3,
-              pl: '40px'  
+              pl: '42px',  
+              pr: '30px',  
+              mb: 2,
+              '@media (max-width: 600px)': { 
+                justifyContent: 'center',
+                pl: 2,
+                pr: 2
+              }
             }}>
               {/* GRAY Value Display */}
               <Typography sx={{ 
@@ -452,9 +1154,9 @@ function App() {
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
                 whiteSpace: 'nowrap',
-                width: '120px',  
+                width: '140px',  
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: "center",
                 gap: 1
               }}>
                 <Box component="span" sx={{ flexShrink: 0 }}>GRAY Value:</Box>
@@ -467,77 +1169,227 @@ function App() {
                 </Box>
               </Typography>
 
-              {/* Slider */}
-              <Box sx={{
-                position: 'relative',
-                width: '200px',
-                height: '24px',
-                backgroundColor: 'transparent',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)',
-                background: 'linear-gradient(to right, #000000, #FFFFFF)',
-                overflow: 'hidden',
-                display: 'flex',
+              {/* Centered layout container for swatch and slider */}
+              <Box sx={{ 
+                display: 'flex', 
                 alignItems: 'center',
-                px: 1
+                gap: 2,
+                flex: 1,
+                pl: 1
               }}>
-                <Slider
-                  value={grayscaleValue}
-                  onChange={handleGrayscaleChange}
-                  min={0}
-                  max={255}
+                {/* Gray Swatch - Clickable */}
+                <Box 
+                  onClick={handleGraySwatchClick}
                   sx={{
-                    width: '100%',
-                    '& .MuiSlider-thumb': {
-                      width: 20,
-                      height: 20,
-                      backgroundColor: 'transparent',
-                      border: '2px solid var(--glow-color)',
-                      outline: '1px solid rgba(0, 0, 0, 0.3)',
-                      boxShadow: 'inset 0 0 4px var(--glow-color), 0 0 4px var(--glow-color)',
-                      '&:before': {
-                        content: '""',
-                        position: 'absolute',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        backgroundColor: 'transparent',
-                      },
-                      '&:hover, &.Mui-focusVisible': {
-                        outline: '1px solid rgba(0, 0, 0, 0.4)',
-                        boxShadow: 'inset 0 0 6px var(--glow-color), 0 0 8px var(--glow-color)',
-                      }
-                    },
-                    '& .MuiSlider-track': {
-                      display: 'none'
-                    },
-                    '& .MuiSlider-rail': {
-                      opacity: 0
+                    width: '40px',
+                    height: '40px',
+                    backgroundColor: `rgb(${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)}, ${Math.round((rgbColor.r + rgbColor.g + rgbColor.b) / 3)})`,
+                    borderRadius: '50%',
+                    border: '1px solid var(--border-color)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      boxShadow: '0 0 5px rgba(255, 153, 0, 0.5)'
                     }
                   }}
                 />
+
+                {/* Slider */}
+                <Box sx={{
+                  position: 'relative',
+                  width: '225px',
+                  height: '24px',
+                  backgroundColor: 'transparent',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(to right, #000000, #FFFFFF)',
+                  overflow: 'visible', 
+                  display: 'flex',
+                  alignItems: "center",
+                  px: 1,
+                  mt: 2.5, // Reduced from 3.5px since we removed the text labels
+                  mb: 0.5,
+                  outline: '1px solid rgba(200, 200, 200, 0.2)'
+                }}>
+                  {/* Grayscale Markers */}
+                  <Box sx={{
+                    position: 'absolute',
+                    top: '-14px', 
+                    left: 0,
+                    right: 0,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    px: 1.5,
+                    pointerEvents: 'none',
+                    zIndex: 5 // Increased z-index to ensure markers are always visible
+                  }}>
+                    {[
+                      { color: '#000000', position: '0%' },
+                      { color: '#333333', position: '25%' },
+                      { color: '#999999', position: '50%' },
+                      { color: '#CCCCCC', position: '75%' },
+                      { color: '#FFFFFF', position: '100%' }
+                    ].map((marker, index) => (
+                      <Box 
+                        key={index}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          position: 'relative',
+                          pointerEvents: 'auto' // Enable pointer events for entire box
+                        }}
+                      >
+                        {/* Circle marker with tooltip */}
+                        <Tooltip 
+                          title={marker.color.toUpperCase()}
+                          placement="top"
+                          arrow
+                          enterDelay={100}
+                          leaveDelay={200}
+                          componentsProps={{
+                            tooltip: {
+                              sx: {
+                                bgcolor: theme === 'dark' ? '#333' : '#fff',
+                                color: theme === 'dark' ? '#fff' : '#333',
+                                border: theme === 'dark' ? '1px solid #555' : '1px solid #ddd',
+                                fontFamily: '"Roboto Mono", monospace',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                padding: '4px 8px',
+                                filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.2))'
+                              }
+                            },
+                            arrow: {
+                              sx: {
+                                color: theme === 'dark' ? '#333' : '#fff'
+                              }
+                            }
+                          }}
+                        >
+                          <div> {/* Wrapping in a regular DOM element for tooltip to attach properly */}
+                            <Box 
+                              component="button" // Make it a button element for better accessibility
+                              sx={{
+                                width: '12px',
+                                height: '12px',
+                                backgroundColor: marker.color,
+                                borderRadius: '50%',
+                                border: theme === 'dark' 
+                                  ? (marker.color === '#000000' ? '1.5px solid rgba(255, 255, 255, 0.9)' : '1px solid rgba(180, 180, 180, 0.7)')
+                                  : (marker.color === '#FFFFFF' ? '1.5px solid rgba(0, 0, 0, 0.8)' : '1px solid rgba(100, 100, 100, 0.7)'),
+                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                                position: 'relative',
+                                transform: 'translateY(-2px)', // Slightly raised to be more visible
+                                cursor: 'pointer !important', // Force pointer cursor
+                                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                                padding: 0, // Remove default button padding
+                                margin: 0,  // Remove default button margin
+                                outline: 'none', // Remove default focus outline
+                                '&:hover': {
+                                  transform: 'translateY(-4px) scale(1.15)', // Elevate and enlarge slightly on hover
+                                  boxShadow: '0 3px 5px rgba(0, 0, 0, 0.4)', // Enhanced shadow on hover
+                                  borderColor: '#FF9900', // Highlight with app's orange accent color
+                                  zIndex: 2
+                                }
+                              }} 
+                              onClick={() => {
+                                // Convert from hex to RGB
+                                const hexToRgb = (hex) => {
+                                  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                                  return result ? {
+                                    r: parseInt(result[1], 16),
+                                    g: parseInt(result[2], 16),
+                                    b: parseInt(result[3], 16)
+                                  } : null;
+                                };
+                                
+                                // Get the marker's color (HEX-ready mode - populates the HEX input but doesn't apply)
+                                const hexColor = marker.color.toUpperCase();
+                                const rgb = hexToRgb(hexColor);
+                                
+                                if (rgb) {
+                                  // Set grayscale value for slider position
+                                  const grayValue = Math.round((rgb.r + rgb.g + rgb.b) / 3);
+                                  setGrayscaleValue(grayValue);
+                                  
+                                  // Update HEX input with the selected color (HEX-ready behavior)
+                                  setSelectedColor(hexColor);
+                                  setRgbColor({ r: rgb.r, g: rgb.g, b: rgb.b });
+                                  
+                                  // Update the wheel - the wheel's internal brightness will handle the display
+                                  if (wheelRef && wheelRef.current && wheelRef.current.setColor) {
+                                    wheelRef.current.setColor(hexColor);
+                                  }
+                                  
+                                  // Focus the HEX input after setting the value (maintaining workflow)
+                                  if (hexInputRef && hexInputRef.current) {
+                                    hexInputRef.current.focus();
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                        </Tooltip>
+                      </Box>
+                    ))}
+                  </Box>
+                  <Slider
+                    value={grayscaleValue}
+                    onChange={handleGrayscaleChange}
+                    min={0}
+                    max={255}
+                    sx={{
+                      width: '100%',
+                      '& .MuiSlider-thumb': {
+                        width: 20,
+                        height: 20,
+                        backgroundColor: 'transparent',
+                        border: '2px solid #FF9900',
+                        outline: '1px solid rgba(0, 0, 0, 0.2)',
+                        boxShadow: 'inset 0 0 4px #FF9900, 0 0 4px #FF9900',
+                        '&:before': {
+                          content: '""',
+                          position: 'absolute',
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          backgroundColor: 'transparent',
+                        },
+                        '&:hover, &.Mui-focusVisible': {
+                          outline: '1px solid rgba(0, 0, 0, 0.3)',
+                          boxShadow: 'inset 0 0 6px #FF9900, 0 0 8px #FF9900',
+                        }
+                      },
+                      '& .MuiSlider-track': {
+                        display: 'none'
+                      },
+                      '& .MuiSlider-rail': {
+                        opacity: 0
+                      }
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
 
-            {/* Section D: HEX Input Bar */}
+            {/* Section 4.0 - HEX Input Bar */}
             <Box sx={{ 
               display: 'flex',
               flexWrap: 'wrap',  
               gap: 2,
-              alignItems: 'center',
+              alignItems: "center",
               width: '100%',
-              pl: '40px',  
-              '@media (max-width: 532px)': {
+              pl: '42px',  
+              pr: '30px',  
+              mb: 2,
+              '@media (max-width: 600px)': { 
                 justifyContent: 'center',
-                pl: 2,  
-                '& #apply-button': {
-                  width: '100%',  
-                  maxWidth: '200px',
-                  marginTop: '8px'
-                }
+                pl: 2,
+                pr: 2
               }
             }}>
               {/* RGB Display */}
@@ -548,7 +1400,7 @@ function App() {
                 whiteSpace: 'nowrap',
                 width: '140px',  
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: "center",
                 gap: 1
               }}>
                 <Box component="span" sx={{ flexShrink: 0 }}>RGB:</Box>
@@ -574,85 +1426,223 @@ function App() {
                 }}
               />
 
-              {/* HEX Input with Reset Icon */}
               <SwatchDropdownField
+                label="HEX Code"
                 value={selectedColor}
                 onChange={handleHexInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault(); // Prevent default behavior
-                    e.stopPropagation(); // Stop event from bubbling up
-                    
-                    let value = e.target.value;
-                    if (!value && selectedColor) {
-                      value = selectedColor;
-                    }
-                    if (!value.startsWith('#')) {
-                      value = '#' + value;
-                    }
-                    value = value.toUpperCase();
-                    
-                    if (value === DEFAULT_COLOR || /^#[0-9A-F]{6}$/i.test(value)) {
-                      setSelectedColor(value);
-                      setRgbColor(hexToRgb(value));
-                      applyColor();
-                    }
-                  }
+                onEnterPress={(trigger) => {
+                  handleHexInputChange(trigger);
+                  saveToRecentColors(selectedColor);
+                  processColor();
                 }}
-                placeholder="#FED141"
-                startIcon={<TagIcon />}
-                hasReset
-                onReset={resetColor}
-                options={[
-                  '#FED141',
-                  '#D50032',
-                  '#00805E',
-                  '#224D8F',
-                  '#FF4400',
-                  '#CABFAD'
-                ]}
-                onSelectionChange={handleDropdownSelect}
+                onDropdownSelect={handleDropdownSelect}
+                options={COLOR_GROUPS}
+                ref={hexInputRef}
+                onReset={() => resetColor()}
+                onClear={() => clearColor()}
                 sx={{ 
-                  width: '180px',  
-                  '& .MuiOutlinedInput-root': {
-                    paddingLeft: '8px'  
+                  width: '225px', 
+                  '& .MuiAutocomplete-inputRoot': {
+                    paddingRight: '45px !important', 
+                    height: '42px'
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    padding: '9px 0px 9px 0', 
+                    fontFamily: '"Roboto Mono", monospace',
+                    letterSpacing: '0px',
+                    fontSize: '14.5px', 
+                    minWidth: '100px' 
                   }
                 }}
-                inputRef={hexInputRef}
               />
-              {/* Apply Button */}
-              <GlowTextButton
-                id="apply-button"
-                variant="contained"
-                onClick={applyColor}
-                disabled={isProcessing || !imageLoaded}
+
+              {/* Custom square container for controls with precise spacing */}
+              <Box
                 sx={{
-                  width: '110px',
-                  '@media (max-width: 532px)': {
-                    width: '110px',
-                    marginTop: '8px'
-                  }
+                  display: 'flex',
+                  flexDirection: 'column',
+                  width: '110px', 
+                  height: '78px', 
+                  ml: '16px', // Use same spacing as between HEX and color swatch
+                  mr: 0,
+                  mb: 0, 
+                  mt: 0, 
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--background-paper)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                  overflow: 'hidden',
+                  alignSelf: 'center', // Vertically center with other elements
                 }}
               >
-                APPLY
-              </GlowTextButton>
+                {/* Top section - APPLY button */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flex: 1,
+                    alignItems: 'stretch', 
+                    justifyContent: 'center',
+                    borderBottom: '1px solid var(--border-color)',
+                    position: 'relative',
+                    p: 0, 
+                    m: 0, 
+                    overflow: 'hidden' 
+                  }}
+                >
+                  <GlowTextButton
+                    id="apply-button"
+                    variant="contained"
+                    onClick={() => {
+                      console.log('Apply button clicked with color:', selectedColor);
+                      
+                      // Validate requirements
+                      if (!selectedColor || !workingImageUrl || !imageLoaded) {
+                        console.error('Cannot apply color - missing requirements', {
+                          hasColor: !!selectedColor, 
+                          hasImage: !!workingImageUrl,
+                          imageLoaded
+                        });
+                        return;
+                      }
+                      
+                      // Save to recent colors when APPLY is clicked (deliberate action)
+                      saveToRecentColors(selectedColor);
+                      
+                      // Visual feedback - only for Apply button
+                      setColorApplied(true);
+                      setTimeout(() => setColorApplied(false), 500);
+                      
+                      // Set processing state - make this independent from other animations
+                      setIsProcessing(true);
+                      
+                      // Process the image with the selected color
+                      processImage(workingImageUrl, selectedColor)
+                        .then(processedUrl => {
+                          console.log('Image successfully processed with color:', selectedColor);
+                          setWorkingProcessedUrl(processedUrl);
+                          setCanDownload(true);
+                          setIsProcessing(false);
+                        })
+                        .catch(error => {
+                          console.error('ERROR processing image:', error);
+                          // Reset the processed URL to the original image as fallback
+                          setWorkingProcessedUrl(workingImageUrl);
+                          setIsProcessing(false);
+                        });
+                    }}
+                    sx={{
+                      height: '100%', 
+                      fontSize: '13px', 
+                      fontWeight: 'bold',
+                      boxShadow: 'none',
+                      width: '100%', 
+                      borderRadius: 0, 
+                      m: 0, 
+                      transition: 'all 0.3s ease',
+                      background: colorApplied ? `linear-gradient(135deg, ${selectedColor}, #FFFFFF, ${selectedColor})` : undefined,
+                      backgroundSize: colorApplied ? '300% 300%' : undefined,
+                      animation: colorApplied ? 'gradient-animation 2s ease infinite' : undefined,
+                    }}
+                  >
+                    APPLY
+                  </GlowTextButton>
+                </Box>
+
+                {/* Bottom section - Auto toggle and Reset */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    px: 1.5,
+                    py: 0.5,
+                    backgroundColor: 'var(--bg-paper-secondary)',
+                    border: 'none',
+                    borderTop: '1px solid var(--border-color)',
+                    minHeight: '36px'
+                  }}
+                >
+                  {/* Auto toggle with tooltip */}
+                  <Tooltip 
+                    title={autoApplyColors ? "Auto mode - colors apply immediately (click to disable)" : "Manual mode - requires APPLY button (recommended)"}
+                    placement="bottom"
+                    arrow
+                    enterDelay={400}
+                  >
+                    <Box 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        cursor: 'pointer',
+                        userSelect: 'none'
+                      }}
+                      onClick={() => setAutoApplyColors(!autoApplyColors)}
+                    >
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          mr: 0, // Reduce margin between text and toggle
+                          fontSize: '10px',
+                          color: 'var(--text-secondary)',
+                          userSelect: 'none'
+                        }}
+                      >
+                        Auto
+                      </Typography>
+                      <GlowSwitch
+                        checked={autoApplyColors}
+                        onChange={(e) => setAutoApplyColors(e.target.checked)}
+                        size="small"
+                        sx={{
+                          '& .MuiSwitch-track': {
+                            backgroundColor: 'var(--border-color)',
+                          },
+                          transform: 'scale(0.65)', // Slightly smaller scale
+                          my: -0.5,
+                          ml: -0.5 // Negative margin to pull closer to text
+                        }}
+                      />
+                    </Box>
+                  </Tooltip>
+                  
+                  {/* Reset Button - moved to the right with auto-margin */}
+                  <Tooltip title="Reset to original image">
+                    <GlowIconButton
+                      id="reset-button"
+                      size="small"
+                      onClick={handleResetImage}
+                      disabled={isProcessing || !imageLoaded}
+                      sx={{
+                        color: 'var(--text-primary)',
+                        padding: '4px',
+                        ml: 'auto', 
+                        mr: 0.5 
+                      }}
+                    >
+                      <RestoreIcon fontSize="small" />
+                    </GlowIconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
             </Box>
+
           </Box>
 
+          {/* === Separator === */}
           <Box
             sx={{
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  
+              my: 1
             }}
           />
 
-          {/* Section D: Main Image Window Title */}
+          {/* Section 5.0 - Main Image Window Title/Image Loading */}
           <Typography 
-            variant="h2" 
+            variant="h6" 
             sx={{ 
-              mb: 4,  
+              mb: 2,  
               textAlign: 'center',
               fontFamily: "'Inter', sans-serif",
               fontSize: '1.25rem',
@@ -666,18 +1656,18 @@ function App() {
             Upload your T-shirt or other Image
           </Typography>
 
-          {/* Section E: Image Loading */}
+          {/* Section 6.0 - Main Image Window (with integrated download button) */}
           <Box sx={{ 
-            display: 'flex', 
+            display: 'flex',
             gap: 2,
-            alignItems: 'center',
+            alignItems: "center",
             justifyContent: 'center', 
             mt: 1,
-            mb: 3,
+            mb: 2,
             width: '100%',
             '@media (max-width: 600px)': {
               flexDirection: 'column',
-              alignItems: 'center', 
+              alignItems: "center",
               '& > button': {
                 width: '110px', 
                 alignSelf: 'center'
@@ -720,69 +1710,185 @@ function App() {
                 onKeyDown={handleUrlKeyPress}
                 startIcon={<LinkIcon />}
                 hasReset
-                onReset={() => setUrlInput('')}
+                onReset={() => setUrlInput(DEFAULT_TSHIRT_URL)}
                 sx={{ width: '100%' }}
+                InputProps={{
+                  endAdornment: (
+                    <IconButton 
+                      onClick={handleLoadUrl}
+                      size="small"
+                      sx={{ 
+                        color: theme => theme.palette.primary.main,
+                        '&:hover': {
+                          bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                        }
+                      }}
+                    >
+                      <ArrowForwardIcon />
+                    </IconButton>
+                  )
+                }}
               />
             </Box>
 
             <GlowTextButton
               variant="contained"
-              onClick={handleLoadUrl}
+              onClick={handleSearchTshirts}
               sx={{ 
-                width: '110px',
-                flexShrink: 0
+                width: '110px'
               }}
+              startIcon={<SearchIcon />}
             >
-              USE URL
+              FIND
             </GlowTextButton>
           </Box>
 
-          {/* Section F: Main Image (with integrated download button) */}
+          {/* Display Image Box */}
           <Box sx={{
-            position: 'relative',
-            zIndex: 1,
-            mt: 2,
+            width: '100%',
+            maxWidth: '720px',
+            height: '720px',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            minHeight: '200px',
-            width: '100%',
-            maxWidth: '800px', 
-            overflow: 'hidden'
+            margin: '0 auto',
+            mb: 1, 
+            position: 'relative'
           }}>
-            <DefaultTshirt onLoad={handleDefaultImageLoad} />
-            <img
-              src={workingProcessedUrl || workingImageUrl}
-              alt="Working"
-              style={{
-                maxWidth: '100%',
-                height: 'auto',
-                display: 'block' 
-              }}
-            />
-            {/* Download button using GlowButton */}
-            <GlowButton
-              onClick={handleQuickDownload}
-              disabled={!canDownload}
-              sx={{
-                position: 'absolute',
-                right: '12px',
-                bottom: '12px',
-                minWidth: 'auto',
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <FileDownloadIcon />
-            </GlowButton>
+            {workingProcessedUrl || workingImageUrl ? (
+              <>
+                <Box 
+                  component="img"
+                  src={workingProcessedUrl || workingImageUrl}
+                  alt="T-shirt or selected image"
+                  sx={{
+                    width: 'auto',
+                    maxWidth: '720px',
+                    maxHeight: '720px',
+                    objectFit: 'contain',
+                    border: theme => theme.palette.mode === 'dark' ? '1px solid rgba(150, 150, 150, 0.2)' : '1px solid rgba(128, 128, 128, 0.15)',
+                    boxShadow: theme => theme.palette.mode === 'dark' ? '0 0 5px rgba(255, 255, 255, 0.1)' : '0 0 2px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                
+                {/* Download Button - always visible when there's an image */}
+                <Tooltip title="Download image">
+                  <GlowIconButton
+                    onClick={handleQuickDownload}
+                    disabled={!canDownload}
+                    sx={{
+                      position: 'absolute',
+                      bottom: '20px',
+                      right: '20px',
+                      backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(50, 50, 50, 0.8)' : 'rgba(255, 255, 255, 0.6)',
+                      '&:hover': {
+                        backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(60, 60, 60, 0.9)' : 'rgba(255, 255, 255, 0.8)',
+                      },
+                      '&.Mui-disabled': {
+                        opacity: 0.4,
+                        backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(40, 40, 40, 0.4)' : 'rgba(255, 255, 255, 0.4)',
+                      }
+                    }}
+                  >
+                    <DownloadIcon sx={{
+                      color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.85)' : undefined
+                    }} />
+                  </GlowIconButton>
+                </Tooltip>
+              </>
+            ) : (
+              <Typography variant="body1" sx={{ color: 'var(--text-secondary)' }}>
+                No image loaded yet. Please upload or select an image.
+              </Typography>
+            )}
+            
+            {/* Use DefaultTshirt component to preload the default t-shirt */}
+            <DefaultTshirt onLoad={(url) => {
+              if (!workingImageUrl && !originalImageUrl) {
+                console.log('Setting default t-shirt from component:', url);
+                setWorkingImageUrl(url);
+                setImageLoaded(true);
+              }
+            }} />
           </Box>
 
-          {/* Section G: Image Processing */}
+          {/* Format Toggle */}
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%',
+            maxWidth: '720px',
+            margin: '0 auto',
+            mt: 0.5, 
+            mb: 2 
+          }}>
+            <Box sx={{ 
+              display: 'flex',
+              alignItems: 'center',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(90, 90, 90, 0.5)' : 'rgba(240, 240, 240, 0.5)'
+            }}>
+              <Tooltip title="Choose PNG format (higher quality, larger file size)">
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{
+                    fontWeight: selectedFormat === 'png' ? 600 : 400,
+                    color: selectedFormat === 'png' 
+                      ? theme => theme.palette.mode === 'dark' ? '#FFFFFF' : 'var(--text-primary)'
+                      : theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.75)' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    mr: 1
+                  }}
+                  onClick={() => setSelectedFormat('png')}
+                >
+                  PNG
+                </Typography>
+              </Tooltip>
+              
+              <GlowSwitch
+                checked={selectedFormat === 'webp'}
+                onChange={(e) => setSelectedFormat(e.target.checked ? 'webp' : 'png')}
+                size="small"
+                sx={{
+                  '& .MuiSwitch-track': {
+                    backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(150, 150, 150, 0.5) !important' : undefined
+                  }
+                }}
+              />
+              
+              <Tooltip title="Choose WebP format (smaller file size, good compatibility)">
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{
+                    fontWeight: selectedFormat === 'webp' ? 600 : 400,
+                    color: selectedFormat === 'webp' 
+                      ? theme => theme.palette.mode === 'dark' ? '#FFFFFF' : 'var(--text-primary)'
+                      : theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.75)' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    ml: 1
+                  }}
+                  onClick={() => setSelectedFormat('webp')}
+                >
+                  WebP
+                </Typography>
+              </Tooltip>
+            </Box>
+          </Box>
+
+          {/* === Separator === */}
+          <Box
+            sx={{
+              width: '100%',
+              height: '4px',
+              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+              my: 1
+            }}
+          />
+
+          {/* Section 7.0 - Image Adjustments */}
           <Box sx={{ 
             width: '100%', 
             mt: 2,
@@ -793,7 +1899,7 @@ function App() {
             <Box sx={{ 
               display: 'flex',
               justifyContent: 'flex-end',
-              alignItems: 'center',
+              alignItems: "center",
               mb: 2
             }}>
               <Box sx={{ 
@@ -827,7 +1933,7 @@ function App() {
               <Box sx={{ 
                 display: 'flex',
                 justifyContent: 'center',
-                alignItems: 'center',
+                alignItems: "center",
                 gap: 4,
                 mb: 3
               }}>
@@ -836,7 +1942,7 @@ function App() {
                   onChange={(e) => {
                     setEnhanceEffect(e.target.checked);
                     if (imageLoaded) {
-                      applyColor();
+                      applyColor('enhance-toggle');
                     }
                   }}
                   label="Enhanced"
@@ -853,7 +1959,6 @@ function App() {
                 <Box sx={{ mb: 2 }}>
                   <Typography gutterBottom sx={{ 
                     fontFamily: "'Inter', sans-serif",
-                    letterSpacing: '0.05em',
                     color: 'var(--text-secondary)'
                   }}>
                     Matte Effect
@@ -881,7 +1986,6 @@ function App() {
                 <Box>
                   <Typography gutterBottom sx={{ 
                     fontFamily: "'Inter', sans-serif",
-                    letterSpacing: '0.05em',
                     color: 'var(--text-secondary)'
                   }}>
                     Texture Effect
@@ -910,37 +2014,27 @@ function App() {
             </Box>
           </Box>
 
-          <Box sx={{ my: 5 }}>
-            <Box
-              sx={{
-                width: '100%',
-                height: '4px',
-                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-              }}
-            />
-          </Box>
-
-          {/* Third separator - before MESMERIZE section */}
+          {/* === Separator === */}
           <Box
             sx={{
               width: '100%',
               height: '4px',
               backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  
+              my: 1
             }}
           />
 
-          {/* Section H: MESMERIZE */}
+          {/* Section 8.0 - BULK Image Generation (Batch Processing) */}
           <Box sx={{ 
             width: '100%',
             maxWidth: '800px',
-            mt: 3 
+            mt: 1
           }}>
             {/* MESMERIZE Section Title */}
             <Typography 
-              variant="h2" 
+              variant="h6" 
               sx={{ 
-                mb: 4,  
+                mb: 1,
                 textAlign: 'center',
                 fontFamily: "'Inter', sans-serif",
                 fontSize: '1.25rem',
@@ -963,8 +2057,10 @@ function App() {
               mt: 4  
             }}>
               <GlowTextButton
-                variant="contained"
-                onClick={() => handleCatalogSwitch('GILDAN_64000')}
+                variant={activeCatalog === 'GILDAN_64000' ? 'contained' : 'outlined'}
+                onClick={() => {
+                  setActiveCatalog('GILDAN_64000');
+                }}
                 sx={{
                   width: '140px',
                   height: '36px',
@@ -974,21 +2070,23 @@ function App() {
                   opacity: activeCatalog === 'GILDAN_64000' ? 1 : 0.7
                 }}
               >
-                GILDAN 64,000
+                GILDAN 64000
               </GlowTextButton>
               <GlowTextButton
-                variant="contained"
-                onClick={() => handleCatalogSwitch('GILDAN_3000')}
+                variant={activeCatalog === 'CUSTOM_21' ? 'contained' : 'outlined'}
+                onClick={() => {
+                  setActiveCatalog('CUSTOM_21');
+                }}
                 sx={{
                   width: '140px',
                   height: '36px',
                   fontSize: '0.8rem',
                   letterSpacing: '0.05em',
                   whiteSpace: 'nowrap',
-                  opacity: activeCatalog === 'GILDAN_3000' ? 1 : 0.7
+                  opacity: activeCatalog === 'CUSTOM_21' ? 1 : 0.7
                 }}
               >
-                GILDAN 3000
+                CUSTOM 21
               </GlowTextButton>
             </Box>
 
@@ -997,7 +2095,7 @@ function App() {
               display: 'flex',
               flexDirection: 'column',
               gap: 2,
-              alignItems: 'center',
+              alignItems: "center",
               p: 3,
               borderRadius: '8px',
               bgcolor: 'var(--bg-secondary)',
@@ -1015,7 +2113,9 @@ function App() {
               <Box sx={{ 
                 display: 'flex', 
                 gap: 2,
-                mb: 2
+                mb: 2,
+                flexWrap: 'wrap',
+                justifyContent: 'center'
               }}>
                 <GlowTextButton
                   variant="contained"
@@ -1024,7 +2124,7 @@ function App() {
                     setBatchStatus('processing');
                     
                     try {
-                      const colors = GILDAN_64000; // Use current catalog
+                      const colors = activeCatalog === 'GILDAN_64000' ? GILDAN_64000 : CUSTOM_21; // Use current catalog
                       console.log(`Processing ${colors.length} colors from ${activeCatalog}`);
                       
                       const zip = new JSZip();
@@ -1052,7 +2152,7 @@ function App() {
                           const response = await fetch(processedUrl);
                           const blob = await response.blob();
                           
-                          const date = new Date().toISOString().split('T')[0];
+                          const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
                           const filename = `HEXTRA-${date}-${activeCatalog}_${color.hex.replace('#', '')}.png`;
                           folder.file(filename, blob);
                         }));
@@ -1102,72 +2202,63 @@ function App() {
                 >
                   GENERATE ALL
                 </GlowTextButton>
-                <GlowTextButton
-                  variant="contained"
-                  onClick={async () => {
-                    setIsProcessing(true);
-                    setBatchStatus('processing');
-                    
-                    try {
-                      const colors = selectedColors;
-                      const zip = new JSZip();
-                      
-                      for (let i = 0; i < colors.length; i++) {
-                        const color = colors[i];
-                        const processedUrl = await processImage(workingImageUrl, color);
-                        const response = await fetch(processedUrl);
-                        const blob = await response.blob();
 
-                        const colorCode = color.replace('#', '');
-                        const filename = `color_${colorCode}.png`;
-                        zip.file(filename, blob);
-                        
-                        setProcessedCount(i + 1);
-                        setTotalCount(colors.length);
-                        setBatchProgress(Math.round(((i + 1) / colors.length) * 100));
-                      }
-                      
-                      const content = await zip.generateAsync({type: "blob"});
-                      const url = window.URL.createObjectURL(content);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = 'hextra-selected-colors.zip';
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      window.URL.revokeObjectURL(url);
-                      
-                      setBatchStatus('complete');
-                      
-                    } catch (err) {
-                      console.error('Error generating selected:', err);
-                      setBatchStatus('error');
-                    } finally {
-                      setIsProcessing(false);
-                    }
+                {/* Multi-Batch Button */}
+                <GlowTextButton
+                  variant="outlined"
+                  disabled={true}
+                  sx={{ 
+                    width: '140px', 
+                    bgcolor: 'transparent',
+                    '&.Mui-disabled': {
+                      color: 'var(--text-secondary)',
+                      borderColor: 'var(--border-color)',
+                      opacity: 0.7
+                    },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: 'auto',
+                    py: 1
                   }}
-                  disabled={isProcessing || !imageLoaded || !selectedColors.length}
-                  sx={{ width: '140px' }}
                 >
-                  SELECTED
+                  <Box>MULTI-BATCH</Box>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: 'var(--text-secondary)',
+                      fontSize: '10px',
+                      opacity: 0.8,
+                      mt: 0.5
+                    }}
+                  >
+                    coming soon
+                  </Typography>
                 </GlowTextButton>
               </Box>
 
               {/* CSV Upload Button */}
-              <GlowTextButton
-                component="label"
-                variant="contained"
-                disabled={isProcessing || batchStatus === 'processing'}
-                sx={{ width: '140px' }}
-              >
-                UPLOAD CSV
-                <input
-                  type="file"
-                  hidden
-                  accept=".csv"
-                  onChange={handleCSVUpload}
-                />
-              </GlowTextButton>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Tooltip title={!isSubscribed ? "Subscribe to unlock batch processing" : ""}>
+                  <span>
+                    <GlowTextButton
+                      component="label"
+                      variant="contained"
+                      disabled={isProcessing || batchStatus === 'processing' || !isSubscribed}
+                      sx={{ width: '140px' }}
+                      onClick={!isSubscribed && isAuthenticated ? () => navigate('/subscription') : undefined}
+                    >
+                      UPLOAD CSV
+                      <input
+                        type="file"
+                        hidden
+                        accept=".csv"
+                        onChange={handleCSVUpload}
+                        disabled={!isSubscribed}
+                      />
+                    </GlowTextButton>
+                  </span>
+                </Tooltip>
+              </Box>
 
               {/* Progress Indicator */}
               {batchStatus === 'processing' && (
@@ -1198,7 +2289,7 @@ function App() {
                   maxWidth: '800px',
                   mt: 3
                 }}>
-                  <Typography variant="subtitle2" sx={{ 
+                  <Typography variant="h6" sx={{ 
                     mb: 2, 
                     textAlign: 'center',
                     color: 'var(--text-secondary)',
@@ -1253,88 +2344,73 @@ function App() {
             </Box>
           </Box>
 
-          <Box sx={{ my: 5 }}>
-            <Box
-              sx={{
-                width: '100%',
-                height: '4px',
-                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-              }}
-            />
-          </Box>
-
-          {/* Fourth separator - before HEXTRA section */}
+          {/* Section 9.0 - HEXTRA Color System (HCS) */}
           <Box
             sx={{
               width: '100%',
-              height: '4px',
-              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-              my: 5  
+              mt: 2
             }}
-          />
+          >
+            {/* HEXTRA Section Title */}
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                mb: 1,
+                textAlign: 'center',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                '@media (max-width: 532px)': {
+                  fontSize: '1.1rem'
+                }
+              }}
+            >
+              HEXTRA Color System (HCS)
+            </Typography>
 
-        </Box>
-      </Box>
-
-      {/* Footer */}
-      <Box 
-        component="footer" 
-        sx={{
-          width: '100%',
-          borderTop: '1px solid var(--border-color)',
-          bgcolor: 'var(--background-paper)',
-          p: 2,
-          mt: 'auto'
-        }}
-      >
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          align="center"
-        >
-          2025 HEXTRA Color System v. All rights reserved.
-        </Typography>
-      </Box>
-
-      {isProcessing && (
-        <Box
-          position="fixed"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bgcolor="rgba(0, 0, 0, 0.7)"
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          zIndex={9999}
-        >
-          <CircularProgress size={60} thickness={4} />
-          <Typography variant="h6" color="white" mt={2}>
-            {batchStatus === 'processing' ? 'Processing Images...' : 'Preparing Download...'}
-          </Typography>
-          {batchProgress > 0 && (
-            <Box sx={{ width: '200px', mt: 2 }}>
-              <Typography variant="body2" color="white" align="center" mt={1}>
-                Processing: {batchProgress}%
+            {/* HEXTRA Section Content */}
+            <Box sx={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              alignItems: "center",
+              p: 3,
+              borderRadius: '8px',
+              bgcolor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-subtle)'
+            }}>
+              <Typography variant="body1" sx={{ 
+                fontFamily: "'Inter', sans-serif",
+                color: 'var(--text-primary)'
+              }}>
+                The HEXTRA Color System (HCS) is a proprietary color management system designed to provide accurate and consistent color representation across various mediums.
               </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={batchProgress} 
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 4,
-                  }
-                }}
-              />
             </Box>
-          )}
+          </Box>
+
+          {/* Section 10.0 - Footer */}
+          <Box 
+            component="footer"
+            sx={{ 
+              width: '100%', 
+              py: 2,
+              mt: 2,
+              textAlign: 'center',
+              borderTop: '1px solid',
+              borderColor: 'var(--border-color)'
+            }}
+          >
+            <Typography 
+              variant="body2" 
+              sx={{ color: 'var(--text-secondary)' }} 
+              align="center"
+            >
+              &copy; 2025 HEXTRA Color System - All rights reserved.
+            </Typography>
+          </Box>
         </Box>
-      )}
+      </Box>
     </Box>
   );
 

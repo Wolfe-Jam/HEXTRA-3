@@ -8,6 +8,7 @@ import PricingPage from './components/pricing/PricingPage';
 import CallbackPage from './components/CallbackPage';
 import Banner from './components/Banner';
 import { VERSION } from './version';
+import SubscriptionPage from './components/SubscriptionPage';
 
 const ProtectedRoute = ({ children }) => {
   const { isLoading, isAuthenticated } = useKindeAuth();
@@ -69,8 +70,15 @@ const Router = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout><ProtectedRoute><App /></ProtectedRoute></Layout>} />
+        {/* Make Subscription Page the home page */}
+        <Route path="/" element={<Layout><SubscriptionPage /></Layout>} />
+        
+        {/* App is now at /app path */}
+        <Route path="/app" element={<Layout><App /></Layout>} />
+        
+        {/* Keep other routes as they were */}
         <Route path="/stripe-test" element={<Layout><ProtectedRoute><StripeTest /></ProtectedRoute></Layout>} />
+        <Route path="/subscription" element={<Layout><SubscriptionPage /></Layout>} />
         <Route path="/pricing" element={<Layout><PricingPage /></Layout>} />
         <Route path="/api/auth/kinde/callback" element={<CallbackPage />} />
       </Routes>

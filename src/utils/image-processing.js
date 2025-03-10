@@ -1,4 +1,11 @@
-import Jimp from 'jimp';
+import JimpModule from 'jimp';
+import { Buffer } from 'buffer';
+
+// Handle different import formats
+const Jimp = JimpModule.default || JimpModule;
+
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
 // Luminance calculation methods
 export const LUMINANCE_METHODS = {
@@ -30,54 +37,102 @@ export const hexToRgb = (hex) => {
 
 // Process image with color
 export const processImage = async (imageUrl, color) => {
+  // Early return with mock data URL for non-browser environments (like during SSR/build)
+  if (!isBrowser) {
+    console.log('Image processing skipped - non-browser environment');
+    return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==`;
+  }
+
   const cacheKey = `${imageUrl}-${color}`;
+  
+  console.log(`Processing image with color: ${color}`);
   
   // Check cache first
   if (processedImageCache.has(cacheKey)) {
+    console.log(`Using cached image for ${color}`);
     return processedImageCache.get(cacheKey);
   }
   
   try {
-    const image = await Jimp.read(imageUrl);
-    const { r, g, b } = hexToRgb(color);
+    console.log('Reading image from URL...');
     
-    // Create clean copy of original image
-    const imageData = {
-      width: image.bitmap.width,
-      height: image.bitmap.height,
-      bitmap: {
-        data: new Uint8ClampedArray(image.bitmap.data),
-        width: image.bitmap.width,
-        height: image.bitmap.height
-      }
-    };
+    // For relative paths, we need to convert to absolute
+    let absoluteUrl = imageUrl;
+    if (imageUrl.startsWith('/')) {
+      absoluteUrl = window.location.origin + imageUrl;
+    }
     
-    // Process each pixel
-    for (let idx = 0; idx < imageData.bitmap.data.length; idx += 4) {
-      const red = imageData.bitmap.data[idx];
-      const green = imageData.bitmap.data[idx + 1];
-      const blue = imageData.bitmap.data[idx + 2];
-      const alpha = imageData.bitmap.data[idx + 3];
+    // Use fetch API to get the image data first
+    const response = await fetch(absoluteUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+    }
+    
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    // Use a simpler approach - create Image element with blob
+    const imgBlob = URL.createObjectURL(blob);
+    const img = new Image();
+    
+    // Load image from blob URL
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = imgBlob;
+    });
+    
+    // Create canvas to process the image
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    
+    // Draw original image
+    ctx.drawImage(img, 0, 0);
+    
+    // Get image data
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+    // Get the RGB values from the color
+    const rgbData = hexToRgb(color);
+    if (!rgbData) {
+      throw new Error(`Invalid color format: ${color}`);
+    }
+    
+    const { r, g, b } = rgbData;
+    console.log(`Color RGB: ${r}, ${g}, ${b}`);
+    
+    // Process each pixel with color
+    for (let idx = 0; idx < imageData.data.length; idx += 4) {
+      const red = imageData.data[idx];
+      const green = imageData.data[idx + 1];
+      const blue = imageData.data[idx + 2];
+      const alpha = imageData.data[idx + 3];
       
       if (alpha > 0) {
         // Calculate NATURAL luminance
         const luminance = LUMINANCE_METHODS.NATURAL.calculate(red, green, blue);
         
         // Apply same luminance to each channel
-        imageData.bitmap.data[idx] = Math.round(r * luminance);
-        imageData.bitmap.data[idx + 1] = Math.round(g * luminance);
-        imageData.bitmap.data[idx + 2] = Math.round(b * luminance);
+        imageData.data[idx] = Math.round(r * luminance);
+        imageData.data[idx + 1] = Math.round(g * luminance);
+        imageData.data[idx + 2] = Math.round(b * luminance);
       }
     }
     
-    // Update image with processed data
-    image.bitmap.data = Buffer.from(imageData.bitmap.data);
+    // Put processed image data back to canvas
+    ctx.putImageData(imageData, 0, 0);
     
-    // Convert to base64
-    const base64 = await image.getBase64Async(Jimp.MIME_PNG);
+    // Convert canvas to data URL
+    const processedDataUrl = canvas.toDataURL('image/png');
+    
+    // Clean up blob URL
+    URL.revokeObjectURL(imgBlob);
     
     // Cache the result
-    processedImageCache.set(cacheKey, base64);
+    processedImageCache.set(cacheKey, processedDataUrl);
     
     // Limit cache size to prevent memory issues
     if (processedImageCache.size > 50) {
@@ -85,7 +140,7 @@ export const processImage = async (imageUrl, color) => {
       processedImageCache.delete(firstKey);
     }
     
-    return base64;
+    return processedDataUrl;
   } catch (error) {
     console.error('Error processing image:', error);
     throw error;
