@@ -45,6 +45,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     try {
       // Get the base URL for API calls (to handle both local and production)
       const baseUrl = window.location.origin;
+      // Use the API path structure that works with Vercel config
       const apiUrl = `${baseUrl}/api/mailchimp-subscribe`;
       
       console.log(`[DEBUG] MailChimp - Making API request to ${apiUrl}`);
