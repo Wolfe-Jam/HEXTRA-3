@@ -2499,13 +2499,20 @@ function App() {
         </Box>
       </Box>
     </Box>
-    
-    {/* Email Collection Dialog */}
-    <EmailCollectionDialog 
-      open={emailDialogOpen} 
-      onClose={() => setEmailDialogOpen(false)}
-      onSubmit={handleEmailSubmit}
-    />
+  );
+  
+  // Render the app content and dialogs
+  return (
+    <>
+      {mainContent}
+      
+      {/* Email Collection Dialog */}
+      <EmailCollectionDialog 
+        open={emailDialogOpen} 
+        onClose={() => setEmailDialogOpen(false)}
+        onSubmit={handleEmailSubmit}
+      />
+    </>
   );
 }
 

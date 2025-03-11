@@ -385,7 +385,7 @@ const Banner = ({
                 F
               </GlowIconButton>
             </Tooltip>
-          );
+          )}
         </Box>
       </Box>
 
