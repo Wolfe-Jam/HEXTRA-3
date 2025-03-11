@@ -5,9 +5,10 @@
  * - Validates email format
  * - Adds users to specified MailChimp audience
  * - Provides success/error response
+ * - Supports CORS for cross-origin requests
  * 
  * @version 2.2.4
- * @lastUpdated 2025-03-10
+ * @lastUpdated 2025-03-11
  */
 
 import mailchimp from '@mailchimp/mailchimp_marketing';
@@ -18,8 +19,25 @@ mailchimp.setConfig({
   server: process.env.MAILCHIMP_SERVER_PREFIX // e.g., "us1"
 });
 
+// CORS headers helper function
+function setCorsHeaders(res) {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+}
+
 export default async function handler(req, res) {
-  console.log('[DEBUG] API - MailChimp subscribe request received');
+  console.log('[DEBUG] API - MailChimp subscribe request received', { method: req.method });
+  
+  // Set CORS headers for all responses
+  setCorsHeaders(res);
+  
+  // Handle OPTIONS request for CORS preflight
+  if (req.method === 'OPTIONS') {
+    console.log('[DEBUG] API - Handling OPTIONS request (CORS preflight)');
+    return res.status(200).end();
+  }
   
   // Only allow POST requests
   if (req.method !== 'POST') {

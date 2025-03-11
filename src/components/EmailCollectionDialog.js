@@ -43,24 +43,48 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     console.log(`[DEBUG] MailChimp - Subscribing email to MailChimp: ${email}`);
     
     try {
-      console.log('[DEBUG] MailChimp - Making API request to /api/mailchimp-subscribe');
+      // Get the base URL for API calls (to handle both local and production)
+      const baseUrl = window.location.origin;
+      const apiUrl = `${baseUrl}/api/mailchimp-subscribe`;
+      
+      console.log(`[DEBUG] MailChimp - Making API request to ${apiUrl}`);
+      
       // Call our MailChimp API endpoint
-      const response = await fetch('/api/mailchimp-subscribe', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: email
-        })
+        }),
+        // Add these for better CORS handling
+        mode: 'cors',
+        credentials: 'same-origin'
       });
       
       console.log('[DEBUG] MailChimp - Response status:', response.status);
-      const data = await response.json();
+      
+      // Handle non-JSON responses
+      let data;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const textData = await response.text();
+          console.log('[DEBUG] MailChimp - Response text:', textData);
+          data = { message: textData };
+        }
+      } catch (parseError) {
+        console.error('[DEBUG] MailChimp - Error parsing response:', parseError);
+        data = { error: 'Could not parse response' };
+      }
+      
       console.log('[DEBUG] MailChimp - Response data:', data);
       
       if (!response.ok) {
-        console.error('[DEBUG] MailChimp - Subscription error:', data.error);
+        console.error('[DEBUG] MailChimp - Subscription error:', data.error || 'Unknown error');
         return false;
       }
       
@@ -74,7 +98,9 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
   };
 
   // Handle dialog submission
-  const handleSubmit = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     console.log('[DEBUG] Dialog - Submit button clicked');
     // Validate email
     if (!email) {
@@ -90,6 +116,9 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     }
     console.log('[DEBUG] Dialog - Email validation passed:', email);
 
+    // Set submitting state
+    setIsSubmitting(true);
+
     // Save email to localStorage
     try {
       localStorage.setItem('hextra_email_user', JSON.stringify({
@@ -103,7 +132,14 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
 
     // Subscribe to MailChimp and send confirmation email
     console.log('[DEBUG] Dialog - Calling MailChimp subscribe');
-    subscribeToMailChimp(email);
+    const subscribeResult = await subscribeToMailChimp(email);
+    console.log('[DEBUG] Dialog - MailChimp subscribe result:', subscribeResult);
+    
+    if (!subscribeResult) {
+      console.log('[DEBUG] Dialog - MailChimp subscription failed, but continuing');
+      // Show a message but don't block the download
+      // Could add a toast notification here
+    }
 
     // Call the onSubmit callback with the email
     console.log('[DEBUG] Dialog - Calling onSubmit callback');
@@ -113,6 +149,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     console.log('[DEBUG] Dialog - Resetting form and closing dialog');
     setEmail('');
     setError('');
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -189,9 +226,9 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
           fullWidth 
           variant="contained" 
           onClick={handleSubmit}
-          disabled={!email}
+          disabled={!email || isSubmitting}
         >
-          Download with Email
+          {isSubmitting ? 'Submitting...' : 'Download with Email'}
         </GlowTextButton>
         
         <Button 
