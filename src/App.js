@@ -128,9 +128,9 @@ function App() {
   // eslint-disable-next-line no-unused-vars
   const { isAuthenticated: kindeAuthenticated, user } = useKindeAuth();
   
-  // Force authentication and subscription to be true for localhost development
-  const isAuthenticated = true; // Bypass authentication check
-  const [isSubscribed, setIsSubscribed] = useState(false); // Default to subscribed
+  // Use the actual authentication status from Kinde
+  const isAuthenticated = kindeAuthenticated;
+  const [isSubscribed, setIsSubscribed] = useState(false); // Default to not subscribed
   
   // Email user state for handling email-only users
   const [emailUser, setEmailUser] = useState(null);
