@@ -18,6 +18,19 @@ import https from 'https';
  * API endpoint handler for Vercel serverless
  */
 export default async function handler(req, res) {
+  // DEBUGGING: Log all API requests for troubleshooting
+  console.log(`[DEBUG] MailChimp API Request: ${req.method} ${req.url}`);
+  console.log(`[DEBUG] Request headers:`, JSON.stringify(req.headers));
+  try {
+    console.log(`[DEBUG] Environment check:`, {
+      hasApiKey: !!process.env.MAILCHIMP_API_KEY,
+      hasServerPrefix: !!process.env.MAILCHIMP_SERVER_PREFIX,
+      hasAudienceId: !!process.env.MAILCHIMP_AUDIENCE_ID,
+      environment: process.env.NODE_ENV || 'not set'
+    });
+  } catch (e) {
+    console.error(`[DEBUG] Error checking environment:`, e.message);
+  }
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*'); 

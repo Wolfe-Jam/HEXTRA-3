@@ -35,7 +35,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// Import route handlers
+const configCheckHandler = require('./src/api/mailchimp-config-check').handler;
+
 // API Routes
+app.get('/api/mailchimp-config-check', (req, res) => {
+  configCheckHandler(req, res);
+});
+
 app.post('/api/mailchimp-subscribe', async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);

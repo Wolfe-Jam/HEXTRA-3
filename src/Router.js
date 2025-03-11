@@ -10,6 +10,7 @@ import Banner from './components/Banner';
 import { VERSION } from './version';
 import SubscriptionPage from './components/SubscriptionPage';
 import MailChimpTest from './components/MailChimpTest';
+import MailChimpDebug from './components/MailChimpDebug';
 
 const ProtectedRoute = ({ children }) => {
   const { isLoading, isAuthenticated } = useKindeAuth();
@@ -82,6 +83,7 @@ const Router = () => {
         <Route path="/subscription" element={<Layout><SubscriptionPage /></Layout>} />
         <Route path="/pricing" element={<Layout><PricingPage /></Layout>} />
         <Route path="/mailchimp-test" element={<Layout><MailChimpTest /></Layout>} />
+        <Route path="/mailchimp-debug" element={<Layout><MailChimpDebug /></Layout>} />
         <Route path="/api/auth/kinde/callback" element={<CallbackPage />} />
       </Routes>
     </BrowserRouter>
