@@ -5,43 +5,32 @@
  * - Validates email format
  * - Adds users to specified MailChimp audience
  * - Provides success/error response
- * - Supports CORS for cross-origin requests
+ * - Follows Vercel serverless best practices
  * 
  * @version 2.2.4
  * @lastUpdated 2025-03-11
  */
 
-import mailchimp from '@mailchimp/mailchimp_marketing';
+// Using native https for better serverless compatibility
+import https from 'https';
 
-// Initialize MailChimp with API key and server prefix
-mailchimp.setConfig({
-  apiKey: process.env.MAILCHIMP_API_KEY,
-  server: process.env.MAILCHIMP_SERVER_PREFIX // e.g., "us1"
-});
-
-// CORS headers helper function
-function setCorsHeaders(res) {
+/**
+ * API endpoint handler for Vercel serverless
+ */
+export default async function handler(req, res) {
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-}
 
-export default async function handler(req, res) {
-  console.log('[DEBUG] API - MailChimp subscribe request received', { method: req.method });
-  
-  // Set CORS headers for all responses
-  setCorsHeaders(res);
-  
-  // Handle OPTIONS request for CORS preflight
+  // Handle OPTIONS request (CORS preflight)
   if (req.method === 'OPTIONS') {
-    console.log('[DEBUG] API - Handling OPTIONS request (CORS preflight)');
     return res.status(200).end();
   }
-  
+
   // Only allow POST requests
   if (req.method !== 'POST') {
-    console.log('[DEBUG] API - Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
@@ -55,63 +44,143 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Valid email is required' });
     }
     
-    // Log environment variables (without revealing sensitive info)
+    // Check environment variables
+    if (!process.env.MAILCHIMP_API_KEY || !process.env.MAILCHIMP_SERVER_PREFIX || !process.env.MAILCHIMP_AUDIENCE_ID) {
+      console.error('[DEBUG] API - Missing required environment variables');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+    
+    // Log environment check (without revealing sensitive info)
     console.log('[DEBUG] API - Environment check:', { 
       hasApiKey: !!process.env.MAILCHIMP_API_KEY, 
       hasServerPrefix: !!process.env.MAILCHIMP_SERVER_PREFIX,
-      hasAudienceId: !!process.env.MAILCHIMP_AUDIENCE_ID,
-      serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX
+      hasAudienceId: !!process.env.MAILCHIMP_AUDIENCE_ID
     });
 
-    // Add member to list
+    // Prepare subscriber data
+    const subscriberData = {
+      email_address: email,
+      status: 'subscribed',  // Use 'pending' for double opt-in
+      merge_fields: {
+        SOURCE: 'HEXTRA App Download',
+        APP_VERSION: '2.2.4'
+      },
+      tags: ['app-user', 'download-dialog']
+    };
+
+    // Add member to list using direct API call
     console.log('[DEBUG] API - Attempting to add to MailChimp list');
-    const response = await mailchimp.lists.addListMember(
-      process.env.MAILCHIMP_AUDIENCE_ID,
-      {
-        email_address: email,
-        status: 'subscribed', // Use 'pending' if you want double opt-in
-        merge_fields: {
-          SOURCE: 'HEXTRA App Download',
-          APP_VERSION: '2.2.4'
-        },
-        tags: ['app-user', 'download-dialog']
-      }
-    );
+    const result = await addToMailchimpList(email, subscriberData);
     
-    console.log('[DEBUG] API - MailChimp API response received:', {
-      id: response.id,
-      status: response.status
-    });
-
-    // Return success with the ID
-    return res.status(200).json({ 
-      success: true, 
-      id: response.id,
-      message: 'Successfully subscribed to HEXTRA updates'
-    });
-  } catch (error) {
-    console.error('[DEBUG] API - MailChimp API Error:', error);
-    
-    // Handle member already exists error
-    if (error.status === 400 && error.response?.body?.title === 'Member Exists') {
+    // Member already exists
+    if (result.title === 'Member Exists') {
       console.log('[DEBUG] API - Member already exists, returning success');
       return res.status(200).json({ 
         success: true, 
         message: 'You are already subscribed to our updates' 
       });
     }
-
-    // Log details about the error
-    console.error('[DEBUG] API - Error details:', {
-      status: error.status,
-      message: error.message,
-      response: error.response?.body || 'No response body'
+    
+    // Success response
+    if (result.id) {
+      console.log('[DEBUG] API - MailChimp API success:', result.id);
+      return res.status(200).json({ 
+        success: true, 
+        id: result.id,
+        message: 'Successfully subscribed to HEXTRA updates'
+      });
+    }
+    
+    // Handle unexpected response
+    console.error('[DEBUG] API - Unexpected MailChimp response:', result);
+    return res.status(500).json({ 
+      error: 'Unexpected response from mail service',
+      details: 'Please try again later'
     });
-
-    // Handle other errors
+  } catch (error) {
+    // Log the error details
+    console.error('[DEBUG] API - Error:', error.message);
+    
+    // Return error response
     return res.status(500).json({ 
       error: 'Error subscribing to newsletter',
-      details: error.message || 'Unknown error'
+      details: 'Please try again later'
     });
   }
+}
+
+/**
+ * Add a subscriber to MailChimp list using direct HTTPS request
+ * More reliable in serverless environments than the MailChimp SDK
+ */
+async function addToMailchimpList(email, data) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Get MailChimp configuration from environment
+      const server = process.env.MAILCHIMP_SERVER_PREFIX;
+      const listId = process.env.MAILCHIMP_AUDIENCE_ID;
+      const apiKey = process.env.MAILCHIMP_API_KEY;
+      
+      // Create authentication string
+      const auth = Buffer.from(`anystring:${apiKey}`).toString('base64');
+      
+      // Prepare data for request
+      const postData = JSON.stringify(data);
+      
+      // Configure request options
+      const options = {
+        hostname: `${server}.api.mailchimp.com`,
+        path: `/3.0/lists/${listId}/members`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${auth}`,
+          'Content-Length': postData.length
+        }
+      };
+      
+      // Make the request
+      const req = https.request(options, (res) => {
+        let data = '';
+        
+        // Collect data chunks
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        // Process complete response
+        res.on('end', () => {
+          try {
+            // Parse JSON response
+            const response = JSON.parse(data);
+            
+            // Check response status
+            if (res.statusCode >= 400) {
+              console.log('[DEBUG] API - MailChimp error response:', response);
+            } else {
+              console.log('[DEBUG] API - MailChimp success response received');
+            }
+            
+            resolve(response);
+          } catch (e) {
+            console.error('[DEBUG] API - Error parsing response:', e.message);
+            reject(new Error('Failed to parse MailChimp response'));
+          }
+        });
+      });
+      
+      // Handle request errors
+      req.on('error', (error) => {
+        console.error('[DEBUG] API - Request error:', error.message);
+        reject(error);
+      });
+      
+      // Send the request
+      req.write(postData);
+      req.end();
+    } catch (error) {
+      console.error('[DEBUG] API - Setup error:', error.message);
+      reject(error);
+    }
+  });
 }
