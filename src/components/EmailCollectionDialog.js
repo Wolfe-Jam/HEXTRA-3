@@ -43,10 +43,11 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     console.log(`[DEBUG] MailChimp - Subscribing email to MailChimp: ${email}`);
     
     try {
-      // Get the base URL for API calls (to handle both local and production)
-      const baseUrl = window.location.origin;
-      // Use the API path structure that works with Vercel config
-      const apiUrl = `${baseUrl}/api/mailchimp-subscribe`;
+      // Use a relative URL to ensure same-origin request
+      // This will always use the current domain, whether hextra.io or elsewhere
+      const apiUrl = '/api/mailchimp-subscribe';
+      
+      console.log(`[DEBUG] MailChimp - Current origin:`, window.location.origin);
       
       console.log(`[DEBUG] MailChimp - Making API request to ${apiUrl}`);
       
@@ -59,8 +60,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         body: JSON.stringify({
           email: email
         }),
-        // Add these for better CORS handling
-        mode: 'cors',
+        // Use default fetch mode for same-origin requests
         credentials: 'same-origin'
       });
       
@@ -86,6 +86,14 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       
       if (!response.ok) {
         console.error('[DEBUG] MailChimp - Subscription error:', data.error || 'Unknown error');
+        console.error('[DEBUG] MailChimp - Status code:', response.status);
+        console.error('[DEBUG] MailChimp - Status text:', response.statusText);
+        
+        // 405 Method Not Allowed typically indicates a CORS issue
+        if (response.status === 405) {
+          console.error('[DEBUG] MailChimp - CORS issue detected. Check API route configuration.');
+        }
+        
         return false;
       }
       
