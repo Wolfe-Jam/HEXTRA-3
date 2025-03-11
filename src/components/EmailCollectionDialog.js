@@ -27,6 +27,7 @@ import GlowButton from './GlowButton';
 import GlowTextButton from './GlowTextButton';
 
 const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
+  console.log('[DEBUG] Dialog - Rendering with props:', { open });
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const { login } = useKindeAuth();
@@ -37,29 +38,79 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     return re.test(email);
   };
 
+  // Subscribe user to MailChimp and send confirmation email
+  const subscribeToMailChimp = async (email) => {
+    console.log(`[DEBUG] MailChimp - Subscribing email to MailChimp: ${email}`);
+    
+    try {
+      console.log('[DEBUG] MailChimp - Making API request to /api/mailchimp-subscribe');
+      // Call our MailChimp API endpoint
+      const response = await fetch('/api/mailchimp-subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email
+        })
+      });
+      
+      console.log('[DEBUG] MailChimp - Response status:', response.status);
+      const data = await response.json();
+      console.log('[DEBUG] MailChimp - Response data:', data);
+      
+      if (!response.ok) {
+        console.error('[DEBUG] MailChimp - Subscription error:', data.error);
+        return false;
+      }
+      
+      console.log('[DEBUG] MailChimp - Subscription successful:', data.message);
+      return true;
+    } catch (error) {
+      console.error('[DEBUG] MailChimp - Failed to subscribe:', error);
+      // Don't block the user experience if subscription fails
+      return false;
+    }
+  };
+
   // Handle dialog submission
   const handleSubmit = () => {
+    console.log('[DEBUG] Dialog - Submit button clicked');
     // Validate email
     if (!email) {
+      console.log('[DEBUG] Dialog - Email is empty');
       setError('Email is required');
       return;
     }
     
     if (!validateEmail(email)) {
+      console.log('[DEBUG] Dialog - Email validation failed:', email);
       setError('Please enter a valid email address');
       return;
     }
+    console.log('[DEBUG] Dialog - Email validation passed:', email);
 
     // Save email to localStorage
-    localStorage.setItem('hextra_email_user', JSON.stringify({
-      email,
-      timestamp: Date.now()
-    }));
+    try {
+      localStorage.setItem('hextra_email_user', JSON.stringify({
+        email,
+        timestamp: Date.now()
+      }));
+      console.log('[DEBUG] Dialog - Saved email to localStorage');
+    } catch (error) {
+      console.error('[DEBUG] Dialog - Error saving to localStorage:', error);
+    }
+
+    // Subscribe to MailChimp and send confirmation email
+    console.log('[DEBUG] Dialog - Calling MailChimp subscribe');
+    subscribeToMailChimp(email);
 
     // Call the onSubmit callback with the email
+    console.log('[DEBUG] Dialog - Calling onSubmit callback');
     onSubmit(email);
     
     // Reset form and close dialog
+    console.log('[DEBUG] Dialog - Resetting form and closing dialog');
     setEmail('');
     setError('');
     onClose();
@@ -67,7 +118,9 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
 
   // Handle full authentication
   const handleAuthenticate = () => {
+    console.log('[DEBUG] Dialog - Authentication requested');
     login();
+    console.log('[DEBUG] Dialog - Closing dialog after auth request');
     onClose();
   };
 
@@ -79,8 +132,13 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         sx: {
           maxWidth: '450px',
           borderRadius: '8px',
-          bgcolor: 'var(--background-paper)',
-          color: 'var(--text-primary)'
+          bgcolor: (theme) => 
+            theme.palette.mode === 'dark' ? '#1a1a1a' : '#ffffff',
+          color: (theme) => 
+            theme.palette.mode === 'dark' ? '#ffffff' : '#1a1a1a',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+          border: (theme) => 
+            `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
         }
       }}
     >

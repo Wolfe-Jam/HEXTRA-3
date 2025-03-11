@@ -201,12 +201,17 @@ function App() {
   // Load email user data from localStorage on app initialization
   useEffect(() => {
     const savedEmailUser = localStorage.getItem('hextra_email_user');
+    console.log('[DEBUG] Init - localStorage email user data:', savedEmailUser);
     if (savedEmailUser) {
       try {
-        setEmailUser(JSON.parse(savedEmailUser));
+        const parsedUser = JSON.parse(savedEmailUser);
+        console.log('[DEBUG] Init - Setting email user state:', parsedUser);
+        setEmailUser(parsedUser);
       } catch (error) {
         console.error('Failed to parse saved email user data:', error);
       }
+    } else {
+      console.log('[DEBUG] Init - No email user data found in localStorage');
     }
   }, []);
 
@@ -860,34 +865,44 @@ function App() {
   // Handle email submission from dialog
   const handleEmailSubmit = useCallback((email) => {
     if (!email) return;
+    console.log('[DEBUG] Email Submit - Processing email:', email);
     
     // Create user info object
     const userInfo = {
       email,
       timestamp: Date.now()
     };
+    console.log('[DEBUG] Email Submit - Created user info:', userInfo);
     
     // Save to localStorage for persistence across sessions
     try {
       localStorage.setItem('hextra_email_user', JSON.stringify(userInfo));
+      console.log('[DEBUG] Email Submit - Saved to localStorage successfully');
     } catch (error) {
       console.error('Failed to save email user data to localStorage:', error);
     }
     
     // Update state
     setEmailUser(userInfo);
+    console.log('[DEBUG] Email Submit - Updated emailUser state');
     
     // Proceed with download after collecting email
+    console.log('[DEBUG] Email Submit - Proceeding with download');
     performDownload();
   }, [performDownload]);
   
   // Main download handler - checks user state and shows dialog if needed
   const handleQuickDownload = useCallback(() => {
+    console.log('[DEBUG] QuickDownload - Authentication state:', isAuthenticated);
+    console.log('[DEBUG] QuickDownload - Email user state:', emailUser);
+    
     // If user is authenticated or has already provided email, proceed with download
     if (isAuthenticated || emailUser) {
+      console.log('[DEBUG] QuickDownload - User is authenticated or has email, proceeding with download');
       performDownload();
     } else {
       // Show email collection dialog for anonymous users
+      console.log('[DEBUG] QuickDownload - User anonymous, showing email dialog');
       setEmailDialogOpen(true);
     }
   }, [isAuthenticated, emailUser, performDownload]);

@@ -10,6 +10,7 @@
     "@emotion/react": "11.11.3",
     "@emotion/styled": "11.11.0",
     "@kinde-oss/kinde-auth-react": "4.0.4",
+    "@mailchimp/mailchimp_marketing": "3.0.80",
     "@mui/icons-material": "5.15.5",
     "@mui/material": "5.15.5",
     "@mui/system": "5.15.5",
