@@ -23,11 +23,27 @@ dotenv.config();
 
 // Middleware
 app.use(bodyParser.json());
+
+// Enhanced CORS configuration to include production domains
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://www.hextra.io', 'https://hextra.io'],
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
 }));
+
+// Global CORS headers for preflight requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle OPTIONS requests explicitly
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
 
 // Log middleware
 app.use((req, res, next) => {
@@ -43,17 +59,24 @@ app.get('/api/mailchimp-config-check', (req, res) => {
   configCheckHandler(req, res);
 });
 
-app.post('/api/mailchimp-subscribe', async (req, res) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*'); 
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+// Handle both POST and OPTIONS for mailchimp-subscribe endpoint
+app.use('/api/mailchimp-subscribe', (req, res, next) => {
+  console.log(`[API DEBUG] Mailchimp subscribe request: ${req.method} from ${req.get('origin')}`);
+  next();
+});
 
-  // Handle OPTIONS request (CORS preflight)
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+app.options('/api/mailchimp-subscribe', (req, res) => {
+  console.log('[API DEBUG] Handling OPTIONS request for mailchimp-subscribe');
+  return res.status(200).end();
+});
+
+app.post('/api/mailchimp-subscribe', async (req, res) => {
+  console.log('[API DEBUG] Handling POST request for mailchimp-subscribe');
+  // Additional CORS headers for this specific endpoint
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+  res.header('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
   try {
     const { email } = req.body;

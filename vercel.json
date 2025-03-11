@@ -17,6 +17,14 @@
       "destination": "/index.html"
     },
     {
+      "source": "/api/mailchimp-subscribe",
+      "destination": "/api/mailchimp-subscribe"
+    },
+    {
+      "source": "/api/mailchimp-config-check",
+      "destination": "/api/mailchimp-config-check"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
