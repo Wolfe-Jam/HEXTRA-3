@@ -10,10 +10,69 @@
  * @lastUpdated 2025-03-11
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { Box, Typography, Button, TextField, Paper, Alert, CircularProgress, Divider, Chip } from '@mui/material';
 
-const MailChimpDebug = () => {
+// Error boundary component to catch rendering errors
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    // Update state so the next render will show the fallback UI
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // Log the error to console
+    console.error('MailChimpDebug Error:', error, errorInfo);
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Render fallback UI
+      return (
+        <Box sx={{ padding: 3, margin: 3, border: '1px solid #f44336', borderRadius: 1 }}>
+          <Typography variant="h5" color="error" gutterBottom>
+            Something went wrong
+          </Typography>
+          <Alert severity="error" sx={{ marginBottom: 2 }}>
+            {this.state.error?.toString() || 'An unexpected error occurred'}
+          </Alert>
+          <Paper 
+            variant="outlined" 
+            sx={{ 
+              padding: 2, 
+              backgroundColor: '#f5f5f5', 
+              maxHeight: 300, 
+              overflow: 'auto', 
+              marginBottom: 2 
+            }}
+          >
+            <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+              {this.state.errorInfo?.componentStack || 'No component stack available'}
+            </pre>
+          </Paper>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => window.location.reload()}
+          >
+            Reload Page
+          </Button>
+        </Box>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Wrap the component with error handling
+const MailChimpDebugContent = () => {
   const [email, setEmail] = useState('');
   const [configStatus, setConfigStatus] = useState(null);
   const [configLoading, setConfigLoading] = useState(false);
@@ -24,6 +83,7 @@ const MailChimpDebug = () => {
 
   // Function to check environment configuration
   const checkConfig = async () => {
+    console.log('Initiating config check...');
     setConfigLoading(true);
     setConfigStatus(null);
     setErrorDetails(null);
@@ -36,6 +96,7 @@ const MailChimpDebug = () => {
       setConfigStatus(data);
       addLog('Config check', data);
     } catch (error) {
+      console.error('Config check error:', error);
       setErrorDetails(error.toString());
       addLog('Config check error', error.toString());
     } finally {
@@ -113,6 +174,18 @@ const MailChimpDebug = () => {
   // Load config status on mount
   useEffect(() => {
     checkConfig();
+  }, []);
+
+  // Add initial render notification
+  useEffect(() => {
+    console.log('MailChimpDebug component mounted');
+    // Add a fallback if the automatic check fails
+    setTimeout(() => {
+      if (!configStatus && !configLoading && !errorDetails) {
+        console.log('Fallback: No config status after timeout');
+        setErrorDetails('Initial configuration check timed out. Please try checking manually.');
+      }
+    }, 5000);
   }, []);
 
   return (
@@ -292,6 +365,15 @@ const MailChimpDebug = () => {
         </Typography>
       </Box>
     </Box>
+  );
+};
+
+// Wrapped component with error boundary
+const MailChimpDebug = () => {
+  return (
+    <ErrorBoundary>
+      <MailChimpDebugContent />
+    </ErrorBoundary>
   );
 };
 
