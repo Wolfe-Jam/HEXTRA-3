@@ -45,6 +45,8 @@ const TestSubscription = React.lazy(() => import('../testSubscription'));
 const ProfilePage = React.lazy(() => import('./ProfilePage'));
 // Import TestLoginPage component
 const TestLoginPage = React.lazy(() => import('./TestLoginPage'));
+// Import MailChimpTest component
+const MailChimpTest = React.lazy(() => import('./MailChimpTest'));
 
 // Layout component for consistent UI across routes
 const Layout = ({ children }) => {
@@ -175,6 +177,16 @@ export default function KindeAuth({ children }) {
               <Layout>
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <TestLoginPage />
+                </React.Suspense>
+              </Layout>
+            } 
+          />
+          <Route 
+            path="/mailchimp-test" 
+            element={
+              <Layout>
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <MailChimpTest />
                 </React.Suspense>
               </Layout>
             } 
