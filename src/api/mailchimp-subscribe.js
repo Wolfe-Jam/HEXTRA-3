@@ -2,7 +2,7 @@
  * MailChimp Subscription API (v2.2.4)
  * 
  * Simplified, production-ready handler for MailChimp integration
- * - Optimized for serverless and Express environments
+ * - Optimized for serverless functions
  * - Handles CORS properly for production domains
  * - Provides detailed logging for troubleshooting
  * - Minimal dependencies for maximum reliability
@@ -21,48 +21,22 @@ const { URL } = require('url');
 const DIAGNOSTIC_MODE = true;
 
 /**
- * Main handler function for the MailChimp API endpoint
+ * Handles request for MailChimp subscription
  */
-async function handler(req, res) {
+const handler = async (req, res) => {
   // Critical: Set CORS headers first, before any processing
-  // This is important for production - ensure we accept requests from hextra.io
-  const allowedOrigins = ['https://hextra.io', 'https://www.hextra.io', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
-  const origin = req.headers.origin;
-  
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // For non-browser requests or unknown origins, be permissive
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  
   res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-  // Log every request for debugging - this is critical for production troubleshooting
+  // Log every request for debugging
   console.log(`[DEBUG] MailChimp API Request:`, {
     method: req.method,
     url: req.url,
-    path: req.path,
-    host: req.headers.host,
-    origin: req.headers.origin || 'unknown',
-    referer: req.headers.referer || 'unknown',
-    contentType: req.headers['content-type'],
-    body: req.body ? (typeof req.body === 'object' ? 'object-present' : 'body-present') : 'no-body'
+    headers: req.headers,
+    origin: req.headers.origin || 'unknown'
   });
-  
-  // Log Vercel-specific environment information if in production
-  if (process.env.VERCEL) {
-    console.log('[DEBUG] Vercel environment detected:', {
-      vercelEnv: process.env.VERCEL_ENV,
-      region: process.env.VERCEL_REGION,
-      url: process.env.VERCEL_URL,
-      hasMailchimpKey: !!process.env.MAILCHIMP_API_KEY,
-      hasServerPrefix: !!process.env.MAILCHIMP_SERVER_PREFIX,
-      hasAudienceId: !!process.env.MAILCHIMP_AUDIENCE_ID
-    });
-  }
 
   // 1. Handle OPTIONS (CORS preflight) requests immediately
   if (req.method === 'OPTIONS') {
@@ -86,49 +60,10 @@ async function handler(req, res) {
       return res.status(400).json({ error: 'Valid email is required' });
     }
     
-    // For testing without affecting real mailing list
-    // Allow test@example.com or any email with example.com domain
-    if (email.endsWith('@example.com')) {
-      console.log('[DEBUG] API - Test email detected, returning simulated success');
-      return res.status(200).json({
-        success: true, 
-        simulated: true,
-        message: 'Test email captured (no MailChimp subscription occurred)',
-        version: '2.2.4',
-        environment: process.env.NODE_ENV || 'unknown',
-        isVercel: !!process.env.VERCEL
-      });
-    }
-    
-    // Check environment variables - log but don't fail completely to ensure core functionality
+    // Check environment variables
     if (!process.env.MAILCHIMP_API_KEY || !process.env.MAILCHIMP_SERVER_PREFIX || !process.env.MAILCHIMP_AUDIENCE_ID) {
       console.error('[DEBUG] API - Missing required environment variables');
-      
-      // Show which variables are missing for easier debugging
-      const missingVars = [];
-      if (!process.env.MAILCHIMP_API_KEY) missingVars.push('MAILCHIMP_API_KEY');
-      if (!process.env.MAILCHIMP_SERVER_PREFIX) missingVars.push('MAILCHIMP_SERVER_PREFIX');
-      if (!process.env.MAILCHIMP_AUDIENCE_ID) missingVars.push('MAILCHIMP_AUDIENCE_ID');
-      
-      console.error(`[DEBUG] API - Missing variables: ${missingVars.join(', ')}`);
-      
-      // In development, provide more helpful error message
-      if (process.env.NODE_ENV !== 'production') {
-        return res.status(200).json({
-          success: true,
-          simulated: true,
-          message: 'Email captured (MailChimp integration disabled - missing environment variables)',
-          missingVariables: missingVars,
-          developmentHelp: 'Create .env file with MAILCHIMP_API_KEY, MAILCHIMP_SERVER_PREFIX, and MAILCHIMP_AUDIENCE_ID'
-        });
-      } else {
-        // In production, still capture the email but notify about config issue
-        return res.status(200).json({
-          success: true,
-          simulated: true,
-          message: 'Email received, but not added to mailing list due to configuration issue'
-        });
-      }
+      return res.status(500).json({ error: 'Server configuration error' });
     }
     
     // Log environment check (without revealing sensitive info)
@@ -188,11 +123,11 @@ async function handler(req, res) {
       details: 'Please try again later'
     });
   }
-}
+};
 
 /**
  * Add a subscriber to MailChimp list using direct HTTPS request
- * Simplified implementation optimized for Vercel serverless functions
+ * Simplified implementation optimized for serverless functions
  * @param {string} email - Subscriber's email address
  * @param {object} data - Subscription data for MailChimp
  * @returns {Promise<object>} MailChimp API response
@@ -376,5 +311,4 @@ async function makeApiRequest(method, url, data, apiKey) {
   });
 }
 
-// Export the handler for CommonJS compatibility
-module.exports = handler;
+module.exports = { handler };
