@@ -95,7 +95,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       
       // MailChimp direct form submission configuration
       const MAILCHIMP_URL = 'https://us8.list-manage.com/subscribe/post';
-      const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // MailChimp user ID
+      const MAILCHIMP_U = '90eafdc7bf8faf272c6e45caf'; // MailChimp user ID
       const MAILCHIMP_ID = '5b2a2cb0b7'; // MailChimp audience ID
       
       console.log('[DEBUG] Email Capture - Using direct form submission to MailChimp');
