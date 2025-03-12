@@ -36,7 +36,9 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
   // Check for MailChimp success parameter in URL
   React.useEffect(() => {
     // Check if we're returning from a successful MailChimp submission
-    if (typeof window !== 'undefined' && window.location.search.includes('mailchimp_success=true')) {
+    if (typeof window !== 'undefined' && 
+        (window.location.search.includes('mailchimp_success=true') || 
+         window.location.search.includes('result=success'))) {
       console.log('[DEBUG] Email Capture - Detected successful MailChimp submission');
       
       // Clean up the URL
@@ -82,7 +84,6 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       const MAILCHIMP_URL = 'https://hextra.us21.list-manage.com/subscribe/post';
       const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // Your MailChimp user ID
       const MAILCHIMP_ID = '15a9e53a0a'; // Your MailChimp list ID
-      const MAILCHIMP_FORM_ID = '00a6b0e6f0'; // Form ID for proper submission
       
       let apiSuccess = false;
       
@@ -90,9 +91,22 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         // Create a form element for direct submission
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}&f_id=${MAILCHIMP_FORM_ID}`;
+        form.action = `${MAILCHIMP_URL}`;
         form.target = '_blank';
         form.style.display = 'none';
+        
+        // Add required MailChimp parameters
+        const uInput = document.createElement('input');
+        uInput.type = 'hidden';
+        uInput.name = 'u';
+        uInput.value = MAILCHIMP_U;
+        form.appendChild(uInput);
+        
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'id';
+        idInput.value = MAILCHIMP_ID;
+        form.appendChild(idInput);
         
         // Add email field
         const emailInput = document.createElement('input');
