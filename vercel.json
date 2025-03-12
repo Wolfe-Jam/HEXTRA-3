@@ -13,6 +13,11 @@
   "buildCommand": "npm run vercel-build",
   "routes": [
     {
+      "src": "/api/mailchimp-sdk",
+      "methods": ["POST", "OPTIONS"],
+      "dest": "/api/mailchimp-sdk"
+    },
+    {
       "src": "/api/mailchimp-subscribe",
       "methods": ["POST", "OPTIONS"],
       "dest": "/api/mailchimp-subscribe"

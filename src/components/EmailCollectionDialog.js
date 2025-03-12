@@ -45,7 +45,8 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     try {
       // Use a relative URL to ensure same-origin request
       // This will always use the current domain, whether hextra.io or elsewhere
-      const apiUrl = '/api/mailchimp-subscribe';
+      // Using the official MailChimp SDK endpoint for reliability
+      const apiUrl = '/api/mailchimp-sdk';
       
       console.log(`[DEBUG] MailChimp - Current origin:`, window.location.origin);
       
