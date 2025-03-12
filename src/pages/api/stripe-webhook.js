@@ -5,13 +5,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 // Disable body parsing, need raw body for webhook signature verification
-export const config = {
+const config = {
   api: {
     bodyParser: false,
   },
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -61,3 +61,7 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Webhook handler failed' });
   }
 }
+
+// Export handler and config for compatibility with Vercel API routes
+module.exports = handler;
+module.exports.config = config;
