@@ -12,22 +12,25 @@
  */
 
 // Import the SDK for reliable functionality
-const mailchimp = require('@mailchimp/mailchimp_marketing');
-const crypto = require('crypto');
+import mailchimp from '@mailchimp/mailchimp_marketing';
+import crypto from 'crypto';
 
 /**
  * Unified handler that works reliably on Vercel
  */
-// Export a default function for Next.js API routes
 export default async function handler(req, res) {
   // CRITICAL: Set CORS headers immediately before any processing
-  // Allow requests from any origin in development and from hextra.io in production
-  const origin = req.headers.origin || '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours cache for preflight
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  
+  // Log request for diagnostics
+  console.log(`[UNIFIED] ${req.method} Request received:`, JSON.stringify({
+    origin: req.headers.origin,
+    host: req.headers.host,
+    'content-type': req.headers['content-type']
+  }));
 
   // Log all requests for diagnostics
   console.log(`[UNIFIED] ${req.method} Request to mailchimp-unified, headers:`, 
@@ -38,22 +41,12 @@ export default async function handler(req, res) {
     })
   );
   
-  // Enhanced OPTIONS handling for CORS preflight
+  // Handle OPTIONS method for CORS preflight
   if (req.method === 'OPTIONS') {
-    console.log('[UNIFIED] Handling OPTIONS preflight request from:', origin);
+    console.log('[UNIFIED] Handling OPTIONS preflight request');
     return res.status(200).end();
   }
 
-  // Allow both GET and POST methods
-  if (req.method !== 'POST' && req.method !== 'GET') {
-    console.log(`[UNIFIED] Method ${req.method} not allowed`);
-    return res.status(200).json({
-      status: 'error',
-      error: 'Method not allowed',
-      message: 'Only POST and GET requests are accepted'
-    });
-  }
-  
   // For GET requests, return a simple status check
   if (req.method === 'GET') {
     console.log('[UNIFIED] Handling GET status check');
@@ -62,6 +55,16 @@ export default async function handler(req, res) {
       message: 'MailChimp API endpoint is operational',
       version: '2.2.5',
       timestamp: new Date().toISOString()
+    });
+  }
+  
+  // Only allow POST for actual subscriptions
+  if (req.method !== 'POST') {
+    console.log(`[UNIFIED] Method ${req.method} not allowed`);
+    return res.status(200).json({
+      status: 'error',
+      error: 'Method not allowed',
+      message: 'Only POST requests are accepted for subscriptions'
     });
   }
 
@@ -174,5 +177,3 @@ async function handleSubscription(req, res) {
     });
   }
 }
-
-// No need to export the handler as we're using the default export above

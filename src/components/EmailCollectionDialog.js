@@ -43,27 +43,14 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     console.log(`[DEBUG] MailChimp - Subscribing email to MailChimp: ${email}`);
     
     try {
-      // Use a relative URL to ensure same-origin request
-      // This will always use the current domain, whether hextra.io or elsewhere
-      // Using the unified MailChimp endpoint for maximum Vercel compatibility
-      const apiUrl = '/api/mailchimp-unified';
+      // Use the mailchimp-subscribe endpoint instead of unified
+      // This endpoint has been proven to work reliably
+      const apiUrl = '/api/mailchimp-subscribe';
       
       console.log(`[DEBUG] MailChimp - Current origin:`, window.location.origin);
       console.log(`[DEBUG] MailChimp - Making API request to ${apiUrl}`);
       
-      // First check if the API is available with a GET request
-      const checkResponse = await fetch(`${apiUrl}?check=true`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Origin': window.location.origin
-        },
-        credentials: 'same-origin'
-      });
-      
-      console.log('[DEBUG] MailChimp - API check status:', checkResponse.status);
-      
-      // Now make the actual subscription request
+      // Make the subscription request directly
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -76,8 +63,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
           source: 'EmailCollectionDialog',
           version: '2.2.5',
           timestamp: new Date().toISOString()
-        }),
-        credentials: 'same-origin'
+        })
       });
       
       console.log('[DEBUG] MailChimp - Response status:', response.status);
