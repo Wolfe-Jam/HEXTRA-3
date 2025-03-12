@@ -25,6 +25,7 @@ import {
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import GlowButton from './GlowButton';
 import GlowTextButton from './GlowTextButton';
+import DirectEmailCapture from './DirectEmailCapture';
 
 const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
   console.log('[DEBUG] Dialog - Rendering with props:', { open });
@@ -45,9 +46,9 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     try {
       // Try multiple endpoints in sequence until one works
       const endpoints = [
-        '/api/email-form',     // Form-based approach (most reliable)
-        '/api/email-capture',  // Simple API endpoint
-        '/api/mailchimp-subscribe' // Original endpoint (least reliable)
+        '/api/mailchimp-direct',  // New direct MailChimp integration (most reliable)
+        '/api/mailchimp-unified', // Updated unified endpoint
+        '/api/mailchimp-subscribe' // Original endpoint
       ];
       
       // Try each endpoint in sequence
@@ -55,18 +56,41 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         console.log(`[DEBUG] Email Capture - Trying endpoint: ${apiUrl}`);
         
         try {
-          // Make a simple POST request
+          // First do a health check to ensure the endpoint is available
+          try {
+            const healthCheck = await fetch(`${apiUrl}?check=true`, {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json'
+              }
+            });
+            console.log(`[DEBUG] Email Capture - Health check status for ${apiUrl}:`, healthCheck.status);
+            
+            // If health check fails with 405, try the next endpoint
+            if (healthCheck.status === 405) {
+              console.log(`[DEBUG] Email Capture - Health check failed with 405 for ${apiUrl}`);
+              continue;
+            }
+          } catch (healthError) {
+            console.error(`[DEBUG] Email Capture - Health check failed for ${apiUrl}:`, healthError);
+            // Continue anyway
+          }
+          
+          // Make the actual subscription request
           const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Origin': window.location.origin
             },
             body: JSON.stringify({
               email: email,
               source: 'EmailCollectionDialog',
               version: '2.2.5',
               timestamp: new Date().toISOString()
-            })
+            }),
+            credentials: 'same-origin'
           });
           
           console.log(`[DEBUG] Email Capture - Response status from ${apiUrl}:`, response.status);
@@ -102,8 +126,8 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         }
       }
       
-      // If we've tried all endpoints and none worked, use a fallback approach
-      console.log('[DEBUG] Email Capture - All endpoints failed, using fallback');
+      // If all MailChimp endpoints fail, try the Kinde Auth approach
+      console.log('[DEBUG] Email Capture - All MailChimp endpoints failed, using Kinde Auth fallback');
       
       // Store the email locally even if API calls fail
       try {

@@ -13,6 +13,16 @@
   "buildCommand": "npm run vercel-build",
   "routes": [
     {
+      "src": "/api/email-serverless",
+      "methods": ["GET", "POST", "OPTIONS"],
+      "dest": "/api/email-serverless",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+      }
+    },
+    {
       "src": "/api/mailchimp-unified",
       "methods": ["POST", "OPTIONS"],
       "dest": "/api/mailchimp-unified",
