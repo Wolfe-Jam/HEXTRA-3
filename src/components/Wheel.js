@@ -223,6 +223,7 @@ const Wheel = forwardRef(({
       case 3: r = p; g = q; b = v; break;
       case 4: r = t; g = p; b = v; break;
       case 5: r = v; g = p; b = q; break;
+      default: r = v; g = t; b = p; break; // Default to case 0 (mathematically this should never happen)
     }
     
     return [
