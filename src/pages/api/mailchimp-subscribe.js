@@ -26,6 +26,17 @@ const DIAGNOSTIC_MODE = true;
 async function handler(req, res) {
   // Critical: Set CORS headers first, before any processing
   // This is important for production - ensure we accept requests from hextra.io
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  
+  // Handle OPTIONS method - respond immediately with 200 OK
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  // For debug logging
   const allowedOrigins = ['https://hextra.io', 'https://www.hextra.io', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
   const origin = req.headers.origin;
   

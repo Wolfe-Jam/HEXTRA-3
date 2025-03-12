@@ -311,4 +311,5 @@ async function makeApiRequest(method, url, data, apiKey) {
   });
 }
 
-module.exports = { handler };
+// Export the handler directly for compatibility with Next.js API routes
+module.exports = handler;
