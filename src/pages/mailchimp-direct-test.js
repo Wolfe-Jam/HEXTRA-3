@@ -36,8 +36,8 @@ You can check your MailChimp audience to verify the email was added.\n`);
       setResults(prev => prev + `Using test email: ${emailToTest}\n\n`);
       
       // MailChimp direct form submission configuration
-      const MAILCHIMP_URL = 'https://hextra.us21.list-manage.com/subscribe/post';
-      const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // MailChimp user ID
+      const MAILCHIMP_URL = 'https://us8.list-manage.com/subscribe/post';
+      const MAILCHIMP_U = '90eafdc7bf8faf272c6e45caf'; // MailChimp user ID
       const MAILCHIMP_ID = '5b2a2cb0b7'; // MailChimp audience ID
       
       setResults(prev => prev + `Using MailChimp URL: ${MAILCHIMP_URL}\n`);
