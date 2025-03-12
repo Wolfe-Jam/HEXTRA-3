@@ -86,10 +86,10 @@ async function handleSubscription(req, res) {
       });
     }
 
-    // Get MailChimp configuration
-    const apiKey = process.env.REACT_APP_MAILCHIMP_API_KEY;
-    const listId = process.env.REACT_APP_MAILCHIMP_LIST_ID;
-    const serverPrefix = apiKey ? apiKey.split('-')[1] : null;
+    // Get MailChimp configuration from production environment variables
+    const apiKey = process.env.MAILCHIMP_API_KEY;
+    const listId = process.env.MAILCHIMP_AUDIENCE_ID;
+    const serverPrefix = process.env.MAILCHIMP_SERVER_PREFIX;
 
     if (!apiKey || !listId || !serverPrefix) {
       console.log('[UNIFIED] Missing MailChimp configuration');
@@ -129,7 +129,8 @@ async function handleSubscription(req, res) {
           email_address: email,
           status: 'subscribed',
           merge_fields: {
-            SOURCE: 'HEXTRA Web App v2.2.5'
+            SOURCE: 'HEXTRA Web App v2.2.5',
+            SIGNUP_DATE: new Date().toISOString().split('T')[0]
           }
         };
 
