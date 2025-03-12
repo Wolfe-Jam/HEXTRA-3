@@ -1,10 +1,10 @@
 /**
- * HEXTRA-3 App Component (v2.2.4)
+ * HEXTRA-3 App Component (v2.2.5)
  * Main application component integrating color selection, image processing, and user tier management.
  * 
- * VERSION: 2.2.4
- * BUILD_ID: HEXTRA-2025-03-10-AD2241
- * BUILD_DATE: 2025-03-10
+ * VERSION: 2.2.5
+ * BUILD_ID: HEXTRA-2025-03-11-MC2245
+ * BUILD_DATE: 2025-03-11
  */
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';

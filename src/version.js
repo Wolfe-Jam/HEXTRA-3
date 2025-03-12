@@ -6,6 +6,6 @@
  * from this file rather than defining them locally.
  */
 
-export const VERSION = '2.2.4';
-export const BUILD_DATE = '2025-03-10';
-export const BUILD_ID = 'HEXTRA-2025-03-10-AD2241';
+export const VERSION = '2.2.5';
+export const BUILD_DATE = '2025-03-11';
+export const BUILD_ID = 'HEXTRA-2025-03-11-MC2245';
