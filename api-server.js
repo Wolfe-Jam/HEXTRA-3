@@ -1,12 +1,12 @@
 /**
- * HEXTRA API Server (v2.2.4)
+ * HEXTRA API Server (v2.2.5)
  * 
  * Simple Express server to handle API requests for MailChimp integration
  * - Serves /api/mailchimp-subscribe endpoint
  * - Supports MailChimp subscription functionality
  * - Uses the same pattern as the existing API handlers
  * 
- * @version 2.2.4
+ * @version 2.2.5
  * @lastUpdated 2025-03-11
  */
 
@@ -238,7 +238,7 @@ async function addToMailchimpList(email, data) {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`[API] HEXTRA API Server v2.2.4 running on port ${PORT}`);
+  console.log(`[API] HEXTRA API Server v2.2.5 running on port ${PORT}`);
   console.log(`[API] Available endpoints:`);
   console.log(`[API] - POST /api/mailchimp-subscribe`);
   console.log(`[API] - GET /api/ping`);

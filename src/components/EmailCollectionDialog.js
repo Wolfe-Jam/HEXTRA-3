@@ -1,5 +1,5 @@
 /**
- * EmailCollectionDialog Component (v2.2.4)
+ * EmailCollectionDialog Component (v2.2.5)
  * 
  * Collects email from users before allowing download.
  * - Shows for non-authenticated users when downloading single images
