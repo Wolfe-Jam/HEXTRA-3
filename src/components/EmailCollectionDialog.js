@@ -40,23 +40,19 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
 
   // Subscribe user to MailChimp and send confirmation email
   const subscribeToMailChimp = async (email) => {
-    console.log(`[DEBUG] MailChimp - Subscribing email to MailChimp: ${email}`);
+    console.log(`[DEBUG] Email Capture - Subscribing email: ${email}`);
     
     try {
-      // Use the mailchimp-subscribe endpoint instead of unified
-      // This endpoint has been proven to work reliably
-      const apiUrl = '/api/mailchimp-subscribe';
+      // Use the new simple email-capture endpoint
+      const apiUrl = '/api/email-capture';
       
-      console.log(`[DEBUG] MailChimp - Current origin:`, window.location.origin);
-      console.log(`[DEBUG] MailChimp - Making API request to ${apiUrl}`);
+      console.log(`[DEBUG] Email Capture - Making API request to ${apiUrl}`);
       
-      // Make the subscription request directly
+      // Make the subscription request directly with minimal options
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Origin': window.location.origin
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           email: email,
@@ -66,7 +62,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         })
       });
       
-      console.log('[DEBUG] MailChimp - Response status:', response.status);
+      console.log('[DEBUG] Email Capture - Response status:', response.status);
     
       // Handle non-JSON responses
       let data;
@@ -76,42 +72,45 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
           data = await response.json();
         } else {
           const textData = await response.text();
-          console.log('[DEBUG] MailChimp - Response text:', textData);
+          console.log('[DEBUG] Email Capture - Response text:', textData);
           data = { message: textData };
         }
       } catch (parseError) {
-        console.error('[DEBUG] MailChimp - Error parsing response:', parseError);
+        console.error('[DEBUG] Email Capture - Error parsing response:', parseError);
         data = { error: 'Could not parse response' };
       }
       
-      console.log('[DEBUG] MailChimp - Response data:', data);
+      console.log('[DEBUG] Email Capture - Response data:', data);
       
-      // Even if response is not OK, we'll still try to process it
-      // This is because our API now returns 200 for most errors for better UX
+      // Check if we got a 405 error
+      if (response.status === 405) {
+        console.error('[DEBUG] Email Capture - 405 Method Not Allowed error detected');
+        console.error('[DEBUG] Email Capture - This is likely a CORS or API route configuration issue');
+        setError('Failed to subscribe. Server configuration error.');
+        return false;
+      }
+      
+      // Check for other non-200 responses
       if (!response.ok && response.status !== 200) {
-        console.error('[DEBUG] MailChimp - Subscription error:', data.error || 'Unknown error');
-        console.error('[DEBUG] MailChimp - Status code:', response.status);
-        console.error('[DEBUG] MailChimp - Status text:', response.statusText);
-        
-        if (response.status === 405) {
-          console.error('[DEBUG] MailChimp - CORS issue detected. Check API route configuration.');
-        }
-        
+        console.error('[DEBUG] Email Capture - Subscription error:', data.error || 'Unknown error');
+        console.error('[DEBUG] Email Capture - Status code:', response.status);
+        console.error('[DEBUG] Email Capture - Status text:', response.statusText);
         setError('Failed to subscribe. Please try again later.');
         return false;
       }
       
-      // Check the status field in the response
-      if (data.status === 'error') {
-        console.error('[DEBUG] MailChimp - API reported error:', data.message);
+      // Check the success field in the response
+      if (data.success === false) {
+        console.error('[DEBUG] Email Capture - API reported error:', data.message);
         setError(data.message || 'Failed to subscribe. Please try again later.');
         return false;
       }
       
-      console.log('[DEBUG] MailChimp - Subscription successful:', data.message);
+      console.log('[DEBUG] Email Capture - Subscription successful:', data.message);
       return true;
     } catch (error) {
-      console.error('[DEBUG] MailChimp - Failed to subscribe:', error);
+      console.error('[DEBUG] Email Capture - Failed to subscribe:', error);
+      setError('Network error. Please check your connection and try again.');
       // Don't block the user experience if subscription fails
       return false;
     }
