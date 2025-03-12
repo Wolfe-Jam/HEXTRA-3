@@ -11,11 +11,30 @@
     "CI": "false"
   },
   "buildCommand": "npm run vercel-build",
+  "rewrites": [
+    { "source": "/api/mailchimp-unified", "destination": "/api/mailchimp-unified" },
+    { "source": "/api/mailchimp-sdk", "destination": "/api/mailchimp-sdk" }
+  ],
   "routes": [
+    {
+      "src": "/api/mailchimp-unified",
+      "methods": ["POST", "OPTIONS"],
+      "dest": "/api/mailchimp-unified",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+      }
+    },
     {
       "src": "/api/mailchimp-sdk",
       "methods": ["POST", "OPTIONS"],
-      "dest": "/api/mailchimp-sdk"
+      "dest": "/api/mailchimp-sdk",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+      }
     },
     {
       "src": "/api/mailchimp-subscribe",
