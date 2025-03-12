@@ -11,10 +11,6 @@
     "CI": "false"
   },
   "buildCommand": "npm run vercel-build",
-  "rewrites": [
-    { "source": "/api/mailchimp-unified", "destination": "/api/mailchimp-unified" },
-    { "source": "/api/mailchimp-sdk", "destination": "/api/mailchimp-sdk" }
-  ],
   "routes": [
     {
       "src": "/api/mailchimp-unified",
