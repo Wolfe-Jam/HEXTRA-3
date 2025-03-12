@@ -6,10 +6,10 @@
  * and can be used to test API connectivity without subscribing users
  * 
  * @version 2.2.5
- * @lastUpdated 2023-03-11
+ * @lastUpdated 2025-03-12
  */
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Set CORS headers first
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*'); 
@@ -79,3 +79,6 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// Export handler for compatibility with Vercel API routes
+module.exports = handler;

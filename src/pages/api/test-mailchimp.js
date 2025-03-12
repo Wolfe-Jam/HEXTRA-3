@@ -1,21 +1,21 @@
 /**
- * MailChimp Test API (v2.2.4)
+ * MailChimp Test API (v2.2.5)
  * 
  * Simple diagnostics endpoint to test MailChimp connectivity
  * - Tests API key validity
  * - Verifies audience list access
  * - Attempts a test ping
  * 
- * @version 2.2.4
- * @lastUpdated 2025-03-11
+ * @version 2.2.5
+ * @lastUpdated 2025-03-12
  */
 
-import https from 'https';
+const https = require('https');
 
 /**
  * API endpoint handler for testing MailChimp connectivity
  */
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*'); 
@@ -499,3 +499,6 @@ async function testMailchimpSubscription(server, apiKey, audienceId, email) {
     }
   });
 }
+
+// Export handler for compatibility with Vercel API routes
+module.exports = handler;

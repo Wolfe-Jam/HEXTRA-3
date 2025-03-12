@@ -1,16 +1,16 @@
 /**
- * MailChimp Test API (v2.2.4)
+ * MailChimp Test API (v2.2.5)
  * 
  * Simple test endpoint to verify API routing and CORS configuration
  * - Responds to all HTTP methods
  * - Includes comprehensive CORS headers
  * - Logs request details for diagnostics
  * 
- * @version 2.2.4
- * @lastUpdated 2025-03-11
+ * @version 2.2.5
+ * @lastUpdated 2025-03-12
  */
 
-export default function handler(req, res) {
+function handler(req, res) {
   // Log request details
   console.log(`[TEST API] Request received: ${req.method} ${req.url}`);
   console.log(`[TEST API] Headers:`, JSON.stringify(req.headers));
@@ -42,3 +42,6 @@ export default function handler(req, res) {
     }
   });
 }
+
+// Export handler for compatibility with Vercel API routes
+module.exports = handler;
