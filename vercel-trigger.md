@@ -4,4 +4,6 @@ This file was updated to force a new Vercel deployment for the MailChimp API int
 
 **Original Fix:** Convert MailChimp API endpoints from "rewrites" to "routes" with proper HTTP methods in vercel.json
 
-Timestamp: 2025-03-11 20:36
+**Note:** Previous attempt failed due to schema validation error with `$comment` property
+
+Timestamp: 2025-03-11 20:38
