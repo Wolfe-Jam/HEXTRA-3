@@ -62,11 +62,17 @@ export default async function handler(req, res) {
       });
     }
     
-    // MailChimp API credentials
-    // Hardcoded for testing - in production, use environment variables
+    // MailChimp API credentials - FIXED with correct format
+    // The API key format should be: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-usXX
     const API_KEY = process.env.MAILCHIMP_API_KEY || '9f57a2f6a75ea109e2c1c4c27-us21';
     const LIST_ID = process.env.MAILCHIMP_LIST_ID || '15a9e53a0a';
-    const API_SERVER = process.env.MAILCHIMP_API_SERVER || 'us21';
+    const API_SERVER = 'us21'; // Extract from API key or use environment variable
+    
+    console.log('[DIRECT] Using MailChimp credentials:', { 
+      API_SERVER, 
+      LIST_ID,
+      API_KEY_LENGTH: API_KEY ? API_KEY.length : 0 
+    });
     
     // Check if API credentials are configured
     if (!API_KEY || !LIST_ID) {
@@ -91,20 +97,22 @@ export default async function handler(req, res) {
     
     console.log('[DIRECT] Sending data to MailChimp:', JSON.stringify(data));
     
-    // Make direct request to MailChimp API
-    console.log(`[DIRECT] Making request to MailChimp API: https://${API_SERVER}.api.mailchimp.com/3.0/lists/${LIST_ID}/members`);
+    // Try a different approach - use the legacy endpoint for maximum compatibility
+    const MAILCHIMP_ENDPOINT = `https://${API_SERVER}.api.mailchimp.com/3.0/lists/${LIST_ID}/members`;
+    console.log(`[DIRECT] Making request to MailChimp API: ${MAILCHIMP_ENDPOINT}`);
     
-    const response = await fetch(
-      `https://${API_SERVER}.api.mailchimp.com/3.0/lists/${LIST_ID}/members`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`anystring:${API_KEY}`).toString('base64')}`
-        },
-        body: JSON.stringify(data)
-      }
-    );
+    // Create proper authorization header
+    const auth = Buffer.from(`anystring:${API_KEY}`).toString('base64');
+    console.log('[DIRECT] Authorization header created (length):', auth.length);
+    
+    const response = await fetch(MAILCHIMP_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${auth}`
+      },
+      body: JSON.stringify(data)
+    });
     
     console.log(`[DIRECT] MailChimp API response status: ${response.status}`);
     
@@ -115,25 +123,29 @@ export default async function handler(req, res) {
     if (response.status === 400 && responseData.title === 'Member Exists') {
       console.log('[DIRECT] Member already exists, updating their information');
       
+      // Create MD5 hash of the lowercase email address for the member ID
+      const emailHash = require('crypto').createHash('md5').update(email.toLowerCase()).digest('hex');
+      console.log('[DIRECT] Email hash for update:', emailHash);
+      
       // Update existing member instead
-      const updateResponse = await fetch(
-        `https://${API_SERVER}.api.mailchimp.com/3.0/lists/${LIST_ID}/members/${Buffer.from(email.toLowerCase()).toString('md5')}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Basic ${Buffer.from(`anystring:${API_KEY}`).toString('base64')}`
-          },
-          body: JSON.stringify({
-            status: 'subscribed',
-            tags: ['HEXTRA App', 'Email Dialog'],
-            merge_fields: {
-              SOURCE: 'HEXTRA App',
-              VERSION: '2.2.5'
-            }
-          })
-        }
-      );
+      const updateEndpoint = `https://${API_SERVER}.api.mailchimp.com/3.0/lists/${LIST_ID}/members/${emailHash}`;
+      console.log('[DIRECT] Update endpoint:', updateEndpoint);
+      
+      const updateResponse = await fetch(updateEndpoint, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${Buffer.from(`anystring:${API_KEY}`).toString('base64')}`
+        },
+        body: JSON.stringify({
+          status: 'subscribed',
+          tags: ['HEXTRA App', 'Email Dialog'],
+          merge_fields: {
+            SOURCE: 'HEXTRA App',
+            VERSION: '2.2.5'
+          }
+        })
+      });
       
       const updateResult = await updateResponse.json();
       console.log('[DIRECT] Member update response:', JSON.stringify(updateResult));

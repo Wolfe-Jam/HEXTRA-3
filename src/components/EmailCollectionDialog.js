@@ -193,8 +193,8 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     const subscribeResult = await subscribeToMailChimp(email);
     console.log('[DEBUG] Dialog - MailChimp subscribe result:', subscribeResult);
     
-    // Set success message for user feedback
-    setSuccessMessage('Thank you for subscribing! Your download is ready.');
+    // Set success message for user feedback - simple and clear
+    setSuccessMessage('Success! Your download is ready.');
     
     if (!subscribeResult) {
       console.log('[DEBUG] Dialog - MailChimp subscription failed, but continuing');
@@ -209,7 +209,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     // Don't close dialog immediately to show success message
     console.log('[DEBUG] Dialog - Showing success message');
     
-    // Close dialog after showing success message for 2 seconds
+    // Close dialog after showing success message for 5 seconds
     setTimeout(() => {
       console.log('[DEBUG] Dialog - Closing dialog after success message');
       setEmail('');
@@ -217,7 +217,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       setSuccessMessage('');
       setIsSubmitting(false);
       onClose();
-    }, 2000);
+    }, 5000);
   };
 
   // Handle full authentication
@@ -261,15 +261,16 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         
         {successMessage ? (
           <Typography 
-            variant="body1" 
+            variant="h6" 
             sx={{ 
               color: 'green', 
               fontWeight: 'bold', 
               textAlign: 'center',
-              my: 2,
-              p: 2,
+              my: 4,
+              p: 3,
               bgcolor: 'rgba(0, 255, 0, 0.1)',
-              borderRadius: 1
+              borderRadius: 1,
+              fontSize: '1.5rem'
             }}
           >
             {successMessage}
