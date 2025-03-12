@@ -23,7 +23,13 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin, Authorization');
+  
+  // Handle OPTIONS requests immediately with 200 status
+  if (req.method === 'OPTIONS') {
+    console.log('[UNIFIED] Handling OPTIONS preflight request');
+    return res.status(200).end();
+  }
   
   // Log request for diagnostics
   console.log(`[UNIFIED] ${req.method} Request received:`, JSON.stringify({

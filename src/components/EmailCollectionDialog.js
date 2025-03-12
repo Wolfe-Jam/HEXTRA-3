@@ -60,6 +60,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       // This approach tries multiple endpoints in sequence until one succeeds
       console.log('[DEBUG] Email Capture - Trying MailChimp API endpoints');
       
+      // Use relative paths to avoid cross-origin issues
       const endpoints = [
         '/api/mailchimp-direct',
         '/api/mailchimp-unified',
@@ -74,6 +75,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         try {
           console.log(`[DEBUG] Email Capture - Trying endpoint: ${endpoint}`);
           
+          // Use relative paths with same-origin credentials
           const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -87,7 +89,8 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
               version: '2.2.5',
               timestamp: new Date().toISOString()
             }),
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            mode: 'cors' // Explicitly set CORS mode
           });
           
           console.log(`[DEBUG] Email Capture - ${endpoint} response status:`, response.status);

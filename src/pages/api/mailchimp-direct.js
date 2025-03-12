@@ -12,18 +12,21 @@
 
 // Next.js API route format (critical for Vercel)
 export default async function handler(req, res) {
-  // Set CORS headers immediately
+  // Set CORS headers immediately - CRITICAL for preventing 405 errors
+  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin, Authorization');
   
-  // Handle preflight requests
+  // Handle preflight requests - MUST return 200 for OPTIONS
   if (req.method === 'OPTIONS') {
+    console.log('[DIRECT] Handling OPTIONS request');
     return res.status(200).end();
   }
   
   // Handle GET requests (health check)
   if (req.method === 'GET') {
+    console.log('[DIRECT] Handling GET request');
     return res.status(200).json({
       status: 'success',
       message: 'MailChimp API is operational',
