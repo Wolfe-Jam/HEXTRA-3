@@ -55,10 +55,14 @@
     <h2>Test Email Submission</h2>
     
     <!-- Direct MailChimp Form -->
-    <form action="https://hextra.us21.list-manage.com/subscribe/post" method="POST">
+    <form action="https://us8.list-manage.com/subscribe/post" method="POST">
       <!-- Hidden fields for MailChimp -->
       <input type="hidden" name="u" value="9f57a2f6a75ea109e2c1c4c27">
       <input type="hidden" name="id" value="5b2a2cb0b7">
+      <!-- Debug info -->
+      <div style="margin-bottom: 15px; font-size: 12px; color: #666;">
+        Server: us8 | User ID: 9f57a2f6a75ea109e2c1c4c27 | List ID: 5b2a2cb0b7
+      </div>
       
       <!-- Success redirect back to this page -->
       <input type="hidden" name="success" id="success-url">
@@ -76,6 +80,11 @@
       <!-- Anti-spam honeypot field (required by MailChimp) -->
       <div style="position: absolute; left: -5000px;" aria-hidden="true">
         <input type="text" name="b_9f57a2f6a75ea109e2c1c4c27_5b2a2cb0b7" tabindex="-1" value="">
+      </div>
+      
+      <!-- Debug info -->
+      <div style="margin-top: 10px; font-size: 12px; color: #666;">
+        Form action: <span id="form-action"></span>
       </div>
       
       <button type="submit">Submit to MailChimp</button>
@@ -98,6 +107,9 @@
   <script>
     // Set the success URL to redirect back to this page
     document.getElementById('success-url').value = window.location.href;
+    
+    // Display the form action for debugging
+    document.getElementById('form-action').textContent = document.querySelector('form').action;
     
     // Check if we're returning from a successful submission
     window.addEventListener('DOMContentLoaded', function() {
