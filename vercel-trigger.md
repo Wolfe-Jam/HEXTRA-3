@@ -1,5 +1,7 @@
 # Vercel Deployment Trigger
 
-This file was created to trigger a Vercel deployment for fixing the MailChimp API integration (v2.2.4).
+This file was updated to force a new Vercel deployment for the MailChimp API integration fix (v2.2.4).
 
-Timestamp: 2025-03-11 19:53
+**Original Fix:** Convert MailChimp API endpoints from "rewrites" to "routes" with proper HTTP methods in vercel.json
+
+Timestamp: 2025-03-11 20:36
