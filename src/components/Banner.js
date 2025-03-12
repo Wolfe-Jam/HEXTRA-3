@@ -393,8 +393,8 @@ const Banner = ({
         open={aboutOpen}
         onClose={() => setAboutOpen(false)}
         version={version}
-        buildId={'HEXTRA-2025-03-10-AD2241'}
-        buildDate={'2025-03-10'}
+        buildId={'HEXTRA-2025-03-12-MC2250'}
+        buildDate={'2025-03-12'}
         PaperProps={{
           sx: {
             bgcolor: isDarkMode ? '#1a1a1a' : '#FFFFFF',

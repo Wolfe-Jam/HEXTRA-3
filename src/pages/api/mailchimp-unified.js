@@ -129,7 +129,7 @@ async function handleSubscription(req, res) {
           email_address: email,
           status: 'subscribed',
           merge_fields: {
-            SOURCE: 'HEXTRA Web App v2.2.5',
+            SOURCE: 'HEXTRA Web App v2.2.5 (HEXTRA-2025-03-12-MC2250)',
             SIGNUP_DATE: new Date().toISOString().split('T')[0]
           }
         };

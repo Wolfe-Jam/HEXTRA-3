@@ -1,5 +1,5 @@
 /**
- * MailChimp Test Component (v2.2.4)
+ * MailChimp Test Component (v2.2.5)
  * 
  * Simple test interface for MailChimp connectivity
  * - Tests API key and server configuration
@@ -7,7 +7,7 @@
  * - Tests ping response
  * - Tests subscription with provided email
  * 
- * @version 2.2.4
+ * @version 2.2.5
  * @lastUpdated 2025-03-11
  */
 

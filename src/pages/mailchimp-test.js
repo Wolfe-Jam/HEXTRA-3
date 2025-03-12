@@ -1,9 +1,9 @@
 /**
- * Simple MailChimp Test Page (v2.2.4)
+ * Simple MailChimp Test Page (v2.2.5)
  * 
  * Basic page to test MailChimp connectivity
  * 
- * @version 2.2.4
+ * @version 2.2.5
  * @lastUpdated 2025-03-11
  */
 
@@ -64,7 +64,7 @@ export default function MailChimpTestPage() {
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <h1>MailChimp Test Page</h1>
-      <p>HEXTRA version 2.2.4</p>
+      <p>HEXTRA version 2.2.5</p>
       
       <div style={{ marginBottom: '20px' }}>
         <input 

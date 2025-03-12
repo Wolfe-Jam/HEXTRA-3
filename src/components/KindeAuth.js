@@ -1,5 +1,5 @@
 /**
- * KindeAuth Component (v2.2.4)
+ * KindeAuth Component (v2.2.5)
  * 
  * Provides authentication wrapper for the application using Kinde Auth.
  * Handles the OAuth2 PKCE flow and redirects.
@@ -20,7 +20,7 @@
  * KINDE_POST_LOGIN_REDIRECT_URL or REACT_APP_KINDE_REDIRECT_URI
  * KINDE_POST_LOGOUT_REDIRECT_URL or REACT_APP_KINDE_LOGOUT_URI
  * 
- * @version 2.2.4
+ * @version 2.2.5
  * @lastUpdated 2025-03-10
  */
 

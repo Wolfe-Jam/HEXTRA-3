@@ -6,7 +6,7 @@
  * - Stores email in localStorage for persistence
  * - Provides option to proceed to full authentication
  * 
- * @version 2.2.4
+ * @version 2.2.5
  * @lastUpdated 2025-03-10
  */
 

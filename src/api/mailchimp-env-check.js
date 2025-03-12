@@ -1,12 +1,12 @@
 /**
- * MailChimp Environment Checker (v2.2.4)
+ * MailChimp Environment Checker (v2.2.5)
  * 
  * Simplified utility to check MailChimp environment variables
  * - Checks for presence of required environment variables
  * - Does not expose sensitive values
  * - For development and diagnostic use only
  * 
- * @version 2.2.4
+ * @version 2.2.5
  * @lastUpdated 2023-03-11
  */
 

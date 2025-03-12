@@ -426,7 +426,7 @@ async function testMailchimpSubscription(server, apiKey, audienceId, email) {
         status: 'subscribed',
         merge_fields: {
           SOURCE: 'HEXTRA Test',
-          APP_VERSION: '2.2.4'
+          APP_VERSION: '2.2.5'
         },
         tags: ['test', 'debug']
       };

@@ -79,7 +79,7 @@ const handler = async (req, res) => {
       status: 'subscribed',  // Use 'pending' for double opt-in
       merge_fields: {
         SOURCE: 'HEXTRA App Download',
-        APP_VERSION: '2.2.4'
+        APP_VERSION: '2.2.5'
       },
       tags: ['app-user', 'download-dialog']
     };
@@ -207,7 +207,7 @@ async function makeApiRequest(method, url, data, apiKey) {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Basic ${auth}`,
-          'User-Agent': 'HEXTRA-App/2.2.4'
+          'User-Agent': 'HEXTRA-App/2.2.5'
         }
       };
       

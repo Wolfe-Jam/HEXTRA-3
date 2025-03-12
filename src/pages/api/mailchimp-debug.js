@@ -48,7 +48,7 @@ function handler(req, res) {
     // Collect all relevant debug information
     const debugInfo = {
       timestamp: new Date().toISOString(),
-      version: '2.2.4',
+      version: '2.2.5',
       
       // Request information
       request: {
@@ -190,7 +190,7 @@ async function makeApiRequest(method, url, data, apiKey) {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Basic ${auth}`,
-          'User-Agent': 'HEXTRA-App/2.2.4'
+          'User-Agent': 'HEXTRA-App/2.2.5'
         }
       };
       

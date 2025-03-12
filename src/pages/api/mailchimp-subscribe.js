@@ -105,7 +105,7 @@ async function handler(req, res) {
         success: true, 
         simulated: true,
         message: 'Test email captured (no MailChimp subscription occurred)',
-        version: '2.2.4',
+        version: '2.2.5',
         environment: process.env.NODE_ENV || 'unknown',
         isVercel: !!process.env.VERCEL
       });
@@ -155,7 +155,7 @@ async function handler(req, res) {
       status: 'subscribed',  // Use 'pending' for double opt-in
       merge_fields: {
         SOURCE: 'HEXTRA App Download',
-        APP_VERSION: '2.2.4'
+        APP_VERSION: '2.2.5'
       },
       tags: ['app-user', 'download-dialog']
     };
@@ -283,7 +283,7 @@ async function makeApiRequest(method, url, data, apiKey) {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Basic ${auth}`,
-          'User-Agent': 'HEXTRA-App/2.2.4'
+          'User-Agent': 'HEXTRA-App/2.2.5'
         }
       };
       

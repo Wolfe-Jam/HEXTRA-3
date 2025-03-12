@@ -1,12 +1,12 @@
 /**
- * MailChimp Debug Component (v2.2.4)
+ * MailChimp Debug Component (v2.2.5)
  * 
  * Diagnostic interface for troubleshooting MailChimp integration
  * - Tests API connectivity
  * - Verifies environment variables
  * - Provides detailed error reporting
  * 
- * @version 2.2.4
+ * @version 2.2.5
  * @lastUpdated 2025-03-11
  */
 
@@ -361,7 +361,7 @@ const MailChimpDebugContent = () => {
       
       <Box sx={{ marginTop: 4 }}>
         <Typography variant="caption" display="block" color="text.secondary">
-          HEXTRA v2.2.4 • MailChimp Integration Debug • {new Date().toISOString().split('T')[0]}
+          HEXTRA v2.2.5 • MailChimp Integration Debug • {new Date().toISOString().split('T')[0]}
         </Typography>
       </Box>
     </Box>
