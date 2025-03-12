@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple MailChimp Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #0078ff;
+    }
+    .test-form {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    input[type="email"] {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #0078ff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simple MailChimp Test</h1>
+  <p>This is a standalone test page that submits an email directly to MailChimp using the form submission method.</p>
+  
+  <div class="test-form">
+    <h2>Test Email Submission</h2>
+    
+    <!-- Direct MailChimp Form -->
+    <form action="https://hextra.us21.list-manage.com/subscribe/post" method="POST">
+      <!-- Hidden fields for MailChimp -->
+      <input type="hidden" name="u" value="9f57a2f6a75ea109e2c1c4c27">
+      <input type="hidden" name="id" value="5b2a2cb0b7">
+      
+      <!-- Success redirect back to this page -->
+      <input type="hidden" name="success" id="success-url">
+      
+      <!-- Email field -->
+      <label for="email">Email to test:</label>
+      <input type="email" name="EMAIL" id="email" placeholder="Enter test email" required>
+      
+      <!-- Source tracking -->
+      <input type="hidden" name="SOURCE" value="Simple Test Page">
+      
+      <!-- Tags -->
+      <input type="hidden" name="tags" value="TEST,SimpleTest">
+      
+      <!-- Anti-spam honeypot field (required by MailChimp) -->
+      <div style="position: absolute; left: -5000px;" aria-hidden="true">
+        <input type="text" name="b_9f57a2f6a75ea109e2c1c4c27_5b2a2cb0b7" tabindex="-1" value="">
+      </div>
+      
+      <button type="submit">Submit to MailChimp</button>
+    </form>
+    
+    <div id="result" style="margin-top: 20px;"></div>
+  </div>
+  
+  <div>
+    <h2>Instructions</h2>
+    <ol>
+      <li>Enter a test email address above</li>
+      <li>Click "Submit to MailChimp"</li>
+      <li>You'll be redirected to MailChimp's confirmation page</li>
+      <li>After confirming, you'll be redirected back to this page</li>
+      <li>Check your MailChimp audience to verify the email was added</li>
+    </ol>
+  </div>
+
+  <script>
+    // Set the success URL to redirect back to this page
+    document.getElementById('success-url').value = window.location.href;
+    
+    // Check if we're returning from a successful submission
+    window.addEventListener('DOMContentLoaded', function() {
+      if (window.location.search.includes('success=true') || 
+          window.location.search.includes('result=success')) {
+        document.getElementById('result').innerHTML = 
+          '<p class="success">Success! Your test email was submitted to MailChimp. ' +
+          'Check your MailChimp audience to verify it was added.</p>';
+        
+        // Clean up the URL
+        history.replaceState({}, document.title, window.location.pathname);
+      }
+    });
+  </script>
+</body>
+</html>
