@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MailChimp API Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #0078ff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>MailChimp API Test</h1>
+  
+  <div class="test-section">
+    <h2>Test MailChimp API Integration</h2>
+    <p>This test will attempt to add a test email to your MailChimp audience list (ID: 5b2a2cb0b7) using the API.</p>
+    <button id="test-api">Run API Test</button>
+    <div id="results">Results will appear here...</div>
+  </div>
+
+  <script>
+    document.getElementById('test-api').addEventListener('click', async () => {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = 'Testing MailChimp API integration...\n';
+      
+      try {
+        // Generate a test email
+        const testEmail = `test-${Date.now()}@example.com`;
+        resultsDiv.innerHTML += `Using test email: ${testEmail}\n\n`;
+        
+        // Make the API request
+        const response = await fetch('/api/mailchimp-direct', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: testEmail,
+            source: 'API Test Page'
+          })
+        });
+        
+        // Parse the response
+        const data = await response.json();
+        
+        // Display the results
+        resultsDiv.innerHTML += `API Response Status: ${response.status}\n`;
+        resultsDiv.innerHTML += `API Response:\n${JSON.stringify(data, null, 2)}\n\n`;
+        
+        if (response.ok) {
+          resultsDiv.innerHTML += '<span class="success">SUCCESS: API request completed successfully!</span>\n';
+          
+          // Check if the email was actually added
+          if (data.status === 'success') {
+            resultsDiv.innerHTML += '<span class="success">Email was successfully added to your MailChimp audience list!</span>\n';
+          } else {
+            resultsDiv.innerHTML += '<span class="error">API request succeeded but the email was not added to your MailChimp audience list.</span>\n';
+          }
+        } else {
+          resultsDiv.innerHTML += '<span class="error">ERROR: API request failed!</span>\n';
+        }
+        
+        // Add environment info
+        resultsDiv.innerHTML += '\nEnvironment Information:\n';
+        resultsDiv.innerHTML += `URL: ${window.location.href}\n`;
+        resultsDiv.innerHTML += `API Endpoint: /api/mailchimp-direct\n`;
+      } catch (error) {
+        resultsDiv.innerHTML += `<span class="error">ERROR: ${error.message}</span>\n`;
+      }
+    });
+  </script>
+</body>
+</html>
