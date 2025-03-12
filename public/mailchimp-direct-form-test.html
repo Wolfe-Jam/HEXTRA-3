@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MailChimp Direct Form Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #0078ff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    input[type="email"] {
+      padding: 10px;
+      width: 100%;
+      max-width: 300px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>MailChimp Direct Form Test</h1>
+  
+  <div class="test-section">
+    <h2>Test Direct Form Submission</h2>
+    <p>This test will submit a form directly to MailChimp's endpoint with your audience ID (5b2a2cb0b7).</p>
+    
+    <div>
+      <label for="test-email">Email to test:</label>
+      <input type="email" id="test-email" placeholder="Enter email or leave empty for random test email">
+    </div>
+    
+    <button id="test-form">Run Direct Form Test</button>
+    <div id="results">Results will appear here...</div>
+  </div>
+
+  <script>
+    document.getElementById('test-form').addEventListener('click', () => {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = 'Testing direct form submission to MailChimp...\n';
+      
+      try {
+        // Get the test email or generate a random one
+        let testEmail = document.getElementById('test-email').value.trim();
+        if (!testEmail) {
+          testEmail = `test-${Date.now()}@example.com`;
+        }
+        
+        resultsDiv.innerHTML += `Using test email: ${testEmail}\n\n`;
+        
+        // MailChimp direct form submission configuration
+        const MAILCHIMP_URL = 'https://hextra.us21.list-manage.com/subscribe/post';
+        const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // MailChimp user ID
+        const MAILCHIMP_ID = '5b2a2cb0b7'; // MailChimp audience ID
+        
+        resultsDiv.innerHTML += `Using MailChimp URL: ${MAILCHIMP_URL}\n`;
+        resultsDiv.innerHTML += `Using MailChimp user ID: ${MAILCHIMP_U}\n`;
+        resultsDiv.innerHTML += `Using MailChimp audience ID: ${MAILCHIMP_ID}\n\n`;
+        
+        // Success redirect URL (back to this page with a success parameter)
+        const successRedirect = `${window.location.href.split('?')[0]}?mailchimp_success=true`;
+        resultsDiv.innerHTML += `Success redirect URL: ${successRedirect}\n\n`;
+        
+        // Create a form element
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}&success=${encodeURIComponent(successRedirect)}`;
+        form.target = '_self'; // Stay in same window for redirect
+        
+        // Add email field
+        const emailField = document.createElement('input');
+        emailField.type = 'email';
+        emailField.name = 'EMAIL';
+        emailField.value = testEmail;
+        form.appendChild(emailField);
+        
+        // Add source tracking field
+        const sourceField = document.createElement('input');
+        sourceField.type = 'hidden';
+        sourceField.name = 'SOURCE';
+        sourceField.value = 'Direct Form Test Page';
+        form.appendChild(sourceField);
+        
+        // Add anti-spam honeypot field (required by MailChimp)
+        const honeypotField = document.createElement('input');
+        honeypotField.type = 'text';
+        honeypotField.name = `b_${MAILCHIMP_U}_${MAILCHIMP_ID}`;
+        honeypotField.value = '';
+        honeypotField.style.display = 'none';
+        form.appendChild(honeypotField);
+        
+        // Add tags field
+        const tagsField = document.createElement('input');
+        tagsField.type = 'hidden';
+        tagsField.name = 'tags';
+        tagsField.value = 'TEST,DirectFormTest';
+        form.appendChild(tagsField);
+        
+        // Add submit button (required by MailChimp)
+        const submitButton = document.createElement('input');
+        submitButton.type = 'submit';
+        submitButton.name = 'subscribe';
+        submitButton.value = 'Subscribe';
+        form.appendChild(submitButton);
+        
+        // Add the form to the document
+        document.body.appendChild(form);
+        
+        resultsDiv.innerHTML += '<span class="success">Form created and ready to submit. You will be redirected to MailChimp.</span>\n';
+        resultsDiv.innerHTML += 'After submission, you should be redirected back to this page with a success parameter.\n\n';
+        
+        // Store the email in localStorage for verification after redirect
+        localStorage.setItem('mailchimp_test_email', testEmail);
+        
+        // Submit the form
+        setTimeout(() => {
+          resultsDiv.innerHTML += 'Submitting form now...\n';
+          form.submit();
+        }, 1000);
+      } catch (error) {
+        resultsDiv.innerHTML += `<span class="error">ERROR: ${error.message}</span>\n`;
+      }
+    });
+    
+    // Check for success parameter in URL
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.location.search.includes('mailchimp_success=true')) {
+        const resultsDiv = document.getElementById('results');
+        const testEmail = localStorage.getItem('mailchimp_test_email') || 'unknown email';
+        
+        resultsDiv.innerHTML = '<span class="success">SUCCESS! Redirected back from MailChimp.</span>\n\n';
+        resultsDiv.innerHTML += `The email "${testEmail}" was successfully submitted to MailChimp.\n`;
+        resultsDiv.innerHTML += 'This confirms that the direct form submission approach works correctly.\n\n';
+        resultsDiv.innerHTML += 'You can check your MailChimp audience to verify the email was added.\n';
+        
+        // Clean up the URL
+        const cleanUrl = window.location.href.split('?')[0];
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    });
+  </script>
+</body>
+</html>
