@@ -62,11 +62,26 @@ export default async function handler(req, res) {
       });
     }
     
-    // MailChimp API credentials - FIXED with correct format and audience ID
+    // MailChimp API credentials - CRITICAL: Must use correct format
     // The API key format should be: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-usXX
-    const API_KEY = process.env.MAILCHIMP_API_KEY || '9f57a2f6a75ea109e2c1c4c27-us21';
-    const LIST_ID = process.env.MAILCHIMP_LIST_ID || '5b2a2cb0b7'; // UPDATED with correct audience ID
-    const API_SERVER = process.env.MAILCHIMP_API_SERVER || 'us21'; // Extract from API key or use environment variable
+    const API_KEY = process.env.MAILCHIMP_API_KEY;
+    
+    // If no API key in environment, use a placeholder but log an error
+    if (!API_KEY) {
+      console.error('[DIRECT] CRITICAL ERROR: No MAILCHIMP_API_KEY found in environment variables');
+      console.error('[DIRECT] Please set the MAILCHIMP_API_KEY environment variable in Vercel');
+      return res.status(500).json({
+        status: 'error',
+        message: 'MailChimp API key not configured',
+        debug: 'Missing MAILCHIMP_API_KEY environment variable'
+      });
+    }
+    
+    // Extract server from API key (e.g., 'us21' from 'xxx-us21')
+    const API_SERVER = API_KEY.split('-')[1] || process.env.MAILCHIMP_API_SERVER || 'us21';
+    
+    // Audience ID - CRITICAL: Must use the correct ID
+    const LIST_ID = process.env.MAILCHIMP_LIST_ID || '5b2a2cb0b7'; // Correct audience ID
     
     console.log('[DIRECT] Using MailChimp credentials:', { 
       API_SERVER, 
