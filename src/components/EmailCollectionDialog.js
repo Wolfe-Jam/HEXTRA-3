@@ -59,7 +59,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     return re.test(email);
   };
 
-  // Subscribe user to MailChimp and send confirmation email using a direct approach
+  // Subscribe user to MailChimp and send confirmation email using their official embedded form approach
   const subscribeToMailChimp = async (email) => {
     console.log(`[DEBUG] Email Capture - Subscribing email: ${email}`);
     
@@ -76,104 +76,88 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         console.error('[DEBUG] Email Capture - Failed to store email locally:', storageError);
       }
       
-      // Use direct MailChimp integration instead of API routes
-      // This bypasses all API routes and avoids 405 errors
-      console.log('[DEBUG] Email Capture - Using direct MailChimp integration');
+      // Use MailChimp's official embedded form approach
+      console.log('[DEBUG] Email Capture - Using MailChimp official embedded form');
       
       // MailChimp configuration
-      const MAILCHIMP_URL = 'https://hextra.us21.list-manage.com/subscribe/post';
       const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // Your MailChimp user ID
       const MAILCHIMP_ID = '15a9e53a0a'; // Your MailChimp list ID
       
       let apiSuccess = false;
       
       try {
-        // Create a form element for direct submission
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `${MAILCHIMP_URL}`;
-        form.target = '_blank';
-        form.style.display = 'none';
-        form.setAttribute('novalidate', '');
+        // Create an iframe to load the MailChimp form
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
         
-        // Add required MailChimp parameters
-        const uInput = document.createElement('input');
-        uInput.type = 'hidden';
-        uInput.name = 'u';
-        uInput.value = MAILCHIMP_U;
-        form.appendChild(uInput);
+        // Access the iframe's document
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         
-        const idInput = document.createElement('input');
-        idInput.type = 'hidden';
-        idInput.name = 'id';
-        idInput.value = MAILCHIMP_ID;
-        form.appendChild(idInput);
+        // Write the MailChimp form HTML to the iframe
+        iframeDoc.open();
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Subscribe to HEXTRA</title>
+          </head>
+          <body>
+            <!-- Begin Mailchimp Signup Form -->
+            <div id="mc_embed_signup">
+              <form action="https://hextra.us21.list-manage.com/subscribe/post?u=${MAILCHIMP_U}&amp;id=${MAILCHIMP_ID}&amp;f_id=00a6b0e6f0&amp;SOURCE=HEXTRA-EmailDialog-v2.2.5" 
+                method="post" 
+                id="mc-embedded-subscribe-form" 
+                name="mc-embedded-subscribe-form" 
+                class="validate" 
+                target="_blank">
+                <div id="mc_embed_signup_scroll">
+                  <div class="mc-field-group">
+                    <input type="email" name="EMAIL" class="required email" id="mce-EMAIL" value="${email}" required>
+                  </div>
+                  <div id="mce-responses" class="clear foot">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                  </div>
+                  <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                  <div style="position: absolute; left: -5000px;" aria-hidden="true">
+                    <input type="text" name="b_${MAILCHIMP_U}_${MAILCHIMP_ID}" tabindex="-1" value="">
+                  </div>
+                  <div class="optionalParent">
+                    <div class="clear foot">
+                      <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button">
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <!--End mc_embed_signup-->
+            <script>
+              // Auto-submit the form
+              document.getElementById('mc-embedded-subscribe-form').submit();
+            </script>
+          </body>
+          </html>
+        `);
+        iframeDoc.close();
         
-        // Add email field
-        const emailInput = document.createElement('input');
-        emailInput.type = 'email';
-        emailInput.name = 'EMAIL';
-        emailInput.value = email;
-        form.appendChild(emailInput);
-        
-        // Add source tracking field
-        const sourceInput = document.createElement('input');
-        sourceInput.type = 'hidden';
-        sourceInput.name = 'SOURCE';
-        sourceInput.value = 'HEXTRA-EmailDialog-v2.2.5';
-        form.appendChild(sourceInput);
-        
-        // Add honeypot field (anti-spam)
-        const honeypotInput = document.createElement('input');
-        honeypotInput.type = 'text';
-        honeypotInput.name = `b_${MAILCHIMP_U}_${MAILCHIMP_ID}`;
-        honeypotInput.value = '';
-        honeypotInput.style.display = 'none';
-        form.appendChild(honeypotInput);
-        
-        // Add success redirect URL (using MailChimp's standard format)
-        const redirectInput = document.createElement('input');
-        redirectInput.type = 'hidden';
-        redirectInput.name = 'success_url';
-        redirectInput.value = window.location.href + '?result=success';
-        form.appendChild(redirectInput);
-        
-        // Add submit button (required by MailChimp)
-        const submitButton = document.createElement('input');
-        submitButton.type = 'submit';
-        submitButton.name = 'subscribe';
-        submitButton.value = 'Subscribe';
-        submitButton.style.display = 'none';
-        form.appendChild(submitButton);
-        
-        // Add required tags field
-        const tagsInput = document.createElement('input');
-        tagsInput.type = 'hidden';
-        tagsInput.name = 'tags';
-        tagsInput.value = 'HEXTRA,website,dialog';
-        form.appendChild(tagsInput);
-        
-        // Add form to document and submit
-        document.body.appendChild(form);
-        form.submit();
-        
-        console.log('[DEBUG] Email Capture - Direct MailChimp form submitted');
+        console.log('[DEBUG] Email Capture - MailChimp embedded form submitted');
         apiSuccess = true;
         
-        // Clean up form
+        // Clean up iframe after a delay
         setTimeout(() => {
-          document.body.removeChild(form);
-        }, 1000);
+          document.body.removeChild(iframe);
+        }, 5000);
       } catch (error) {
-        console.error('[DEBUG] Email Capture - Direct MailChimp integration error:', error);
+        console.error('[DEBUG] Email Capture - MailChimp embedded form error:', error);
       }
       
       if (apiSuccess) {
-        console.log('[DEBUG] Email Capture - Direct MailChimp submission successful');
+        console.log('[DEBUG] Email Capture - MailChimp submission successful');
         return true;
       }
       
-      console.error('[DEBUG] Email Capture - Direct MailChimp integration failed');
+      console.error('[DEBUG] Email Capture - MailChimp integration failed');
       
       
       // If Formspree fails, try a simple image pixel tracking as fallback
