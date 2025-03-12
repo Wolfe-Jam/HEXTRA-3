@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MailChimp Unified Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #0078ff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>MailChimp Unified Test</h1>
+  
+  <div class="test-section">
+    <h2>Test Unified API Integration</h2>
+    <p>This test will attempt to add a test email to your MailChimp audience list using the unified API approach.</p>
+    <button id="test-unified">Run Unified API Test</button>
+    <div id="results">Results will appear here...</div>
+  </div>
+
+  <script>
+    document.getElementById('test-unified').addEventListener('click', async () => {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = 'Testing MailChimp unified API integration...\n';
+      
+      try {
+        // Generate a test email
+        const testEmail = `test-${Date.now()}@example.com`;
+        resultsDiv.innerHTML += `Using test email: ${testEmail}\n\n`;
+        
+        // Make the API request
+        resultsDiv.innerHTML += `Sending POST request to /api/mailchimp-unified with email: ${testEmail}\n`;
+        
+        const response = await fetch('/api/mailchimp-unified', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            email: testEmail,
+            source: 'Unified Test Page'
+          })
+        });
+        
+        resultsDiv.innerHTML += `Response received with status: ${response.status}\n`;
+        
+        // Parse the response
+        let responseText = '';
+        try {
+          const data = await response.json();
+          responseText = JSON.stringify(data, null, 2);
+          
+          resultsDiv.innerHTML += `API Response:\n${responseText}\n\n`;
+          
+          if (response.ok && data.status === 'success') {
+            resultsDiv.innerHTML += '<span class="success">SUCCESS: Email was successfully added to your MailChimp audience list!</span>\n';
+          } else {
+            resultsDiv.innerHTML += '<span class="error">ERROR: API request failed or returned an error.</span>\n';
+            resultsDiv.innerHTML += `Error details: ${data.message || 'Unknown error'}\n`;
+          }
+        } catch (jsonError) {
+          resultsDiv.innerHTML += `<span class="error">ERROR parsing JSON response: ${jsonError.message}</span>\n`;
+          
+          // Try to get the raw text
+          try {
+            const rawText = await response.text();
+            resultsDiv.innerHTML += `Raw response:\n${rawText.substring(0, 500)}${rawText.length > 500 ? '...' : ''}\n`;
+          } catch (textError) {
+            resultsDiv.innerHTML += `<span class="error">ERROR getting raw response: ${textError.message}</span>\n`;
+          }
+        }
+        
+        // Add environment info
+        resultsDiv.innerHTML += '\nEnvironment Information:\n';
+        resultsDiv.innerHTML += `URL: ${window.location.href}\n`;
+        resultsDiv.innerHTML += `API Endpoint: /api/mailchimp-unified\n`;
+        resultsDiv.innerHTML += `Timestamp: ${new Date().toISOString()}\n`;
+      } catch (error) {
+        resultsDiv.innerHTML += `<span class="error">ERROR: ${error.message}</span>\n`;
+      }
+    });
+  </script>
+</body>
+</html>

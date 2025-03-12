@@ -111,20 +111,27 @@ async function handleSubscription(req, res) {
       });
     }
 
-    // Get MailChimp configuration from production environment variables
+    // Get MailChimp configuration from environment variables
     const apiKey = process.env.MAILCHIMP_API_KEY;
-    const listId = process.env.MAILCHIMP_AUDIENCE_ID;
-    const serverPrefix = process.env.MAILCHIMP_SERVER_PREFIX;
+    const listId = process.env.MAILCHIMP_LIST_ID || '5b2a2cb0b7'; // Use the correct audience ID
+    const serverPrefix = apiKey ? apiKey.split('-')[1] : 'us21'; // Extract server from API key
 
-    if (!apiKey || !listId || !serverPrefix) {
-      console.log('[UNIFIED] Missing MailChimp configuration');
-      return res.status(500).json({
+    if (!apiKey) {
+      console.log('[UNIFIED] Missing MailChimp API key');
+      return res.status(200).json({
+        status: 'error',
         error: 'Configuration error',
-        message: 'MailChimp API not properly configured'
+        message: 'MailChimp API key not configured',
+        debug: {
+          hasApiKey: !!apiKey,
+          hasListId: !!listId,
+          serverPrefix: serverPrefix
+        }
       });
     }
 
     // Configure the SDK
+    console.log(`[UNIFIED] Configuring MailChimp SDK with server: ${serverPrefix}`);
     mailchimp.setConfig({
       apiKey: apiKey,
       server: serverPrefix
@@ -137,16 +144,31 @@ async function handleSubscription(req, res) {
       .digest('hex');
 
     try {
+      console.log(`[UNIFIED] Checking if email exists in list ID: ${listId}`);
       // First check if member exists
       await mailchimp.lists.getListMember(listId, subscriberHash);
       
-      // Member exists
-      console.log('[UNIFIED] Member already subscribed');
+      // Member exists - update their information
+      console.log('[UNIFIED] Member already subscribed - updating information');
+      
+      // Update the existing member
+      const memberData = {
+        email_address: email,
+        status_if_new: 'subscribed',
+        merge_fields: {
+          SOURCE: 'HEXTRA Web App v2.2.5 (Updated)',
+          SIGNUP_DATE: new Date().toISOString().split('T')[0]
+        }
+      };
+      
+      await mailchimp.lists.updateListMember(listId, subscriberHash, memberData);
+      
       return res.status(200).json({
         status: 'success',
-        message: 'Email is already subscribed'
+        message: 'Email is already subscribed - information updated'
       });
     } catch (checkError) {
+      console.log('[UNIFIED] Check member error:', checkError.status, checkError.message);
       // If 404, member doesn't exist
       if (checkError.status === 404) {
         // Add the member
