@@ -1,0 +1,12 @@
+VERCEL DEPLOYMENT TRIGGER
+
+This file is created specifically to force a Vercel deployment.
+The previous commits (including ec50392d9) were not detected by Vercel.
+
+Key changes needed:
+- MailChimp API routes configuration
+- Method restrictions (POST/OPTIONS for subscribe, GET for config-check)
+- Debug endpoint configuration
+
+Timestamp: 2025-03-11 20:41
+Build attempt: 3
