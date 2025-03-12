@@ -8,5 +8,5 @@ Key changes needed:
 - Method restrictions (POST/OPTIONS for subscribe, GET for config-check)
 - Debug endpoint configuration
 
-Timestamp: 2025-03-11 20:41
-Build attempt: 3
+Timestamp: 2025-03-11 20:44
+Build attempt: 4 (after Vercel reconnection)
