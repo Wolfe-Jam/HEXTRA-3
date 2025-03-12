@@ -11,26 +11,32 @@
     "CI": "false"
   },
   "buildCommand": "npm run vercel-build",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/auth/kinde/callback",
-      "destination": "/index.html"
+      "src": "/api/mailchimp-subscribe",
+      "methods": ["POST", "OPTIONS"],
+      "dest": "/api/mailchimp-subscribe"
     },
     {
-      "source": "/api/mailchimp-subscribe",
-      "destination": "/api/mailchimp-subscribe"
+      "src": "/api/mailchimp-config-check",
+      "methods": ["GET"],
+      "dest": "/api/mailchimp-config-check"
     },
     {
-      "source": "/api/mailchimp-config-check",
-      "destination": "/api/mailchimp-config-check"
+      "src": "/api/mailchimp-debug",
+      "methods": ["GET", "OPTIONS"],
+      "dest": "/api/mailchimp-debug"
     },
     {
-      "source": "/api/mailchimp-debug",
-      "destination": "/api/mailchimp-debug"
+      "handle": "filesystem"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/api/auth/kinde/callback",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
