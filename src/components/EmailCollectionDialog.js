@@ -32,6 +32,24 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const { login } = useKindeAuth();
+  
+  // Check for MailChimp success parameter in URL
+  React.useEffect(() => {
+    // Check if we're returning from a successful MailChimp submission
+    if (typeof window !== 'undefined' && window.location.search.includes('mailchimp_success=true')) {
+      console.log('[DEBUG] Email Capture - Detected successful MailChimp submission');
+      
+      // Clean up the URL
+      const cleanUrl = window.location.href.split('?')[0];
+      window.history.replaceState({}, document.title, cleanUrl);
+      
+      // Close the dialog with success
+      if (onSubmit && email) {
+        onSubmit(email);
+      }
+      onClose();
+    }
+  }, [onClose, onSubmit, email]);
 
   // Email validation
   const validateEmail = (email) => {
@@ -64,6 +82,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       const MAILCHIMP_URL = 'https://hextra.us21.list-manage.com/subscribe/post';
       const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // Your MailChimp user ID
       const MAILCHIMP_ID = '15a9e53a0a'; // Your MailChimp list ID
+      const MAILCHIMP_FORM_ID = '00a6b0e6f0'; // Form ID for proper submission
       
       let apiSuccess = false;
       
@@ -71,7 +90,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         // Create a form element for direct submission
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}`;
+        form.action = `${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}&f_id=${MAILCHIMP_FORM_ID}`;
         form.target = '_blank';
         form.style.display = 'none';
         
@@ -96,6 +115,13 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         honeypotInput.value = '';
         honeypotInput.style.display = 'none';
         form.appendChild(honeypotInput);
+        
+        // Add success redirect URL
+        const redirectInput = document.createElement('input');
+        redirectInput.type = 'hidden';
+        redirectInput.name = 'success_url';
+        redirectInput.value = window.location.href + '?mailchimp_success=true';
+        form.appendChild(redirectInput);
         
         // Add form to document and submit
         document.body.appendChild(form);
