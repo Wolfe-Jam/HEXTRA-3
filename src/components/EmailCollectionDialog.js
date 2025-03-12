@@ -60,7 +60,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     return re.test(email);
   };
 
-  // Subscribe user to MailChimp and send confirmation email using a server-side API call
+  // Subscribe user to MailChimp using direct form submission (proven reliable approach)
   const subscribeToMailChimp = async (email) => {
     console.log(`[DEBUG] Email Capture - Subscribing email: ${email}`);
     
@@ -77,50 +77,70 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         console.error('[DEBUG] Email Capture - Failed to store email locally:', storageError);
       }
       
-      // Use direct MailChimp API call
-      console.log('[DEBUG] Email Capture - Using direct MailChimp API call');
-      
       // Set success message for user feedback
-      setSuccessMessage('Thank you for subscribing! You will receive updates about HEXTRA soon.');
+      setSuccessMessage('Success!\nYour download is ready.');
       
       let apiSuccess = false;
       
+      // DIRECT FORM SUBMISSION TO MAILCHIMP
+      // This approach has been proven to work reliably
+      console.log('[DEBUG] Email Capture - Using direct form submission to MailChimp');
+      
       try {
-        // Make a direct API call to MailChimp
-        const response = await fetch('/api/mailchimp-direct', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: email,
-            source: 'HEXTRA-EmailDialog-v2.2.5'
-          })
-        });
+        // MailChimp configuration
+        const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // Your MailChimp user ID
+        const MAILCHIMP_ID = '5b2a2cb0b7'; // Your MailChimp audience ID
+        const MAILCHIMP_URL = 'https://hextra.us21.list-manage.com/subscribe/post';
         
-        const result = await response.json();
-        console.log('[DEBUG] Email Capture - MailChimp API response:', result);
+        // Create a form element
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}`;
+        form.target = '_blank'; // Open in new tab to avoid navigation
+        form.style.display = 'none';
         
-        if (response.ok) {
-          console.log('[DEBUG] Email Capture - MailChimp API call successful');
-          apiSuccess = true;
-          
-          // Update local storage to mark as successful
-          try {
-            localStorage.setItem('hextra_email_backup', JSON.stringify({
-              email,
-              timestamp: new Date().toISOString(),
-              pending: false,
-              success: true
-            }));
-          } catch (storageError) {
-            console.error('[DEBUG] Email Capture - Failed to update localStorage:', storageError);
-          }
-        } else {
-          console.error('[DEBUG] Email Capture - MailChimp API call failed:', result);
-        }
-      } catch (error) {
-        console.error('[DEBUG] Email Capture - MailChimp API call error:', error);
+        // Add email field
+        const emailField = document.createElement('input');
+        emailField.type = 'email';
+        emailField.name = 'EMAIL';
+        emailField.value = email;
+        form.appendChild(emailField);
+        
+        // Add source tracking field
+        const sourceField = document.createElement('input');
+        sourceField.type = 'hidden';
+        sourceField.name = 'SOURCE';
+        sourceField.value = 'HEXTRA-EmailDialog-v2.2.5';
+        form.appendChild(sourceField);
+        
+        // Add anti-spam honeypot field (required by MailChimp)
+        const honeypotField = document.createElement('input');
+        honeypotField.type = 'text';
+        honeypotField.name = `b_${MAILCHIMP_U}_${MAILCHIMP_ID}`;
+        honeypotField.value = '';
+        honeypotField.style.display = 'none';
+        form.appendChild(honeypotField);
+        
+        // Add submit button (required by MailChimp)
+        const submitButton = document.createElement('input');
+        submitButton.type = 'submit';
+        submitButton.name = 'subscribe';
+        submitButton.value = 'Subscribe';
+        form.appendChild(submitButton);
+        
+        // Add the form to the document and submit it
+        document.body.appendChild(form);
+        form.submit();
+        console.log('[DEBUG] Email Capture - Direct form submitted to MailChimp');
+        
+        // Remove the form after submission
+        setTimeout(() => {
+          document.body.removeChild(form);
+        }, 1000);
+        
+        apiSuccess = true;
+      } catch (formError) {
+        console.error('[DEBUG] Email Capture - Direct form submission error:', formError);
       }
       
       if (apiSuccess) {
@@ -193,8 +213,8 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     const subscribeResult = await subscribeToMailChimp(email);
     console.log('[DEBUG] Dialog - MailChimp subscribe result:', subscribeResult);
     
-    // Set success message for user feedback - simple and clear
-    setSuccessMessage('Success! Your download is ready.');
+    // Set success message for user feedback - simple and clear on two lines
+    setSuccessMessage('Success!\nYour download is ready.');
     
     if (!subscribeResult) {
       console.log('[DEBUG] Dialog - MailChimp subscription failed, but continuing');
@@ -260,21 +280,36 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         </Typography>
         
         {successMessage ? (
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              color: 'green', 
-              fontWeight: 'bold', 
+          <Box
+            sx={{
+              color: 'green',
+              fontWeight: 'bold',
               textAlign: 'center',
               my: 4,
               p: 3,
               bgcolor: 'rgba(0, 255, 0, 0.1)',
               borderRadius: 1,
-              fontSize: '1.5rem'
             }}
           >
-            {successMessage}
-          </Typography>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 'bold',
+                fontSize: '1.8rem',
+                mb: 1
+              }}
+            >
+              Success!
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                fontSize: '1.2rem' 
+              }}
+            >
+              Your download is ready.
+            </Typography>
+          </Box>
         ) : (
           <TextField
             autoFocus

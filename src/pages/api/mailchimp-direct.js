@@ -62,10 +62,10 @@ export default async function handler(req, res) {
       });
     }
     
-    // MailChimp API credentials - FIXED with correct format
+    // MailChimp API credentials - FIXED with correct format and audience ID
     // The API key format should be: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-usXX
     const API_KEY = process.env.MAILCHIMP_API_KEY || '9f57a2f6a75ea109e2c1c4c27-us21';
-    const LIST_ID = process.env.MAILCHIMP_LIST_ID || '15a9e53a0a';
+    const LIST_ID = process.env.MAILCHIMP_LIST_ID || '5b2a2cb0b7'; // UPDATED with correct audience ID
     const API_SERVER = 'us21'; // Extract from API key or use environment variable
     
     console.log('[DIRECT] Using MailChimp credentials:', { 
