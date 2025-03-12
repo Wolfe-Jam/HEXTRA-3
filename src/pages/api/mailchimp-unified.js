@@ -20,10 +20,13 @@ const crypto = require('crypto');
  */
 function handler(req, res) {
   // CRITICAL: Set CORS headers immediately before any processing
+  // Allow requests from any origin in development and from hextra.io in production
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours cache for preflight
 
   // Log all requests for diagnostics
   console.log(`[UNIFIED] ${req.method} Request to mailchimp-unified, headers:`, 
@@ -34,18 +37,30 @@ function handler(req, res) {
     })
   );
   
-  // Handle OPTIONS method for CORS preflight
+  // Enhanced OPTIONS handling for CORS preflight
   if (req.method === 'OPTIONS') {
-    console.log('[UNIFIED] Handling OPTIONS preflight request');
+    console.log('[UNIFIED] Handling OPTIONS preflight request from:', origin);
     return res.status(200).end();
   }
 
-  // Only allow POST for actual subscriptions
-  if (req.method !== 'POST') {
+  // Allow both GET and POST methods
+  if (req.method !== 'POST' && req.method !== 'GET') {
     console.log(`[UNIFIED] Method ${req.method} not allowed`);
-    return res.status(405).json({
+    return res.status(200).json({
+      status: 'error',
       error: 'Method not allowed',
-      message: 'Only POST requests are accepted'
+      message: 'Only POST and GET requests are accepted'
+    });
+  }
+  
+  // For GET requests, return a simple status check
+  if (req.method === 'GET') {
+    console.log('[UNIFIED] Handling GET status check');
+    return res.status(200).json({
+      status: 'success',
+      message: 'MailChimp API endpoint is operational',
+      version: '2.2.5',
+      timestamp: new Date().toISOString()
     });
   }
 

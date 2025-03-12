@@ -49,24 +49,36 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       const apiUrl = '/api/mailchimp-unified';
       
       console.log(`[DEBUG] MailChimp - Current origin:`, window.location.origin);
-      
       console.log(`[DEBUG] MailChimp - Making API request to ${apiUrl}`);
       
-      // Call our MailChimp API endpoint
+      // First check if the API is available with a GET request
+      const checkResponse = await fetch(`${apiUrl}?check=true`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Origin': window.location.origin
+        },
+        credentials: 'same-origin'
+      });
+      
+      console.log('[DEBUG] MailChimp - API check status:', checkResponse.status);
+      
+      // Now make the actual subscription request
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': window.location.origin
         },
         body: JSON.stringify({
           email: email
         }),
-        // Use default fetch mode for same-origin requests
         credentials: 'same-origin'
       });
       
       console.log('[DEBUG] MailChimp - Response status:', response.status);
-      
+    
       // Handle non-JSON responses
       let data;
       try {
@@ -85,16 +97,25 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       
       console.log('[DEBUG] MailChimp - Response data:', data);
       
-      if (!response.ok) {
+      // Even if response is not OK, we'll still try to process it
+      // This is because our API now returns 200 for most errors for better UX
+      if (!response.ok && response.status !== 200) {
         console.error('[DEBUG] MailChimp - Subscription error:', data.error || 'Unknown error');
         console.error('[DEBUG] MailChimp - Status code:', response.status);
         console.error('[DEBUG] MailChimp - Status text:', response.statusText);
         
-        // 405 Method Not Allowed typically indicates a CORS issue
         if (response.status === 405) {
           console.error('[DEBUG] MailChimp - CORS issue detected. Check API route configuration.');
         }
         
+        setError('Failed to subscribe. Please try again later.');
+        return false;
+      }
+      
+      // Check the status field in the response
+      if (data.status === 'error') {
+        console.error('[DEBUG] MailChimp - API reported error:', data.message);
+        setError(data.message || 'Failed to subscribe. Please try again later.');
         return false;
       }
       
