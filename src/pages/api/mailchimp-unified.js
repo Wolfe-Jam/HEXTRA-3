@@ -18,7 +18,8 @@ const crypto = require('crypto');
 /**
  * Unified handler that works reliably on Vercel
  */
-function handler(req, res) {
+// Export a default function for Next.js API routes
+export default async function handler(req, res) {
   // CRITICAL: Set CORS headers immediately before any processing
   // Allow requests from any origin in development and from hextra.io in production
   const origin = req.headers.origin || '*';
@@ -174,5 +175,4 @@ async function handleSubscription(req, res) {
   }
 }
 
-// Export the handler
-module.exports = handler;
+// No need to export the handler as we're using the default export above

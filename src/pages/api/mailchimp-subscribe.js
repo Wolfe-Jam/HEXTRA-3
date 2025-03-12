@@ -13,9 +13,9 @@
  */
 
 // Import only the essential modules
-const https = require('https');
-const crypto = require('crypto');
-const { URL } = require('url');
+import https from 'https';
+import crypto from 'crypto';
+import { URL } from 'url';
 
 // Diagnostic settings
 const DIAGNOSTIC_MODE = true;
@@ -23,7 +23,7 @@ const DIAGNOSTIC_MODE = true;
 /**
  * Main handler function for the MailChimp API endpoint
  */
-async function handler(req, res) {
+export default async function handler(req, res) {
   // Critical: Set CORS headers first, before any processing
   // This is important for production - ensure we accept requests from hextra.io
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -388,4 +388,4 @@ async function makeApiRequest(method, url, data, apiKey) {
 }
 
 // Export the handler for CommonJS compatibility
-module.exports = handler;
+// Using export default above instead of module.exports

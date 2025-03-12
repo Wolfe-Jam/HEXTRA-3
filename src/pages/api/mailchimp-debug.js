@@ -17,7 +17,7 @@ const { URL } = require('url');
 /**
  * Handler function for MailChimp debugging
  */
-function handler(req, res) {
+export default async function handler(req, res) {
   // Set CORS headers - critical for hextra.io
   const allowedOrigins = ['https://hextra.io', 'https://www.hextra.io', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
   const origin = req.headers.origin;
@@ -278,4 +278,4 @@ async function makeApiRequest(method, url, data, apiKey) {
 }
 
 // Export handler for CommonJS compatibility
-module.exports = handler;
+// Using export default above instead of module.exports

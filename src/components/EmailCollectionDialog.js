@@ -72,7 +72,10 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
           'Origin': window.location.origin
         },
         body: JSON.stringify({
-          email: email
+          email: email,
+          source: 'EmailCollectionDialog',
+          version: '2.2.5',
+          timestamp: new Date().toISOString()
         }),
         credentials: 'same-origin'
       });

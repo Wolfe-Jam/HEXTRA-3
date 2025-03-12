@@ -15,7 +15,7 @@ const https = require('https');
 /**
  * API endpoint handler for testing MailChimp connectivity
  */
-async function handler(req, res) {
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*'); 
@@ -501,4 +501,4 @@ async function testMailchimpSubscription(server, apiKey, audienceId, email) {
 }
 
 // Export handler for compatibility with Vercel API routes
-module.exports = handler;
+// Using export default above instead of module.exports
