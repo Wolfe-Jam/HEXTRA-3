@@ -31,6 +31,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
   console.log('[DEBUG] Dialog - Rendering with props:', { open });
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const { login } = useKindeAuth();
   
   // Check for MailChimp success parameter in URL
@@ -59,7 +60,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     return re.test(email);
   };
 
-  // Subscribe user to MailChimp and send confirmation email using their official embedded form approach
+  // Subscribe user to MailChimp and send confirmation email using a server-side API call
   const subscribeToMailChimp = async (email) => {
     console.log(`[DEBUG] Email Capture - Subscribing email: ${email}`);
     
@@ -76,80 +77,50 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         console.error('[DEBUG] Email Capture - Failed to store email locally:', storageError);
       }
       
-      // Use MailChimp's official embedded form approach
-      console.log('[DEBUG] Email Capture - Using MailChimp official embedded form');
+      // Use direct MailChimp API call
+      console.log('[DEBUG] Email Capture - Using direct MailChimp API call');
       
-      // MailChimp configuration
-      const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // Your MailChimp user ID
-      const MAILCHIMP_ID = '15a9e53a0a'; // Your MailChimp list ID
+      // Set success message for user feedback
+      setSuccessMessage('Thank you for subscribing! You will receive updates about HEXTRA soon.');
       
       let apiSuccess = false;
       
       try {
-        // Create an iframe to load the MailChimp form
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
+        // Make a direct API call to MailChimp
+        const response = await fetch('/api/mailchimp-direct', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email,
+            source: 'HEXTRA-EmailDialog-v2.2.5'
+          })
+        });
         
-        // Access the iframe's document
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const result = await response.json();
+        console.log('[DEBUG] Email Capture - MailChimp API response:', result);
         
-        // Write the MailChimp form HTML to the iframe
-        iframeDoc.open();
-        iframeDoc.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Subscribe to HEXTRA</title>
-          </head>
-          <body>
-            <!-- Begin Mailchimp Signup Form -->
-            <div id="mc_embed_signup">
-              <form action="https://hextra.us21.list-manage.com/subscribe/post?u=${MAILCHIMP_U}&amp;id=${MAILCHIMP_ID}&amp;f_id=00a6b0e6f0&amp;SOURCE=HEXTRA-EmailDialog-v2.2.5" 
-                method="post" 
-                id="mc-embedded-subscribe-form" 
-                name="mc-embedded-subscribe-form" 
-                class="validate" 
-                target="_blank">
-                <div id="mc_embed_signup_scroll">
-                  <div class="mc-field-group">
-                    <input type="email" name="EMAIL" class="required email" id="mce-EMAIL" value="${email}" required>
-                  </div>
-                  <div id="mce-responses" class="clear foot">
-                    <div class="response" id="mce-error-response" style="display:none"></div>
-                    <div class="response" id="mce-success-response" style="display:none"></div>
-                  </div>
-                  <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
-                  <div style="position: absolute; left: -5000px;" aria-hidden="true">
-                    <input type="text" name="b_${MAILCHIMP_U}_${MAILCHIMP_ID}" tabindex="-1" value="">
-                  </div>
-                  <div class="optionalParent">
-                    <div class="clear foot">
-                      <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button">
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
-            <!--End mc_embed_signup-->
-            <script>
-              // Auto-submit the form
-              document.getElementById('mc-embedded-subscribe-form').submit();
-            </script>
-          </body>
-          </html>
-        `);
-        iframeDoc.close();
-        
-        console.log('[DEBUG] Email Capture - MailChimp embedded form submitted');
-        apiSuccess = true;
-        
-        // Clean up iframe after a delay
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 5000);
+        if (response.ok) {
+          console.log('[DEBUG] Email Capture - MailChimp API call successful');
+          apiSuccess = true;
+          
+          // Update local storage to mark as successful
+          try {
+            localStorage.setItem('hextra_email_backup', JSON.stringify({
+              email,
+              timestamp: new Date().toISOString(),
+              pending: false,
+              success: true
+            }));
+          } catch (storageError) {
+            console.error('[DEBUG] Email Capture - Failed to update localStorage:', storageError);
+          }
+        } else {
+          console.error('[DEBUG] Email Capture - MailChimp API call failed:', result);
+        }
       } catch (error) {
-        console.error('[DEBUG] Email Capture - MailChimp embedded form error:', error);
+        console.error('[DEBUG] Email Capture - MailChimp API call error:', error);
       }
       
       if (apiSuccess) {
@@ -203,6 +174,8 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
 
     // Set submitting state
     setIsSubmitting(true);
+    // Clear any previous error
+    setError('');
 
     // Save email to localStorage
     try {
@@ -220,22 +193,31 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     const subscribeResult = await subscribeToMailChimp(email);
     console.log('[DEBUG] Dialog - MailChimp subscribe result:', subscribeResult);
     
+    // Set success message for user feedback
+    setSuccessMessage('Thank you for subscribing! Your download is ready.');
+    
     if (!subscribeResult) {
       console.log('[DEBUG] Dialog - MailChimp subscription failed, but continuing');
-      // Show a message but don't block the download
-      // Could add a toast notification here
+      // Still show success message even if MailChimp fails
+      setSuccessMessage('Thank you! Your download is ready.');
     }
 
     // Call the onSubmit callback with the email
     console.log('[DEBUG] Dialog - Calling onSubmit callback');
     onSubmit(email);
     
-    // Reset form and close dialog
-    console.log('[DEBUG] Dialog - Resetting form and closing dialog');
-    setEmail('');
-    setError('');
-    setIsSubmitting(false);
-    onClose();
+    // Don't close dialog immediately to show success message
+    console.log('[DEBUG] Dialog - Showing success message');
+    
+    // Close dialog after showing success message for 2 seconds
+    setTimeout(() => {
+      console.log('[DEBUG] Dialog - Closing dialog after success message');
+      setEmail('');
+      setError('');
+      setSuccessMessage('');
+      setIsSubmitting(false);
+      onClose();
+    }, 2000);
   };
 
   // Handle full authentication
@@ -277,21 +259,39 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
           Please enter your email to download this image. We'll keep you updated with new features and improvements.
         </Typography>
         
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Email Address"
-          type="email"
-          fullWidth
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (error) setError('');
-          }}
-          error={!!error}
-          helperText={error}
-          sx={{ mb: 2 }}
-        />
+        {successMessage ? (
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              color: 'green', 
+              fontWeight: 'bold', 
+              textAlign: 'center',
+              my: 2,
+              p: 2,
+              bgcolor: 'rgba(0, 255, 0, 0.1)',
+              borderRadius: 1
+            }}
+          >
+            {successMessage}
+          </Typography>
+        ) : (
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Email Address"
+            type="email"
+            fullWidth
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError('');
+            }}
+            error={!!error}
+            helperText={error}
+            sx={{ mb: 2 }}
+            disabled={isSubmitting}
+          />
+        )}
         
         <Box sx={{ my: 2 }}>
           <Divider>

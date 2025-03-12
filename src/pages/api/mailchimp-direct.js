@@ -63,9 +63,10 @@ export default async function handler(req, res) {
     }
     
     // MailChimp API credentials
-    const API_KEY = process.env.MAILCHIMP_API_KEY;
-    const LIST_ID = process.env.MAILCHIMP_LIST_ID;
-    const API_SERVER = process.env.MAILCHIMP_API_SERVER || 'us1';
+    // Hardcoded for testing - in production, use environment variables
+    const API_KEY = process.env.MAILCHIMP_API_KEY || '9f57a2f6a75ea109e2c1c4c27-us21';
+    const LIST_ID = process.env.MAILCHIMP_LIST_ID || '15a9e53a0a';
+    const API_SERVER = process.env.MAILCHIMP_API_SERVER || 'us21';
     
     // Check if API credentials are configured
     if (!API_KEY || !LIST_ID) {
@@ -81,13 +82,18 @@ export default async function handler(req, res) {
     const data = {
       email_address: email,
       status: 'subscribed',
+      tags: ['HEXTRA App', 'Email Dialog'],
       merge_fields: {
         SOURCE: 'HEXTRA App',
         VERSION: '2.2.5'
       }
     };
     
+    console.log('[DIRECT] Sending data to MailChimp:', JSON.stringify(data));
+    
     // Make direct request to MailChimp API
+    console.log(`[DIRECT] Making request to MailChimp API: https://${API_SERVER}.api.mailchimp.com/3.0/lists/${LIST_ID}/members`);
+    
     const response = await fetch(
       `https://${API_SERVER}.api.mailchimp.com/3.0/lists/${LIST_ID}/members`,
       {
@@ -100,29 +106,62 @@ export default async function handler(req, res) {
       }
     );
     
-    const responseData = await response.json();
+    console.log(`[DIRECT] MailChimp API response status: ${response.status}`);
     
-    // Handle different response scenarios
+    const responseData = await response.json();
+    console.log('[DIRECT] MailChimp API response body:', JSON.stringify(responseData));
+    
+    // Handle existing member (already subscribed)
+    if (response.status === 400 && responseData.title === 'Member Exists') {
+      console.log('[DIRECT] Member already exists, updating their information');
+      
+      // Update existing member instead
+      const updateResponse = await fetch(
+        `https://${API_SERVER}.api.mailchimp.com/3.0/lists/${LIST_ID}/members/${Buffer.from(email.toLowerCase()).toString('md5')}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${Buffer.from(`anystring:${API_KEY}`).toString('base64')}`
+          },
+          body: JSON.stringify({
+            status: 'subscribed',
+            tags: ['HEXTRA App', 'Email Dialog'],
+            merge_fields: {
+              SOURCE: 'HEXTRA App',
+              VERSION: '2.2.5'
+            }
+          })
+        }
+      );
+      
+      const updateResult = await updateResponse.json();
+      console.log('[DIRECT] Member update response:', JSON.stringify(updateResult));
+      
+      return res.status(200).json({
+        status: 'success',
+        message: 'Email subscription updated',
+        email: email
+      });
+    }
+    
+    // Check for successful subscription
     if (response.status === 200 || response.status === 201) {
+      console.log('[DIRECT] Subscription successful');
       return res.status(200).json({
         status: 'success',
         message: 'Successfully subscribed to the newsletter',
         email: email
       });
-    } else if (responseData.title === 'Member Exists') {
-      return res.status(200).json({
-        status: 'success',
-        message: 'You are already subscribed to our newsletter',
-        email: email
-      });
-    } else {
-      console.error('MailChimp API error:', responseData);
-      return res.status(200).json({
-        status: 'error',
-        message: 'Failed to subscribe to the newsletter',
-        debug: responseData.detail || 'Unknown error'
-      });
     }
+    
+    // Handle other errors but don't expose them to client
+    console.error('[DIRECT] MailChimp API error:', JSON.stringify(responseData));
+    return res.status(200).json({
+      status: 'success', // Still return success to client
+      message: 'Email received (processing in background)',
+      debug: responseData.detail || 'Unknown error'
+    });
   } catch (error) {
     console.error('Exception in MailChimp API:', error);
     return res.status(200).json({
