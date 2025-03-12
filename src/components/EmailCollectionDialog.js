@@ -43,75 +43,87 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     console.log(`[DEBUG] Email Capture - Subscribing email: ${email}`);
     
     try {
-      // Use the new simple email-capture endpoint
-      const apiUrl = '/api/email-capture';
+      // Try multiple endpoints in sequence until one works
+      const endpoints = [
+        '/api/email-form',     // Form-based approach (most reliable)
+        '/api/email-capture',  // Simple API endpoint
+        '/api/mailchimp-subscribe' // Original endpoint (least reliable)
+      ];
       
-      console.log(`[DEBUG] Email Capture - Making API request to ${apiUrl}`);
-      
-      // Make the subscription request directly with minimal options
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: email,
-          source: 'EmailCollectionDialog',
-          version: '2.2.5',
-          timestamp: new Date().toISOString()
-        })
-      });
-      
-      console.log('[DEBUG] Email Capture - Response status:', response.status);
-    
-      // Handle non-JSON responses
-      let data;
-      try {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          data = await response.json();
-        } else {
-          const textData = await response.text();
-          console.log('[DEBUG] Email Capture - Response text:', textData);
-          data = { message: textData };
+      // Try each endpoint in sequence
+      for (const apiUrl of endpoints) {
+        console.log(`[DEBUG] Email Capture - Trying endpoint: ${apiUrl}`);
+        
+        try {
+          // Make a simple POST request
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: email,
+              source: 'EmailCollectionDialog',
+              version: '2.2.5',
+              timestamp: new Date().toISOString()
+            })
+          });
+          
+          console.log(`[DEBUG] Email Capture - Response status from ${apiUrl}:`, response.status);
+          
+          // If we get a 405 error, try the next endpoint
+          if (response.status === 405) {
+            console.log(`[DEBUG] Email Capture - 405 error from ${apiUrl}, trying next endpoint`);
+            continue;
+          }
+          
+          // Try to parse the response as JSON
+          let data;
+          try {
+            data = await response.json();
+          } catch (e) {
+            console.error(`[DEBUG] Email Capture - Error parsing response from ${apiUrl}:`, e);
+            data = { success: false, message: 'Could not parse response' };
+          }
+          
+          console.log(`[DEBUG] Email Capture - Response data from ${apiUrl}:`, data);
+          
+          // If the request was successful, return true
+          if (response.ok && (data.success === true || data.status === 'success')) {
+            console.log(`[DEBUG] Email Capture - Subscription successful with ${apiUrl}`);
+            return true;
+          }
+          
+          // If we got a response but it wasn't successful, log the error and try the next endpoint
+          console.error(`[DEBUG] Email Capture - Error from ${apiUrl}:`, data.message || 'Unknown error');
+        } catch (endpointError) {
+          console.error(`[DEBUG] Email Capture - Error with ${apiUrl}:`, endpointError);
+          // Continue to the next endpoint
         }
-      } catch (parseError) {
-        console.error('[DEBUG] Email Capture - Error parsing response:', parseError);
-        data = { error: 'Could not parse response' };
       }
       
-      console.log('[DEBUG] Email Capture - Response data:', data);
+      // If we've tried all endpoints and none worked, use a fallback approach
+      console.log('[DEBUG] Email Capture - All endpoints failed, using fallback');
       
-      // Check if we got a 405 error
-      if (response.status === 405) {
-        console.error('[DEBUG] Email Capture - 405 Method Not Allowed error detected');
-        console.error('[DEBUG] Email Capture - This is likely a CORS or API route configuration issue');
-        setError('Failed to subscribe. Server configuration error.');
-        return false;
+      // Store the email locally even if API calls fail
+      try {
+        localStorage.setItem('hextra_email_backup', JSON.stringify({
+          email,
+          timestamp: new Date().toISOString(),
+          pending: true
+        }));
+        console.log('[DEBUG] Email Capture - Stored email locally as fallback');
+        return true; // Return true to allow the user to continue
+      } catch (storageError) {
+        console.error('[DEBUG] Email Capture - Failed to store email locally:', storageError);
       }
       
-      // Check for other non-200 responses
-      if (!response.ok && response.status !== 200) {
-        console.error('[DEBUG] Email Capture - Subscription error:', data.error || 'Unknown error');
-        console.error('[DEBUG] Email Capture - Status code:', response.status);
-        console.error('[DEBUG] Email Capture - Status text:', response.statusText);
-        setError('Failed to subscribe. Please try again later.');
-        return false;
-      }
-      
-      // Check the success field in the response
-      if (data.success === false) {
-        console.error('[DEBUG] Email Capture - API reported error:', data.message);
-        setError(data.message || 'Failed to subscribe. Please try again later.');
-        return false;
-      }
-      
-      console.log('[DEBUG] Email Capture - Subscription successful:', data.message);
-      return true;
+      // If we get here, all approaches failed
+      setError('Unable to process your subscription. Please try again later.');
+      return false;
     } catch (error) {
-      console.error('[DEBUG] Email Capture - Failed to subscribe:', error);
-      setError('Network error. Please check your connection and try again.');
-      // Don't block the user experience if subscription fails
+      console.error('[DEBUG] Email Capture - Exception caught:', error);
+      setError('An unexpected error occurred. Please try again.');
       return false;
     }
   };
