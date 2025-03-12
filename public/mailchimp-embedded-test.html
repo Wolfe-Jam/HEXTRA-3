@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MailChimp Embedded Form Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #0078ff;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .instructions {
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .code-block {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>MailChimp Embedded Form Test</h1>
+  
+  <div class="instructions">
+    <h2>Instructions</h2>
+    <p>This page contains instructions for creating a proper MailChimp embedded form that will help us identify the correct user ID and audience ID.</p>
+    <ol>
+      <li>Log in to your MailChimp account</li>
+      <li>Go to the Audience section</li>
+      <li>Select your audience (the one with ID 5b2a2cb0b7)</li>
+      <li>Click on "Signup forms"</li>
+      <li>Select "Embedded forms"</li>
+      <li>Choose any form style (doesn't matter which one)</li>
+      <li>Copy the entire HTML code provided by MailChimp</li>
+      <li>Paste it below in the designated area</li>
+      <li>Save the file and refresh this page</li>
+    </ol>
+  </div>
+  
+  <div class="test-section">
+    <h2>Embedded Form from MailChimp</h2>
+    <p>Replace this section with the embedded form code from MailChimp:</p>
+    
+    <div class="code-block">
+      <!-- PASTE MAILCHIMP EMBEDDED FORM CODE HERE -->
+      <!-- It will look something like this:
+      
+      <!-- Begin Mailchimp Signup Form -->
+      <link href="//cdn-images.mailchimp.com/embedcode/classic-071822.css" rel="stylesheet" type="text/css">
+      <style type="text/css">
+        #mc_embed_signup{background:#fff; clear:left; font:14px Helvetica,Arial,sans-serif; }
+      </style>
+      <div id="mc_embed_signup">
+        <form action="https://YOURDOMAIN.us8.list-manage.com/subscribe/post?u=YOUR_USER_ID&amp;id=YOUR_AUDIENCE_ID" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+          <div id="mc_embed_signup_scroll">
+            <h2>Subscribe</h2>
+            <div class="indicates-required"><span class="asterisk">*</span> indicates required</div>
+            <div class="mc-field-group">
+              <label for="mce-EMAIL">Email Address  <span class="asterisk">*</span></label>
+              <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+            </div>
+            <div id="mce-responses" class="clear foot">
+              <div class="response" id="mce-error-response" style="display:none"></div>
+              <div class="response" id="mce-success-response" style="display:none"></div>
+            </div>
+            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_YOUR_USER_ID_YOUR_AUDIENCE_ID" tabindex="-1" value=""></div>
+            <div class="optionalParent">
+              <div class="clear foot">
+                <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <!--End mc_embed_signup-->
+      
+      -->
+    </div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Manual Test Form</h2>
+    <p>After you've identified the correct parameters from the embedded form, create a test form with those values:</p>
+    
+    <form id="manual-test-form" method="POST">
+      <div style="margin-bottom: 15px;">
+        <label for="server-prefix">Server Prefix:</label>
+        <input type="text" id="server-prefix" value="us8" style="width: 100%; padding: 8px; margin-top: 5px;">
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label for="user-id">User ID (u parameter):</label>
+        <input type="text" id="user-id" value="" style="width: 100%; padding: 8px; margin-top: 5px;">
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label for="audience-id">Audience ID (id parameter):</label>
+        <input type="text" id="audience-id" value="5b2a2cb0b7" style="width: 100%; padding: 8px; margin-top: 5px;">
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label for="test-email">Test Email:</label>
+        <input type="email" id="test-email" value="" placeholder="Enter test email" style="width: 100%; padding: 8px; margin-top: 5px;">
+      </div>
+      
+      <button type="button" id="generate-form" style="background-color: #0078ff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">
+        Generate Test Form
+      </button>
+    </form>
+    
+    <div id="generated-form-container" style="margin-top: 20px; display: none;">
+      <h3>Generated Form</h3>
+      <div id="generated-form" class="code-block"></div>
+      <button id="submit-generated-form" style="background-color: #0078ff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+        Submit Generated Form
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    document.getElementById('generate-form').addEventListener('click', function() {
+      const serverPrefix = document.getElementById('server-prefix').value.trim();
+      const userId = document.getElementById('user-id').value.trim();
+      const audienceId = document.getElementById('audience-id').value.trim();
+      const testEmail = document.getElementById('test-email').value.trim() || `test-${Date.now()}@example.com`;
+      
+      if (!serverPrefix || !userId || !audienceId) {
+        alert('Please fill in all required fields (Server Prefix, User ID, and Audience ID)');
+        return;
+      }
+      
+      // Create the form HTML
+      const formAction = `https://${serverPrefix}.list-manage.com/subscribe/post?u=${userId}&id=${audienceId}`;
+      const honeypotName = `b_${userId}_${audienceId}`;
+      
+      const formHtml = `
+<form action="${formAction}" method="POST" id="test-mailchimp-form">
+  <!-- Email field -->
+  <input type="email" name="EMAIL" value="${testEmail}">
+  
+  <!-- Source tracking -->
+  <input type="hidden" name="SOURCE" value="Manual Test Form">
+  
+  <!-- Tags -->
+  <input type="hidden" name="tags" value="TEST,ManualTest">
+  
+  <!-- Anti-spam honeypot field -->
+  <div style="position: absolute; left: -5000px;" aria-hidden="true">
+    <input type="text" name="${honeypotName}" tabindex="-1" value="">
+  </div>
+  
+  <!-- Submit button -->
+  <input type="submit" name="subscribe" value="Subscribe">
+</form>`;
+      
+      // Display the generated form
+      document.getElementById('generated-form').textContent = formHtml;
+      document.getElementById('generated-form-container').style.display = 'block';
+      
+      // Setup the submit button
+      document.getElementById('submit-generated-form').addEventListener('click', function() {
+        // Create the actual form element
+        const tempForm = document.createElement('div');
+        tempForm.innerHTML = formHtml;
+        const form = tempForm.querySelector('form');
+        
+        // Add to document and submit
+        document.body.appendChild(form);
+        form.submit();
+      });
+    });
+  </script>
+</body>
+</html>
