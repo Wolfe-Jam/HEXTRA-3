@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MailChimp Beamer Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #0078ff;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    input[type="email"], input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #0078ff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    .info-box {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>MailChimp Beamer Test</h1>
+  
+  <div class="info-box">
+    <h2>Email Beamer Information</h2>
+    <p>Based on your Email Beamer address: <code>us8-7595d635fe-13eec2dca6@inbound.mailchimp.com</code></p>
+    <ul>
+      <li><strong>Server Prefix:</strong> us8</li>
+      <li><strong>Possible User ID:</strong> 7595d635fe</li>
+      <li><strong>Possible List ID:</strong> 13eec2dca6</li>
+    </ul>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test Form 1: Using Beamer-derived IDs</h2>
+    <form action="https://us8.list-manage.com/subscribe/post" method="POST" id="test-form-1">
+      <!-- Hidden fields for MailChimp -->
+      <input type="hidden" name="u" value="7595d635fe">
+      <input type="hidden" name="id" value="13eec2dca6">
+      
+      <!-- Email field -->
+      <label for="email-1">Email to test:</label>
+      <input type="email" name="EMAIL" id="email-1" placeholder="Enter test email" required>
+      
+      <!-- Source tracking -->
+      <input type="hidden" name="SOURCE" value="Beamer Test Page">
+      
+      <!-- Tags -->
+      <input type="hidden" name="tags" value="TEST,BeamerTest">
+      
+      <!-- Anti-spam honeypot field (required by MailChimp) -->
+      <div style="position: absolute; left: -5000px;" aria-hidden="true">
+        <input type="text" name="b_7595d635fe_13eec2dca6" tabindex="-1" value="">
+      </div>
+      
+      <button type="submit">Submit to MailChimp (Beamer IDs)</button>
+    </form>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test Form 2: Using Original IDs</h2>
+    <form action="https://us8.list-manage.com/subscribe/post" method="POST" id="test-form-2">
+      <!-- Hidden fields for MailChimp -->
+      <input type="hidden" name="u" value="9f57a2f6a75ea109e2c1c4c27">
+      <input type="hidden" name="id" value="5b2a2cb0b7">
+      
+      <!-- Email field -->
+      <label for="email-2">Email to test:</label>
+      <input type="email" name="EMAIL" id="email-2" placeholder="Enter test email" required>
+      
+      <!-- Source tracking -->
+      <input type="hidden" name="SOURCE" value="Original Test Page">
+      
+      <!-- Tags -->
+      <input type="hidden" name="tags" value="TEST,OriginalTest">
+      
+      <!-- Anti-spam honeypot field (required by MailChimp) -->
+      <div style="position: absolute; left: -5000px;" aria-hidden="true">
+        <input type="text" name="b_9f57a2f6a75ea109e2c1c4c27_5b2a2cb0b7" tabindex="-1" value="">
+      </div>
+      
+      <button type="submit">Submit to MailChimp (Original IDs)</button>
+    </form>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test Form 3: Using List ID from Memory</h2>
+    <form action="https://us8.list-manage.com/subscribe/post" method="POST" id="test-form-3">
+      <!-- Hidden fields for MailChimp -->
+      <input type="hidden" name="u" value="7595d635fe">
+      <input type="hidden" name="id" value="5b2a2cb0b7">
+      
+      <!-- Email field -->
+      <label for="email-3">Email to test:</label>
+      <input type="email" name="EMAIL" id="email-3" placeholder="Enter test email" required>
+      
+      <!-- Source tracking -->
+      <input type="hidden" name="SOURCE" value="Mixed Test Page">
+      
+      <!-- Tags -->
+      <input type="hidden" name="tags" value="TEST,MixedTest">
+      
+      <!-- Anti-spam honeypot field (required by MailChimp) -->
+      <div style="position: absolute; left: -5000px;" aria-hidden="true">
+        <input type="text" name="b_7595d635fe_5b2a2cb0b7" tabindex="-1" value="">
+      </div>
+      
+      <button type="submit">Submit to MailChimp (Mixed IDs)</button>
+    </form>
+  </div>
+  
+  <div class="info-box">
+    <h2>Instructions</h2>
+    <p>Try each of the test forms above to see which one works. The one that successfully adds an email to your MailChimp audience has the correct parameters.</p>
+    <p>After finding the working form, we'll update the EmailCollectionDialog component with the correct parameters.</p>
+  </div>
+</body>
+</html>
