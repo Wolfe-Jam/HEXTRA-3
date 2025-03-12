@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MailChimp Direct Form Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #0078ff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>MailChimp Direct Form Test</h1>
+  
+  <div class="test-section">
+    <h2>Test Direct Form Submission</h2>
+    <p>This test will submit a form directly to MailChimp's endpoint with your audience ID (5b2a2cb0b7).</p>
+    <button id="test-form">Run Form Test</button>
+    <div id="results">Results will appear here...</div>
+  </div>
+
+  <script>
+    document.getElementById('test-form').addEventListener('click', () => {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = 'Testing direct form submission to MailChimp...\n';
+      
+      try {
+        // Generate a test email
+        const testEmail = `test-${Date.now()}@example.com`;
+        resultsDiv.innerHTML += `Using test email: ${testEmail}\n\n`;
+        
+        // MailChimp configuration
+        const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // Your MailChimp user ID
+        const MAILCHIMP_ID = '5b2a2cb0b7'; // Your MailChimp audience ID
+        const MAILCHIMP_URL = 'https://hextra.us21.list-manage.com/subscribe/post';
+        
+        resultsDiv.innerHTML += `Using MailChimp URL: ${MAILCHIMP_URL}\n`;
+        resultsDiv.innerHTML += `Using MailChimp user ID: ${MAILCHIMP_U}\n`;
+        resultsDiv.innerHTML += `Using MailChimp audience ID: ${MAILCHIMP_ID}\n\n`;
+        
+        // Create a form element
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}`;
+        form.target = '_blank'; // Open in new tab to avoid navigation
+        
+        // Add email field
+        const emailField = document.createElement('input');
+        emailField.type = 'email';
+        emailField.name = 'EMAIL';
+        emailField.value = testEmail;
+        form.appendChild(emailField);
+        
+        // Add source tracking field
+        const sourceField = document.createElement('input');
+        sourceField.type = 'hidden';
+        sourceField.name = 'SOURCE';
+        sourceField.value = 'Form Test Page';
+        form.appendChild(sourceField);
+        
+        // Add anti-spam honeypot field (required by MailChimp)
+        const honeypotField = document.createElement('input');
+        honeypotField.type = 'text';
+        honeypotField.name = `b_${MAILCHIMP_U}_${MAILCHIMP_ID}`;
+        honeypotField.value = '';
+        honeypotField.style.display = 'none';
+        form.appendChild(honeypotField);
+        
+        // Add submit button (required by MailChimp)
+        const submitButton = document.createElement('input');
+        submitButton.type = 'submit';
+        submitButton.name = 'subscribe';
+        submitButton.value = 'Subscribe';
+        form.appendChild(submitButton);
+        
+        // Add the form to the document and submit it
+        document.body.appendChild(form);
+        
+        resultsDiv.innerHTML += 'Form created and ready to submit. A new tab will open with the MailChimp response.\n';
+        resultsDiv.innerHTML += '<span class="success">Submitting form now...</span>\n';
+        
+        // Submit the form
+        form.submit();
+        
+        // Remove the form after submission
+        setTimeout(() => {
+          document.body.removeChild(form);
+          resultsDiv.innerHTML += '\nForm submitted and removed from the page.\n';
+          resultsDiv.innerHTML += 'Check the new tab that opened for the MailChimp response.\n';
+          resultsDiv.innerHTML += 'If successful, the email should be added to your audience list.\n';
+        }, 1000);
+      } catch (error) {
+        resultsDiv.innerHTML += `<span class="error">ERROR: ${error.message}</span>\n`;
+      }
+    });
+  </script>
+</body>
+</html>

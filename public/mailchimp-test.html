@@ -70,16 +70,21 @@
         resultsDiv.innerHTML += `Using test email: ${testEmail}\n\n`;
         
         // Make the API request
+        resultsDiv.innerHTML += `Sending POST request to /api/mailchimp-direct with email: ${testEmail}\n`;
+        
         const response = await fetch('/api/mailchimp-direct', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
           body: JSON.stringify({
             email: testEmail,
             source: 'API Test Page'
           })
         });
+        
+        resultsDiv.innerHTML += `Response received with status: ${response.status}\n`;
         
         // Parse the response
         const data = await response.json();

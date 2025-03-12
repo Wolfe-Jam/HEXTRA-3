@@ -12,6 +12,9 @@
 
 // Next.js API route format (critical for Vercel)
 export default async function handler(req, res) {
+  console.log('[DIRECT] API route called with method:', req.method);
+  console.log('[DIRECT] Request headers:', req.headers);
+  
   // Set CORS headers immediately - CRITICAL for preventing 405 errors
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -44,7 +47,8 @@ export default async function handler(req, res) {
   
   try {
     // Extract email from request body
-    const { email } = req.body;
+    console.log('[DIRECT] Request body:', req.body);
+    const { email } = req.body || {};
     
     if (!email) {
       return res.status(400).json({
