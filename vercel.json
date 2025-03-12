@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 2, 
   "env": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "NODE_ENV": "production",
