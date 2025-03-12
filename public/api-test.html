@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXTRA API Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .endpoint-test {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+        }
+        .endpoint-test h2 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        .test-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .test-button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HEXTRA API Test</h1>
+        <p>This page tests the various MailChimp API endpoints to verify they're working correctly with the updated Vercel configuration.</p>
+        
+        <div class="endpoint-test">
+            <h2>1. MailChimp Direct API</h2>
+            <p>Tests the /api/mailchimp-direct endpoint with a health check (GET) and subscription (POST).</p>
+            <button class="test-button" onclick="testMailchimpDirect('GET')">Test GET</button>
+            <button class="test-button" onclick="testMailchimpDirect('POST')">Test POST</button>
+            <div id="mailchimp-direct-result" class="result">Results will appear here...</div>
+        </div>
+        
+        <div class="endpoint-test">
+            <h2>2. MailChimp Unified API</h2>
+            <p>Tests the /api/mailchimp-unified endpoint with a health check (GET) and subscription (POST).</p>
+            <button class="test-button" onclick="testMailchimpUnified('GET')">Test GET</button>
+            <button class="test-button" onclick="testMailchimpUnified('POST')">Test POST</button>
+            <div id="mailchimp-unified-result" class="result">Results will appear here...</div>
+        </div>
+        
+        <div class="endpoint-test">
+            <h2>3. MailChimp Subscribe API</h2>
+            <p>Tests the /api/mailchimp-subscribe endpoint with a health check (GET) and subscription (POST).</p>
+            <button class="test-button" onclick="testMailchimpSubscribe('GET')">Test GET</button>
+            <button class="test-button" onclick="testMailchimpSubscribe('POST')">Test POST</button>
+            <div id="mailchimp-subscribe-result" class="result">Results will appear here...</div>
+        </div>
+        
+        <div class="endpoint-test">
+            <h2>4. CORS Preflight Test</h2>
+            <p>Tests the CORS preflight (OPTIONS) handling for all endpoints.</p>
+            <button class="test-button" onclick="testCorsOptions('/api/mailchimp-direct')">Test Direct CORS</button>
+            <button class="test-button" onclick="testCorsOptions('/api/mailchimp-unified')">Test Unified CORS</button>
+            <button class="test-button" onclick="testCorsOptions('/api/mailchimp-subscribe')">Test Subscribe CORS</button>
+            <div id="cors-result" class="result">Results will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        // Test the MailChimp Direct API
+        async function testMailchimpDirect(method) {
+            const resultDiv = document.getElementById('mailchimp-direct-result');
+            resultDiv.innerHTML = 'Testing...';
+            resultDiv.className = 'result';
+            
+            try {
+                let response;
+                if (method === 'GET') {
+                    response = await fetch('/api/mailchimp-direct?check=true', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                } else {
+                    response = await fetch('/api/mailchimp-direct', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: 'test@example.com',
+                            source: 'API Test',
+                            version: '2.2.5',
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                }
+                
+                const statusText = `Status: ${response.status} ${response.statusText}`;
+                
+                try {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `${statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = response.ok ? 'result success' : 'result error';
+                } catch (e) {
+                    resultDiv.innerHTML = `${statusText}\n\nCould not parse JSON response: ${e.message}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        // Test the MailChimp Unified API
+        async function testMailchimpUnified(method) {
+            const resultDiv = document.getElementById('mailchimp-unified-result');
+            resultDiv.innerHTML = 'Testing...';
+            resultDiv.className = 'result';
+            
+            try {
+                let response;
+                if (method === 'GET') {
+                    response = await fetch('/api/mailchimp-unified?check=true', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                } else {
+                    response = await fetch('/api/mailchimp-unified', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: 'test@example.com',
+                            source: 'API Test',
+                            version: '2.2.5',
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                }
+                
+                const statusText = `Status: ${response.status} ${response.statusText}`;
+                
+                try {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `${statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = response.ok ? 'result success' : 'result error';
+                } catch (e) {
+                    resultDiv.innerHTML = `${statusText}\n\nCould not parse JSON response: ${e.message}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        // Test the MailChimp Subscribe API
+        async function testMailchimpSubscribe(method) {
+            const resultDiv = document.getElementById('mailchimp-subscribe-result');
+            resultDiv.innerHTML = 'Testing...';
+            resultDiv.className = 'result';
+            
+            try {
+                let response;
+                if (method === 'GET') {
+                    response = await fetch('/api/mailchimp-subscribe?check=true', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                } else {
+                    response = await fetch('/api/mailchimp-subscribe', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: 'test@example.com',
+                            source: 'API Test',
+                            version: '2.2.5',
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                }
+                
+                const statusText = `Status: ${response.status} ${response.statusText}`;
+                
+                try {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `${statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = response.ok ? 'result success' : 'result error';
+                } catch (e) {
+                    resultDiv.innerHTML = `${statusText}\n\nCould not parse JSON response: ${e.message}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        // Test CORS preflight (OPTIONS) handling
+        async function testCorsOptions(endpoint) {
+            const resultDiv = document.getElementById('cors-result');
+            resultDiv.innerHTML = 'Testing CORS preflight...';
+            resultDiv.className = 'result';
+            
+            try {
+                // We can't directly test OPTIONS with fetch, so we'll simulate it with a custom XMLHttpRequest
+                const xhr = new XMLHttpRequest();
+                xhr.open('OPTIONS', endpoint, true);
+                xhr.setRequestHeader('Access-Control-Request-Method', 'POST');
+                xhr.setRequestHeader('Access-Control-Request-Headers', 'Content-Type, Accept');
+                xhr.setRequestHeader('Origin', window.location.origin);
+                
+                xhr.onload = function() {
+                    const headers = {
+                        'Access-Control-Allow-Origin': xhr.getResponseHeader('Access-Control-Allow-Origin'),
+                        'Access-Control-Allow-Methods': xhr.getResponseHeader('Access-Control-Allow-Methods'),
+                        'Access-Control-Allow-Headers': xhr.getResponseHeader('Access-Control-Allow-Headers'),
+                        'Access-Control-Max-Age': xhr.getResponseHeader('Access-Control-Max-Age')
+                    };
+                    
+                    resultDiv.innerHTML = `Status: ${xhr.status} ${xhr.statusText}\n\nCORS Headers:\n${JSON.stringify(headers, null, 2)}`;
+                    resultDiv.className = xhr.status === 200 ? 'result success' : 'result error';
+                };
+                
+                xhr.onerror = function() {
+                    resultDiv.innerHTML = `Error making OPTIONS request to ${endpoint}`;
+                    resultDiv.className = 'result error';
+                };
+                
+                xhr.send();
+            } catch (error) {
+                resultDiv.innerHTML = `Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>

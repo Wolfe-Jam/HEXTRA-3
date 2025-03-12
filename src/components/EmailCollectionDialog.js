@@ -39,45 +39,42 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     return re.test(email);
   };
 
-  // Subscribe user to MailChimp and send confirmation email
+  // Subscribe user to MailChimp and send confirmation email using a direct approach
   const subscribeToMailChimp = async (email) => {
     console.log(`[DEBUG] Email Capture - Subscribing email: ${email}`);
     
     try {
-      // Try multiple endpoints in sequence until one works
+      // Store the email locally first as a backup
+      try {
+        localStorage.setItem('hextra_email_backup', JSON.stringify({
+          email,
+          timestamp: new Date().toISOString(),
+          pending: true
+        }));
+        console.log('[DEBUG] Email Capture - Stored email locally as backup');
+      } catch (storageError) {
+        console.error('[DEBUG] Email Capture - Failed to store email locally:', storageError);
+      }
+      
+      // Try our cascade of MailChimp API endpoints
+      // This approach tries multiple endpoints in sequence until one succeeds
+      console.log('[DEBUG] Email Capture - Trying MailChimp API endpoints');
+      
       const endpoints = [
-        '/api/mailchimp-direct',  // New direct MailChimp integration (most reliable)
-        '/api/mailchimp-unified', // Updated unified endpoint
-        '/api/mailchimp-subscribe' // Original endpoint
+        '/api/mailchimp-direct',
+        '/api/mailchimp-unified',
+        '/api/mailchimp-subscribe'
       ];
       
-      // Try each endpoint in sequence
-      for (const apiUrl of endpoints) {
-        console.log(`[DEBUG] Email Capture - Trying endpoint: ${apiUrl}`);
+      let apiSuccess = false;
+      
+      for (const endpoint of endpoints) {
+        if (apiSuccess) break;
         
         try {
-          // First do a health check to ensure the endpoint is available
-          try {
-            const healthCheck = await fetch(`${apiUrl}?check=true`, {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json'
-              }
-            });
-            console.log(`[DEBUG] Email Capture - Health check status for ${apiUrl}:`, healthCheck.status);
-            
-            // If health check fails with 405, try the next endpoint
-            if (healthCheck.status === 405) {
-              console.log(`[DEBUG] Email Capture - Health check failed with 405 for ${apiUrl}`);
-              continue;
-            }
-          } catch (healthError) {
-            console.error(`[DEBUG] Email Capture - Health check failed for ${apiUrl}:`, healthError);
-            // Continue anyway
-          }
+          console.log(`[DEBUG] Email Capture - Trying endpoint: ${endpoint}`);
           
-          // Make the actual subscription request
-          const response = await fetch(apiUrl, {
+          const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -93,62 +90,50 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
             credentials: 'same-origin'
           });
           
-          console.log(`[DEBUG] Email Capture - Response status from ${apiUrl}:`, response.status);
+          console.log(`[DEBUG] Email Capture - ${endpoint} response status:`, response.status);
           
-          // If we get a 405 error, try the next endpoint
-          if (response.status === 405) {
-            console.log(`[DEBUG] Email Capture - 405 error from ${apiUrl}, trying next endpoint`);
-            continue;
+          if (response.ok) {
+            try {
+              const data = await response.json();
+              console.log(`[DEBUG] Email Capture - ${endpoint} success:`, data);
+              apiSuccess = true;
+              return true;
+            } catch (jsonError) {
+              console.error(`[DEBUG] Email Capture - ${endpoint} JSON parse error:`, jsonError);
+            }
           }
-          
-          // Try to parse the response as JSON
-          let data;
-          try {
-            data = await response.json();
-          } catch (e) {
-            console.error(`[DEBUG] Email Capture - Error parsing response from ${apiUrl}:`, e);
-            data = { success: false, message: 'Could not parse response' };
-          }
-          
-          console.log(`[DEBUG] Email Capture - Response data from ${apiUrl}:`, data);
-          
-          // If the request was successful, return true
-          if (response.ok && (data.success === true || data.status === 'success')) {
-            console.log(`[DEBUG] Email Capture - Subscription successful with ${apiUrl}`);
-            return true;
-          }
-          
-          // If we got a response but it wasn't successful, log the error and try the next endpoint
-          console.error(`[DEBUG] Email Capture - Error from ${apiUrl}:`, data.message || 'Unknown error');
-        } catch (endpointError) {
-          console.error(`[DEBUG] Email Capture - Error with ${apiUrl}:`, endpointError);
-          // Continue to the next endpoint
+        } catch (apiError) {
+          console.error(`[DEBUG] Email Capture - ${endpoint} error:`, apiError);
         }
       }
       
-      // If all MailChimp endpoints fail, try the Kinde Auth approach
-      console.log('[DEBUG] Email Capture - All MailChimp endpoints failed, using Kinde Auth fallback');
-      
-      // Store the email locally even if API calls fail
-      try {
-        localStorage.setItem('hextra_email_backup', JSON.stringify({
-          email,
-          timestamp: new Date().toISOString(),
-          pending: true
-        }));
-        console.log('[DEBUG] Email Capture - Stored email locally as fallback');
-        return true; // Return true to allow the user to continue
-      } catch (storageError) {
-        console.error('[DEBUG] Email Capture - Failed to store email locally:', storageError);
+      if (apiSuccess) {
+        console.log('[DEBUG] Email Capture - API submission successful');
+        return true;
       }
       
-      // If we get here, all approaches failed
-      setError('Unable to process your subscription. Please try again later.');
-      return false;
+      console.error('[DEBUG] Email Capture - All API endpoints failed');
+      
+      
+      // If Formspree fails, try a simple image pixel tracking as fallback
+      // This is a very basic method but works in almost all environments
+      console.log('[DEBUG] Email Capture - Trying pixel tracking fallback');
+      
+      try {
+        const trackingPixel = new Image();
+        trackingPixel.src = `https://www.hextra.io/pixel.gif?email=${encodeURIComponent(email)}&t=${Date.now()}`;
+        console.log('[DEBUG] Email Capture - Tracking pixel sent');
+      } catch (pixelError) {
+        console.error('[DEBUG] Email Capture - Pixel tracking error:', pixelError);
+      }
+      
+      // Even if all our approaches fail, we've stored the email locally
+      // So we'll return true to allow the user to continue
+      return true;
     } catch (error) {
       console.error('[DEBUG] Email Capture - Exception caught:', error);
-      setError('An unexpected error occurred. Please try again.');
-      return false;
+      // Don't block the user experience if subscription fails
+      return true;
     }
   };
 

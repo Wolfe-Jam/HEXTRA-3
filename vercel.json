@@ -13,39 +13,45 @@
   "buildCommand": "npm run vercel-build",
   "routes": [
     {
-      "src": "/api/email-serverless",
-      "methods": ["GET", "POST", "OPTIONS"],
-      "dest": "/api/email-serverless",
+      "src": "/api/(.*)",
+      "methods": ["OPTIONS"],
+      "status": 200,
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin, Authorization",
+        "Access-Control-Max-Age": "86400"
+      }
+    },
+    {
+      "src": "/api/mailchimp-direct",
+      "methods": ["GET", "POST"],
+      "dest": "/api/mailchimp-direct",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin, Authorization"
       }
     },
     {
       "src": "/api/mailchimp-unified",
-      "methods": ["POST", "OPTIONS"],
+      "methods": ["GET", "POST"],
       "dest": "/api/mailchimp-unified",
       "headers": {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
-      }
-    },
-    {
-      "src": "/api/mailchimp-sdk",
-      "methods": ["POST", "OPTIONS"],
-      "dest": "/api/mailchimp-sdk",
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin, Authorization"
       }
     },
     {
       "src": "/api/mailchimp-subscribe",
-      "methods": ["POST", "OPTIONS"],
-      "dest": "/api/mailchimp-subscribe"
+      "methods": ["GET", "POST"],
+      "dest": "/api/mailchimp-subscribe",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin, Authorization"
+      }
     },
     {
       "src": "/api/mailchimp-config-check",

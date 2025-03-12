@@ -89,8 +89,11 @@
                 <input type="email" id="email" name="email" required>
             </div>
             <input type="hidden" name="_subject" value="New HEXTRA Newsletter Signup">
+            <input type="hidden" name="source" value="standalone-form">
+            <input type="hidden" name="version" value="2.2.5">
+            <input type="hidden" name="timestamp" id="timestamp">
             <input type="hidden" name="_next" value="https://www.hextra.io/thank-you">
-            <button type="submit">Subscribe</button>
+            <button type="submit" id="submit-button">Subscribe</button>
         </form>
         
         <div id="message"></div>
@@ -101,79 +104,41 @@
     </div>
 
     <script>
+        // Set timestamp when the page loads
+        document.getElementById('timestamp').value = new Date().toISOString();
+        
+        // Store email in localStorage as backup when form is submitted
         document.getElementById('email-form').addEventListener('submit', function(e) {
-            // We'll still try our API endpoints first
-            e.preventDefault();
-            
             const email = document.getElementById('email').value;
             const messageDiv = document.getElementById('message');
+            const submitButton = document.getElementById('submit-button');
             
-            // Try our cascade of endpoints
-            tryEndpoints(email)
-                .then(success => {
-                    if (success) {
-                        messageDiv.className = 'success';
-                        messageDiv.textContent = 'Thank you for subscribing!';
-                        document.getElementById('email').value = '';
-                    } else {
-                        // If all API endpoints fail, fall back to Formspree
-                        console.log('All API endpoints failed, submitting form directly');
-                        this.submit();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // If there's an error with our API endpoints, fall back to Formspree
-                    console.log('Error with API endpoints, submitting form directly');
-                    this.submit();
-                });
-        });
-        
-        async function tryEndpoints(email) {
-            const endpoints = [
-                '/api/email-serverless',
-                '/api/email-form',
-                '/api/email-capture',
-                '/api/mailchimp-subscribe'
-            ];
-            
-            for (const endpoint of endpoints) {
-                try {
-                    console.log(`Trying endpoint: ${endpoint}`);
-                    
-                    const response = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            email: email,
-                            source: 'StandaloneForm',
-                            version: '2.2.5',
-                            timestamp: new Date().toISOString()
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.success) {
-                            console.log(`Subscription successful with ${endpoint}`);
-                            return true;
-                        }
-                    }
-                    
-                    if (response.status === 405) {
-                        console.log(`405 error from ${endpoint}, trying next endpoint`);
-                        continue;
-                    }
-                } catch (error) {
-                    console.error(`Error with ${endpoint}:`, error);
-                    // Continue to the next endpoint
-                }
+            // Store the email locally as a backup
+            try {
+                localStorage.setItem('hextra_email_backup', JSON.stringify({
+                    email: email,
+                    timestamp: new Date().toISOString(),
+                    source: 'standalone-form'
+                }));
+                console.log('Email stored in localStorage as backup');
+            } catch (storageError) {
+                console.error('Failed to store email in localStorage:', storageError);
             }
             
-            // If all endpoints fail, return false to trigger the form submission
-            return false;
+            // Update button state
+            submitButton.textContent = 'Subscribing...';
+            submitButton.disabled = true;
+            
+            // Form will submit directly to Formspree
+            // No need to prevent default or try API endpoints
+        });
+        
+        // Check if we're returning from a successful submission
+        if (window.location.search.includes('success=true') || 
+            window.location.pathname.includes('thank-you')) {
+            document.getElementById('message').className = 'success';
+            document.getElementById('message').textContent = 'Thank you for subscribing!';
+            document.getElementById('email').value = '';
         }
     </script>
 </body>
