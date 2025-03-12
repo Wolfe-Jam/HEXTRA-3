@@ -1,13 +1,13 @@
 /**
- * MailChimp Debug Endpoint (v2.2.4)
+ * MailChimp Debug Endpoint (v2.2.5)
  * 
  * Diagnostic endpoint for production troubleshooting
  * - Returns complete environment details (safely)
  * - Reports HTTP request details for debugging
  * - Tests connectivity to MailChimp API
  * 
- * @version 2.2.4
- * @lastUpdated 2023-03-11
+ * @version 2.2.5
+ * @lastUpdated 2025-03-11
  */
 
 const https = require('https');

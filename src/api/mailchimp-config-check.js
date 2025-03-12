@@ -1,12 +1,12 @@
 /**
- * MailChimp Configuration Diagnostic (v2.2.4)
+ * MailChimp Configuration Diagnostic (v2.2.5)
  * 
  * API endpoint to verify MailChimp environment variables
  * - Checks the presence of required environment variables
  * - Returns only boolean flags (not actual values) for security
  * - Helps troubleshoot MailChimp integration issues
  * 
- * @version 2.2.4
+ * @version 2.2.5
  * @lastUpdated 2025-03-11
  */
 

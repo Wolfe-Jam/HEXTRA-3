@@ -1,5 +1,5 @@
 /**
- * MailChimp Subscription API (v2.2.4)
+ * MailChimp Subscription API (v2.2.5)
  * 
  * Simplified, production-ready handler for MailChimp integration
  * - Optimized for serverless and Express environments
@@ -8,8 +8,8 @@
  * - Minimal dependencies for maximum reliability
  * - Fixed 405 Method Not Allowed error
  * 
- * @version 2.2.4
- * @lastUpdated 2023-03-11
+ * @version 2.2.5
+ * @lastUpdated 2025-03-11
  */
 
 // Import only the essential modules
