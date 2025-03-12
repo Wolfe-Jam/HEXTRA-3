@@ -66,7 +66,7 @@ export default async function handler(req, res) {
     // The API key format should be: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-usXX
     const API_KEY = process.env.MAILCHIMP_API_KEY || '9f57a2f6a75ea109e2c1c4c27-us21';
     const LIST_ID = process.env.MAILCHIMP_LIST_ID || '5b2a2cb0b7'; // UPDATED with correct audience ID
-    const API_SERVER = 'us21'; // Extract from API key or use environment variable
+    const API_SERVER = process.env.MAILCHIMP_API_SERVER || 'us21'; // Extract from API key or use environment variable
     
     console.log('[DIRECT] Using MailChimp credentials:', { 
       API_SERVER, 
@@ -101,9 +101,22 @@ export default async function handler(req, res) {
     const MAILCHIMP_ENDPOINT = `https://${API_SERVER}.api.mailchimp.com/3.0/lists/${LIST_ID}/members`;
     console.log(`[DIRECT] Making request to MailChimp API: ${MAILCHIMP_ENDPOINT}`);
     
-    // Create proper authorization header
+    // Create proper authorization header - CRITICAL: API key must be in correct format
+    // The format should be: anystring:API_KEY where API_KEY is xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-usXX
     const auth = Buffer.from(`anystring:${API_KEY}`).toString('base64');
     console.log('[DIRECT] Authorization header created (length):', auth.length);
+    console.log('[DIRECT] API Key format check:', API_KEY.includes('-us'));
+    
+    // Log the full request details for debugging
+    console.log('[DIRECT] Full request details:', {
+      url: MAILCHIMP_ENDPOINT,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${auth.substring(0, 10)}...` // Log partial for security
+      },
+      body: JSON.stringify(data)
+    });
     
     const response = await fetch(MAILCHIMP_ENDPOINT, {
       method: 'POST',
