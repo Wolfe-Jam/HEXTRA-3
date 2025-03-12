@@ -1,0 +1,10 @@
+VERCEL WEBHOOK TEST
+
+This file was created as a last attempt to trigger Vercel's GitHub webhook detection.
+Several previous attempts have failed, including:
+- Changes to vercel.json
+- Version bumps
+- Trigger files
+- Direct Git pushes
+
+Timestamp: 2025-03-11 20:56
