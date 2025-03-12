@@ -56,66 +56,68 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         console.error('[DEBUG] Email Capture - Failed to store email locally:', storageError);
       }
       
-      // Try our cascade of MailChimp API endpoints
-      // This approach tries multiple endpoints in sequence until one succeeds
-      console.log('[DEBUG] Email Capture - Trying MailChimp API endpoints');
+      // Use direct MailChimp integration instead of API routes
+      // This bypasses all API routes and avoids 405 errors
+      console.log('[DEBUG] Email Capture - Using direct MailChimp integration');
       
-      // Use relative paths to avoid cross-origin issues
-      const endpoints = [
-        '/api/mailchimp-direct',
-        '/api/mailchimp-unified',
-        '/api/mailchimp-subscribe'
-      ];
+      // MailChimp configuration
+      const MAILCHIMP_URL = 'https://hextra.us21.list-manage.com/subscribe/post';
+      const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // Your MailChimp user ID
+      const MAILCHIMP_ID = '15a9e53a0a'; // Your MailChimp list ID
       
       let apiSuccess = false;
       
-      for (const endpoint of endpoints) {
-        if (apiSuccess) break;
+      try {
+        // Create a form element for direct submission
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}`;
+        form.target = '_blank';
+        form.style.display = 'none';
         
-        try {
-          console.log(`[DEBUG] Email Capture - Trying endpoint: ${endpoint}`);
-          
-          // Use relative paths with same-origin credentials
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Origin': window.location.origin
-            },
-            body: JSON.stringify({
-              email: email,
-              source: 'EmailCollectionDialog',
-              version: '2.2.5',
-              timestamp: new Date().toISOString()
-            }),
-            credentials: 'same-origin',
-            mode: 'cors' // Explicitly set CORS mode
-          });
-          
-          console.log(`[DEBUG] Email Capture - ${endpoint} response status:`, response.status);
-          
-          if (response.ok) {
-            try {
-              const data = await response.json();
-              console.log(`[DEBUG] Email Capture - ${endpoint} success:`, data);
-              apiSuccess = true;
-              return true;
-            } catch (jsonError) {
-              console.error(`[DEBUG] Email Capture - ${endpoint} JSON parse error:`, jsonError);
-            }
-          }
-        } catch (apiError) {
-          console.error(`[DEBUG] Email Capture - ${endpoint} error:`, apiError);
-        }
+        // Add email field
+        const emailInput = document.createElement('input');
+        emailInput.type = 'email';
+        emailInput.name = 'EMAIL';
+        emailInput.value = email;
+        form.appendChild(emailInput);
+        
+        // Add source tracking field
+        const sourceInput = document.createElement('input');
+        sourceInput.type = 'hidden';
+        sourceInput.name = 'SOURCE';
+        sourceInput.value = 'HEXTRA-EmailDialog-v2.2.5';
+        form.appendChild(sourceInput);
+        
+        // Add honeypot field (anti-spam)
+        const honeypotInput = document.createElement('input');
+        honeypotInput.type = 'text';
+        honeypotInput.name = `b_${MAILCHIMP_U}_${MAILCHIMP_ID}`;
+        honeypotInput.value = '';
+        honeypotInput.style.display = 'none';
+        form.appendChild(honeypotInput);
+        
+        // Add form to document and submit
+        document.body.appendChild(form);
+        form.submit();
+        
+        console.log('[DEBUG] Email Capture - Direct MailChimp form submitted');
+        apiSuccess = true;
+        
+        // Clean up form
+        setTimeout(() => {
+          document.body.removeChild(form);
+        }, 1000);
+      } catch (error) {
+        console.error('[DEBUG] Email Capture - Direct MailChimp integration error:', error);
       }
       
       if (apiSuccess) {
-        console.log('[DEBUG] Email Capture - API submission successful');
+        console.log('[DEBUG] Email Capture - Direct MailChimp submission successful');
         return true;
       }
       
-      console.error('[DEBUG] Email Capture - All API endpoints failed');
+      console.error('[DEBUG] Email Capture - Direct MailChimp integration failed');
       
       
       // If Formspree fails, try a simple image pixel tracking as fallback
