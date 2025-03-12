@@ -94,6 +94,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         form.action = `${MAILCHIMP_URL}`;
         form.target = '_blank';
         form.style.display = 'none';
+        form.setAttribute('novalidate', '');
         
         // Add required MailChimp parameters
         const uInput = document.createElement('input');
@@ -130,12 +131,27 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
         honeypotInput.style.display = 'none';
         form.appendChild(honeypotInput);
         
-        // Add success redirect URL
+        // Add success redirect URL (using MailChimp's standard format)
         const redirectInput = document.createElement('input');
         redirectInput.type = 'hidden';
         redirectInput.name = 'success_url';
-        redirectInput.value = window.location.href + '?mailchimp_success=true';
+        redirectInput.value = window.location.href + '?result=success';
         form.appendChild(redirectInput);
+        
+        // Add submit button (required by MailChimp)
+        const submitButton = document.createElement('input');
+        submitButton.type = 'submit';
+        submitButton.name = 'subscribe';
+        submitButton.value = 'Subscribe';
+        submitButton.style.display = 'none';
+        form.appendChild(submitButton);
+        
+        // Add required tags field
+        const tagsInput = document.createElement('input');
+        tagsInput.type = 'hidden';
+        tagsInput.name = 'tags';
+        tagsInput.value = 'HEXTRA,website,dialog';
+        form.appendChild(tagsInput);
         
         // Add form to document and submit
         document.body.appendChild(form);
