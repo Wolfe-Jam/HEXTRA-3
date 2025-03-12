@@ -42,13 +42,26 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
          window.location.search.includes('result=success'))) {
       console.log('[DEBUG] Email Capture - Detected successful MailChimp submission');
       
+      // Try to get the email from localStorage
+      let storedEmail = '';
+      try {
+        const storedData = localStorage.getItem('hextra_email_backup');
+        if (storedData) {
+          const parsedData = JSON.parse(storedData);
+          storedEmail = parsedData.email || '';
+          console.log('[DEBUG] Email Capture - Retrieved email from localStorage:', storedEmail);
+        }
+      } catch (error) {
+        console.error('[DEBUG] Email Capture - Failed to retrieve email from localStorage:', error);
+      }
+      
       // Clean up the URL
       const cleanUrl = window.location.href.split('?')[0];
       window.history.replaceState({}, document.title, cleanUrl);
       
       // Close the dialog with success
-      if (onSubmit && email) {
-        onSubmit(email);
+      if (onSubmit && (email || storedEmail)) {
+        onSubmit(email || storedEmail);
       }
       onClose();
     }
@@ -60,7 +73,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     return re.test(email);
   };
 
-  // Subscribe user to MailChimp using server-side API call
+  // Subscribe user to MailChimp using direct form submission
   const subscribeToMailChimp = async (email) => {
     console.log(`[DEBUG] Email Capture - Subscribing email: ${email}`);
     
@@ -80,61 +93,94 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       // Set success message for user feedback
       setSuccessMessage('Success!\nYour download is ready.');
       
-      let apiSuccess = false;
+      // MailChimp direct form submission configuration
+      const MAILCHIMP_URL = 'https://hextra.us21.list-manage.com/subscribe/post';
+      const MAILCHIMP_U = '9f57a2f6a75ea109e2c1c4c27'; // MailChimp user ID
+      const MAILCHIMP_ID = '5b2a2cb0b7'; // MailChimp audience ID
       
-      // Use server-side API call
-      console.log('[DEBUG] Email Capture - Using server-side API call');
+      console.log('[DEBUG] Email Capture - Using direct form submission to MailChimp');
+      console.log(`[DEBUG] Email Capture - MailChimp URL: ${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}`);
       
+      // Create a form element
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}`;
+      // Add success redirect URL
+      const successRedirect = `${window.location.href.split('?')[0]}?mailchimp_success=true`;
+      form.action = `${MAILCHIMP_URL}?u=${MAILCHIMP_U}&id=${MAILCHIMP_ID}&success=${encodeURIComponent(successRedirect)}`;
+      form.target = '_self'; // Stay in the same tab for redirect handling
+      form.style.display = 'none'; // Hide the form
+      
+      // Add email field
+      const emailField = document.createElement('input');
+      emailField.type = 'email';
+      emailField.name = 'EMAIL';
+      emailField.value = email;
+      form.appendChild(emailField);
+      
+      // Add source tracking field
+      const sourceField = document.createElement('input');
+      sourceField.type = 'hidden';
+      sourceField.name = 'SOURCE';
+      sourceField.value = 'HEXTRA-EmailDialog-v2.2.5';
+      form.appendChild(sourceField);
+      
+      // Add anti-spam honeypot field (required by MailChimp)
+      const honeypotField = document.createElement('input');
+      honeypotField.type = 'text';
+      honeypotField.name = `b_${MAILCHIMP_U}_${MAILCHIMP_ID}`;
+      honeypotField.value = '';
+      honeypotField.style.display = 'none';
+      form.appendChild(honeypotField);
+      
+      // Add tags field
+      const tagsField = document.createElement('input');
+      tagsField.type = 'hidden';
+      tagsField.name = 'tags';
+      tagsField.value = 'HEXTRA,WebApp';
+      form.appendChild(tagsField);
+      
+      // Add submit button (required by MailChimp)
+      const submitButton = document.createElement('input');
+      submitButton.type = 'submit';
+      submitButton.name = 'subscribe';
+      submitButton.value = 'Subscribe';
+      form.appendChild(submitButton);
+      
+      // Add the form to the document
+      document.body.appendChild(form);
+      
+      // Submit the form
+      console.log('[DEBUG] Email Capture - Submitting form to MailChimp');
+      form.submit();
+      
+      // Remove the form after submission
+      setTimeout(() => {
+        document.body.removeChild(form);
+        console.log('[DEBUG] Email Capture - Form submitted and removed');
+      }, 1000);
+      
+      // Mark as successful in local storage
       try {
-        // Make a direct API call to MailChimp
-        const response = await fetch('/api/mailchimp-direct', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: email,
-            source: 'HEXTRA-EmailDialog-v2.2.5'
-          })
-        });
+        console.log('[DEBUG] Email Capture - Direct form submission initiated');
         
-        const result = await response.json();
-        console.log('[DEBUG] Email Capture - MailChimp API response:', result);
+        // Update local storage to mark as successful
+        localStorage.setItem('hextra_email_backup', JSON.stringify({
+          email,
+          timestamp: new Date().toISOString(),
+          pending: false,
+          success: true
+        }));
         
-        if (response.ok) {
-          console.log('[DEBUG] Email Capture - MailChimp API call successful');
-          apiSuccess = true;
-          
-          // Update local storage to mark as successful
-          try {
-            localStorage.setItem('hextra_email_backup', JSON.stringify({
-              email,
-              timestamp: new Date().toISOString(),
-              pending: false,
-              success: true
-            }));
-          } catch (storageError) {
-            console.error('[DEBUG] Email Capture - Failed to update localStorage:', storageError);
-          }
-        } else {
-          console.error('[DEBUG] Email Capture - MailChimp API call failed:', result);
-        }
-      } catch (error) {
-        console.error('[DEBUG] Email Capture - MailChimp API call error:', error);
+        console.log('[DEBUG] Email Capture - Local storage updated with success status');
+      } catch (storageError) {
+        console.error('[DEBUG] Email Capture - Failed to update local storage:', storageError);
       }
       
-      if (apiSuccess) {
-        console.log('[DEBUG] Email Capture - MailChimp submission successful');
-        return true;
-      }
+      // Add success URL redirect parameter
+      console.log('[DEBUG] Email Capture - Form submitted successfully');
       
-      console.error('[DEBUG] Email Capture - MailChimp integration failed');
-      
-      
-      // If Formspree fails, try a simple image pixel tracking as fallback
-      // This is a very basic method but works in almost all environments
-      console.log('[DEBUG] Email Capture - Trying pixel tracking fallback');
-      
+      // Add a success tracking pixel as a backup
       try {
         const trackingPixel = new Image();
         trackingPixel.src = `https://www.hextra.io/pixel.gif?email=${encodeURIComponent(email)}&t=${Date.now()}`;
