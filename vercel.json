@@ -17,25 +17,20 @@
       "destination": "/index.html"
     },
     {
+      "source": "/api/mailchimp-subscribe",
+      "destination": "/api/mailchimp-subscribe"
+    },
+    {
+      "source": "/api/mailchimp-config-check",
+      "destination": "/api/mailchimp-config-check"
+    },
+    {
+      "source": "/api/mailchimp-debug",
+      "destination": "/api/mailchimp-debug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/mailchimp-subscribe",
-      "methods": ["POST", "OPTIONS"],
-      "dest": "/api/mailchimp-subscribe"
-    },
-    {
-      "src": "/api/mailchimp-config-check",
-      "methods": ["GET"],
-      "dest": "/api/mailchimp-config-check"
-    },
-    {
-      "src": "/api/mailchimp-debug",
-      "methods": ["GET", "OPTIONS"],
-      "dest": "/api/mailchimp-debug"
     }
   ]
 }
