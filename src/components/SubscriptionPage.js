@@ -8,6 +8,18 @@ import { VERSION } from '../version';
 import Banner from './Banner';
 import { useTheme } from '../context';
 
+// Define keyframe animations for the badges
+const keyframes = `
+  @keyframes crownPulse { 
+    0% { transform: scale(1) rotate(10deg); opacity: 0.9; } 
+    100% { transform: scale(1.15) rotate(10deg); opacity: 1; } 
+  }
+  @keyframes starPulse { 
+    0% { transform: scale(1) rotate(10deg); opacity: 0.9; } 
+    100% { transform: scale(1.15) rotate(15deg); opacity: 1; } 
+  }
+`;
+
 export default function SubscriptionPage() {
   const { isAuthenticated: kindeAuthenticated, user, login } = useKindeAuth();
   const isAuthenticated = true; // Force authenticated for local development
@@ -115,6 +127,26 @@ export default function SubscriptionPage() {
       navigate('/app');
     });
   };
+
+  // Add keyframes to the document
+  React.useEffect(() => {
+    // Check if the style element already exists
+    const existingStyle = document.getElementById('subscription-keyframes');
+    if (!existingStyle) {
+      const styleElement = document.createElement('style');
+      styleElement.id = 'subscription-keyframes';
+      styleElement.innerHTML = keyframes;
+      document.head.appendChild(styleElement);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      const styleElement = document.getElementById('subscription-keyframes');
+      if (styleElement) {
+        document.head.removeChild(styleElement);
+      }
+    };
+  }, []);
 
   return (
     <div style={{ 
@@ -290,12 +322,72 @@ export default function SubscriptionPage() {
                 }
               }}
             >
-              <div>
+              <div style={{ position: 'relative' }}>
+                {/* Badge for plan type */}
+                <div style={{ 
+                  position: 'absolute',
+                  top: '-15px',
+                  right: '-15px',
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  backgroundColor: plan.name.includes('Pro') ? '#224D8F' : '#00805E', // Exact brand colors from Banner
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'League Spartan', sans-serif",
+                  fontSize: '1.1rem',
+                  fontWeight: 700,
+                  boxShadow: `0 3px 10px rgba(0,0,0,0.3), 0 0 15px ${plan.name.includes('Pro') ? 'rgba(34, 77, 143, 0.5)' : 'rgba(0, 128, 94, 0.5)'}`,
+                  border: '3px solid #FFFFFF',
+                  outline: `1px solid ${plan.name.includes('Pro') ? '#224D8F' : '#00805E'}`,
+                  zIndex: 2,
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                    boxShadow: `0 5px 15px rgba(0,0,0,0.4), 0 0 20px ${plan.name.includes('Pro') ? 'rgba(34, 77, 143, 0.7)' : 'rgba(0, 128, 94, 0.7)'}`
+                  }
+                }}>
+                  {/* Plan initial with badge */}
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {plan.name.includes('Pro') ? 'P' : 'E'}
+                    <span style={{ 
+                      position: 'absolute',
+                      top: plan.name.includes('Pro') ? '-18px' : '-16px',
+                      right: '-14px',
+                      fontSize: plan.name.includes('Pro') ? '22px' : '18px', // Reduced star size
+                      lineHeight: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#FFC700', // Gold color for both crown and star
+                      // Add outline using text-shadow with page background color
+                      textShadow: `
+                        0 0 4px rgba(255, 199, 0, 0.8),
+                        -1px -1px 0 var(--bg-primary),  
+                        1px -1px 0 var(--bg-primary),
+                        -1px 1px 0 var(--bg-primary),
+                        1px 1px 0 var(--bg-primary)
+                      `,
+                      transform: 'rotate(15deg)',
+                      fontWeight: 'bold',
+                      animation: `${plan.name.includes('Pro') ? 'crownPulse' : 'starPulse'} 2s infinite alternate`,
+                      zIndex: 3
+                    }}>
+                      {plan.name.includes('Pro') ? '♛' : '★'}
+                    </span>
+                  </div>
+                </div>
                 <h3 style={{ 
                   marginBottom: '10px', 
-                  color: plan.name.includes('Pro') ? '#224D8F' : '#00805E',
+                  color: plan.name.includes('Pro') ? 
+                    (theme === 'dark' ? '#4A7CC7' : '#224D8F') : 
+                    '#00805E',
                   fontFamily: "'League Spartan', sans-serif",
-                  fontSize: '1.3rem'
+                  fontSize: '1.3rem',
+                  fontWeight: 700,
+                  textShadow: theme === 'dark' && plan.name.includes('Pro') ? '0px 0px 1px rgba(255,255,255,0.5)' : 'none'
                 }}>{plan.name}</h3>
                 <Typography variant="h5" sx={{ 
                   marginBottom: '15px',
