@@ -9,6 +9,18 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const BRAND_COLORS = ['#D50032', '#00805E', '#224D8F'];  // Red, Green, Blue
 
+// Define keyframe animations for the badges
+const keyframes = `
+  @keyframes crownPulse { 
+    0% { transform: scale(1) rotate(10deg); opacity: 0.9; } 
+    100% { transform: scale(1.15) rotate(10deg); opacity: 1; } 
+  }
+  @keyframes starPulse { 
+    0% { transform: scale(1) rotate(10deg); opacity: 0.9; } 
+    100% { transform: scale(1.15) rotate(15deg); opacity: 1; } 
+  }
+`;
+
 const Banner = ({
   version,
   isDarkMode = false,
@@ -19,6 +31,26 @@ const Banner = ({
 }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  
+  // Add keyframes to the document
+  React.useEffect(() => {
+    // Check if the style element already exists
+    const existingStyle = document.getElementById('banner-badge-keyframes');
+    if (!existingStyle) {
+      const styleElement = document.createElement('style');
+      styleElement.id = 'banner-badge-keyframes';
+      styleElement.innerHTML = keyframes;
+      document.head.appendChild(styleElement);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      const styleElement = document.getElementById('banner-badge-keyframes');
+      if (styleElement) {
+        document.head.removeChild(styleElement);
+      }
+    };
+  }, []);
   const { isAuthenticated, user, login, logout } = useKindeAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -187,12 +219,31 @@ const Banner = ({
             onClick={() => {
               if (!isAuthenticated) {
                 startTransition(() => {
-                  navigate('/subscription#available-plans');
+                  // Navigate to subscription page and scroll to make 'Available Plans' visible below the logo
+                  // Simple function to scroll to the Available Plans section
+                  const scrollToAvailablePlans = () => {
+                    console.log('Scrolling to Available Plans section');
+                    // Use a reliable fixed position that works across devices
+                    window.scrollTo({
+                      top: 500,
+                      behavior: 'smooth'
+                    });
+                  };
+                  
+                  if (isSubscriptionPage) {
+                    // If already on subscription page, scroll directly
+                    scrollToAvailablePlans();
+                  } else {
+                    // Navigate to subscription page first, then scroll after page loads
+                    navigate('/subscription');
+                    // Use a longer timeout to ensure the page is fully loaded
+                    setTimeout(scrollToAvailablePlans, 800);
+                  }
                 });
               }
             }}
           >
-            {isAuthenticated && user?.email ? user.email : 'Subscribe for premium features'}
+            {isAuthenticated && user?.email ? user.email : 'Level-Up'}
           </Typography>
         </Box>
 
@@ -308,18 +359,27 @@ const Banner = ({
                 {/* Crown symbol for PRO users */}
                 <Box sx={{ 
                   position: 'absolute', 
-                  top: '-1px', 
-                  right: '-1px', 
-                  width: '12px', 
-                  height: '12px',
-                  fontSize: '12px',
+                  top: '-4px', 
+                  right: '-4px', 
+                  width: '14px', 
+                  height: '14px',
+                  fontSize: '14px',
                   lineHeight: 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#FFC700',
+                  textShadow: `
+                    0 0 3px rgba(255, 199, 0, 0.6),
+                    -0.5px -0.5px 0 var(--bg-primary),  
+                    0.5px -0.5px 0 var(--bg-primary),
+                    -0.5px 0.5px 0 var(--bg-primary),
+                    0.5px 0.5px 0 var(--bg-primary)
+                  `,
+                  zIndex: 3,
+                  animation: 'crownPulse 2s infinite alternate',
                 }}>
-                  ♔
+                  ♛
                 </Box>
                 {userInitial}
               </GlowIconButton>
@@ -328,13 +388,24 @@ const Banner = ({
             <Tooltip title={`Early Bird User: ${emailUser.email || 'Email User'}`}>
               <GlowIconButton
                 onClick={() => startTransition(() => {
+                  // Simple function to scroll to the Available Plans section
+                  const scrollToAvailablePlans = () => {
+                    console.log('Scrolling to Available Plans section');
+                    // Use a reliable fixed position that works across devices
+                    window.scrollTo({
+                      top: 500,
+                      behavior: 'smooth'
+                    });
+                  };
+                  
                   if (isSubscriptionPage) {
-                    const availablePlansSection = document.getElementById('available-plans');
-                    if (availablePlansSection) {
-                      availablePlansSection.scrollIntoView({ behavior: 'smooth' });
-                    }
+                    // If already on subscription page, scroll directly
+                    scrollToAvailablePlans();
                   } else {
-                    navigate('/subscription#available-plans');
+                    // Navigate to subscription page first, then scroll after page loads
+                    navigate('/subscription');
+                    // Use a longer timeout to ensure the page is fully loaded
+                    setTimeout(scrollToAvailablePlans, 800);
                   }
                 })}
                 sx={{
@@ -351,21 +422,30 @@ const Banner = ({
                   }
                 }}
               >
-                {/* Leaf symbol for Early Bird users */}
+                {/* Star symbol for Early Bird users */}
                 <Box sx={{ 
                   position: 'absolute', 
-                  top: '-1px', 
-                  right: '-1px', 
-                  width: '12px', 
-                  height: '12px',
-                  fontSize: '12px',
+                  top: '-4px', 
+                  right: '-4px', 
+                  width: '14px', 
+                  height: '14px',
+                  fontSize: '14px',
                   lineHeight: 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#CCFF90',
+                  color: '#FFC700', // Gold color to match Pro crown
+                  textShadow: `
+                    0 0 3px rgba(255, 199, 0, 0.6),
+                    -0.5px -0.5px 0 var(--bg-primary),  
+                    0.5px -0.5px 0 var(--bg-primary),
+                    -0.5px 0.5px 0 var(--bg-primary),
+                    0.5px 0.5px 0 var(--bg-primary)
+                  `,
+                  zIndex: 3,
+                  animation: 'starPulse 2s infinite alternate',
                 }}>
-                  ☘
+                  ★
                 </Box>
                 {userInitial}
               </GlowIconButton>
@@ -374,13 +454,24 @@ const Banner = ({
             <Tooltip title="Free Version - Sign Up for More Features">  
               <GlowIconButton
                 onClick={() => startTransition(() => {
+                  // Simple function to scroll to the Available Plans section
+                  const scrollToAvailablePlans = () => {
+                    console.log('Scrolling to Available Plans section');
+                    // Use a reliable fixed position that works across devices
+                    window.scrollTo({
+                      top: 500,
+                      behavior: 'smooth'
+                    });
+                  };
+                  
                   if (isSubscriptionPage) {
-                    const availablePlansSection = document.getElementById('available-plans');
-                    if (availablePlansSection) {
-                      availablePlansSection.scrollIntoView({ behavior: 'smooth' });
-                    }
+                    // If already on subscription page, scroll directly
+                    scrollToAvailablePlans();
                   } else {
-                    navigate('/subscription#available-plans');
+                    // Navigate to subscription page first, then scroll after page loads
+                    navigate('/subscription');
+                    // Use a longer timeout to ensure the page is fully loaded
+                    setTimeout(scrollToAvailablePlans, 800);
                   }
                 })}
                 sx={{
