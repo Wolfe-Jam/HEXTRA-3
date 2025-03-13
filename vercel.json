@@ -12,7 +12,6 @@
   },
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "build",
-  "cacheOutputs": true,
   "routes": [
     {
       "src": "/api/(.*)",
