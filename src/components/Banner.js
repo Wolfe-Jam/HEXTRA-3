@@ -294,13 +294,13 @@ const Banner = ({
                   width: '32px',
                   height: '32px',
                   position: 'relative',
-                  backgroundColor: BRAND_COLORS[1], // Green for PRO users
+                  backgroundColor: BRAND_COLORS[2], // Blue #224D8F for PRO users
                   color: '#FFFFFF',
                   fontFamily: "'League Spartan', sans-serif",
                   fontSize: '0.85rem',
                   fontWeight: 700,
                   '&:hover': {
-                    backgroundColor: '#006F51', // Darker green on hover
+                    backgroundColor: '#1A3B6D', // Darker blue on hover
                     transform: 'scale(1.05)'
                   }
                 }}
@@ -325,7 +325,7 @@ const Banner = ({
               </GlowIconButton>
             </Tooltip>
           ) : emailUser ? (
-            <Tooltip title={`Popular Plan: ${emailUser.email || 'Email User'}`}>
+            <Tooltip title={`Early Bird User: ${emailUser.email || 'Email User'}`}>
               <GlowIconButton
                 onClick={() => startTransition(() => {
                   if (isSubscriptionPage) {
@@ -340,18 +340,18 @@ const Banner = ({
                 sx={{
                   width: '32px',
                   height: '32px',
-                  backgroundColor: '#D35400', // Orange for Popular plan
+                  backgroundColor: BRAND_COLORS[1], // Green #00805E for Early Bird users
                   color: '#FFFFFF',
                   fontFamily: "'League Spartan', sans-serif",
                   fontSize: '0.85rem',
                   fontWeight: 700,
                   '&:hover': {
-                    backgroundColor: '#A04000',
+                    backgroundColor: '#006F51', // Darker green on hover
                     transform: 'scale(1.05)'
                   }
                 }}
               >
-                {/* Star for Popular plan */}
+                {/* Leaf symbol for Early Bird users */}
                 <Box sx={{ 
                   position: 'absolute', 
                   top: '-1px', 
@@ -363,15 +363,15 @@ const Banner = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#FFEB3B',
+                  color: '#CCFF90',
                 }}>
-                  ★
+                  ☘
                 </Box>
                 {userInitial}
               </GlowIconButton>
             </Tooltip>
           ) : (
-            <Tooltip title="Upgrade to Popular or Pro Plan">  
+            <Tooltip title="Free Version - Sign Up for More Features">  
               <GlowIconButton
                 onClick={() => startTransition(() => {
                   if (isSubscriptionPage) {
@@ -386,13 +386,13 @@ const Banner = ({
                 sx={{
                   width: '32px',
                   height: '32px',
-                  backgroundColor: BRAND_COLORS[0], // Red for free users
+                  backgroundColor: BRAND_COLORS[0], // Red #D50032 for free users
                   color: '#FFFFFF',
                   fontFamily: "'League Spartan', sans-serif",
                   fontSize: '0.85rem',
                   fontWeight: 700,
                   '&:hover': {
-                    backgroundColor: '#B3002B',
+                    backgroundColor: '#B3002B', // Darker red on hover
                     transform: 'scale(1.05)'
                   }
                 }}
