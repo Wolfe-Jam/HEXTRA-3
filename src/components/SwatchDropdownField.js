@@ -149,17 +149,7 @@ const SwatchDropdownField = forwardRef(({
   const handleKeyDown = (event) => {
     if (event.key === 'Enter' && onEnterPress) {
       event.preventDefault();
-      event.stopPropagation(); // Stop event propagation to prevent other handlers from capturing it
       onEnterPress('keyboard');
-      
-      // Ensure the input maintains focus after Enter is pressed
-      if (ref && ref.current) {
-        setTimeout(() => {
-          if (ref.current) {
-            ref.current.focus();
-          }
-        }, 0);
-      }
     }
   };
   
@@ -351,6 +341,15 @@ const SwatchDropdownField = forwardRef(({
             padding: '6px 10px', // More compact dropdown items
           }
         }
+      }}
+      PopperProps={{
+        placement: 'bottom-start',
+        modifiers: [
+          {
+            name: 'flip',
+            enabled: false, // Disable the flip behavior to force dropdown to always open downward
+          }
+        ]
       }}
       renderGroup={(params) => {
         if (!isGrouped) return params.children;

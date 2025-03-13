@@ -1310,13 +1310,13 @@ function App() {
                   alignItems: "center",
                   px: 1,
                   mt: 2.5, // Reduced from 3.5px since we removed the text labels
-                  mb: 0.5,
+                  mb: 2, // Adjusted since markers are now closer to the slider
                   outline: '1px solid rgba(200, 200, 200, 0.2)'
                 }}>
                   {/* Grayscale Markers */}
                   <Box sx={{
                     position: 'absolute',
-                    top: '-14px', 
+                    bottom: '-14px', 
                     left: 0,
                     right: 0,
                     display: 'flex',
@@ -1382,14 +1382,14 @@ function App() {
                                   : (marker.color === '#FFFFFF' ? '1.5px solid rgba(0, 0, 0, 0.8)' : '1px solid rgba(100, 100, 100, 0.7)'),
                                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
                                 position: 'relative',
-                                transform: 'translateY(-2px)', // Slightly raised to be more visible
+                                transform: 'translateY(0)', // Slightly lowered to be more visible below the slider
                                 cursor: 'pointer !important', // Force pointer cursor
                                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                                 padding: 0, // Remove default button padding
                                 margin: 0,  // Remove default button margin
                                 outline: 'none', // Remove default focus outline
                                 '&:hover': {
-                                  transform: 'translateY(-4px) scale(1.15)', // Elevate and enlarge slightly on hover
+                                  transform: 'translateY(2px) scale(1.15)', // Lower and enlarge slightly on hover
                                   boxShadow: '0 3px 5px rgba(0, 0, 0, 0.4)', // Enhanced shadow on hover
                                   borderColor: '#FF9900', // Highlight with app's orange accent color
                                   zIndex: 2
@@ -1533,15 +1533,9 @@ function App() {
                 value={selectedColor}
                 onChange={handleHexInputChange}
                 onEnterPress={(trigger) => {
-                  // Ensure we have the latest color value
                   handleHexInputChange(trigger);
-                  // Save to recent colors
                   saveToRecentColors(selectedColor);
-                  // Force immediate color processing
-                  setTimeout(() => {
-                    processColor();
-                    console.log('Color processing triggered by Enter key');
-                  }, 0);
+                  processColor();
                 }}
                 onDropdownSelect={handleDropdownSelect}
                 options={COLOR_GROUPS}
