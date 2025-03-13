@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-async function handler(req, res) {
+async export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -55,6 +55,3 @@ async function handler(req, res) {
     res.status(500).json({ message: 'Error creating checkout session' });
   }
 }
-
-// Export handler for compatibility with Vercel API routes
-module.exports = handler;

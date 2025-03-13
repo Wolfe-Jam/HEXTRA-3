@@ -17,7 +17,7 @@ const crypto = require('crypto');
 /**
  * Handles request for MailChimp subscription
  */
-async function handler(req, res) {
+async export default async function handler(req, res) {
   // Critical: Set CORS headers first, before any processing
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*'); 
@@ -140,5 +140,3 @@ async function handler(req, res) {
     });
   }
 }
-
-module.exports = handler;

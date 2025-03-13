@@ -9,7 +9,7 @@
  * @lastUpdated 2025-03-12
  */
 
-async function handler(req, res) {
+async export default async function handler(req, res) {
   // Set CORS headers first
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*'); 
@@ -79,6 +79,3 @@ async function handler(req, res) {
     });
   }
 }
-
-// Export handler for compatibility with Vercel API routes
-module.exports = handler;

@@ -10,7 +10,7 @@
  * @lastUpdated 2025-03-12
  */
 
-function handler(req, res) {
+export default function handler(req, res) {
   // Log request details
   console.log(`[TEST API] Request received: ${req.method} ${req.url}`);
   console.log(`[TEST API] Headers:`, JSON.stringify(req.headers));
@@ -42,6 +42,3 @@ function handler(req, res) {
     }
   });
 }
-
-// Export handler for compatibility with Vercel API routes
-module.exports = handler;
