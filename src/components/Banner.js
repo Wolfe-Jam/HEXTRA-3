@@ -1,17 +1,11 @@
 import React, { useState, useMemo, useEffect, useContext, useTransition } from 'react';
 import { Box, Typography, IconButton, Button, Tooltip, Divider, Menu, MenuItem, ListItemIcon } from '@mui/material';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AboutDialog from './AboutDialog';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { VERSION } from '../version';
 import GlowIconButton from './GlowIconButton';
 import { useNavigate, useLocation } from 'react-router-dom';
-import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
-import HomeIcon from '@mui/icons-material/Home';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
 
 const BRAND_COLORS = ['#D50032', '#00805E', '#224D8F'];  // Red, Green, Blue
 
@@ -212,21 +206,25 @@ const Banner = ({
             display: 'flex',
             justifyContent: 'center',
             zIndex: 1100,
-            marginTop: '-5px',
-            pointerEvents: 'none'
+            marginTop: '-5px'
           }}
         >
           <Box
             component="img"
             src={isDarkMode ? '/images/HEXTRA-3-logo-Wht.svg' : '/images/HEXTRA-3-logo-Blk.svg'}
             alt="HEXTRA-3"
+            onClick={() => startTransition(() => navigate('/app'))}
             sx={{
               height: '90px',
               width: 'auto',
               objectFit: 'contain',
               display: 'block',
               position: 'relative',
-              pointerEvents: 'none'
+              cursor: 'pointer',
+              transition: 'transform 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'scale(1.03)'
+              }
             }}
           />
         </Box>
@@ -244,144 +242,162 @@ const Banner = ({
           transform: 'translateX(-8px)',
           mt: 1.5
         }}>
-          {/* Theme Toggle */}
+          {/* Theme Toggle - Simple black/white disc */}
           <Tooltip title={`Switch to ${isDarkMode ? 'Light' : 'Dark'} Mode`}>
             <IconButton 
               onClick={onThemeToggle}
               sx={{
                 width: '32px',
                 height: '32px',
-                color: isDarkMode ? COLORS.textLight : COLORS.textDark,
-                '&:hover': {
-                  color: '#FED141',
-                }
-              }}
-            >
-              {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
-          </Tooltip>
-
-          {/* T-shirt Status Badge / Sign Up CTA */}
-          <Tooltip title={!isAuthenticated ? "View Subscription Options" : "Manage Subscription"}>
-            <GlowIconButton
-              onClick={() => {
-                startTransition(() => {
-                  if (isSubscriptionPage) {
-                    // If already on subscription page, just scroll to available plans
-                    const availablePlansSection = document.getElementById('available-plans');
-                    if (availablePlansSection) {
-                      availablePlansSection.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  } else {
-                    // Navigate to subscription page with hash for available plans
-                    navigate('/subscription#available-plans');
-                  }
-                });
-              }}
-              sx={{ 
-                width: '32px',
-                height: '32px',
                 position: 'relative',
-                color: isDarkMode ? COLORS.textLight : COLORS.textDark,
+                padding: 0,
+                overflow: 'hidden',
                 '&:hover': {
-                  color: '#FED141',
+                  transform: 'scale(1.05)',
                 }
               }}
             >
               <Box
-                component="img"
-                src={isAuthenticated ? "/images/tshirts-icon.svg" : "/images/tshirt-icon.svg"}
-                alt={isAuthenticated ? "Manage Subscription" : "View Subscription Options"}
                 sx={{
-                  width: '20px',
-                  height: '20px',
-                  filter: !isDarkMode ? 'brightness(0) invert(1)' : 'none'
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(128, 128, 128, 0.5)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    width: '200%',
+                    height: '200%',
+                    top: '-50%',
+                    left: '-50%',
+                    background: `linear-gradient(135deg, 
+                      ${isDarkMode ? '#ffffff' : '#000000'} 0%, 
+                      ${isDarkMode ? '#ffffff' : '#000000'} 49%, 
+                      ${isDarkMode ? '#000000' : '#ffffff'} 51%, 
+                      ${isDarkMode ? '#000000' : '#ffffff'} 100%)`,
+                    transformOrigin: 'center',
+                  }
                 }}
               />
-            </GlowIconButton>
-          </Tooltip>
-
-          {/* Subscription Button - Always visible */}
-          <Tooltip title={isSubscriptionPage ? "Return to App" : "View Subscription Plans"}>
-            <IconButton
-              onClick={() => startTransition(() => {
-                isSubscriptionPage ? navigate('/app') : navigate('/subscription');
-              })}
-              sx={{
-                width: '32px',
-                height: '32px',
-                position: 'relative',
-                color: isDarkMode ? COLORS.textLight : COLORS.textDark,
-                '&:hover': {
-                  color: '#FED141',
-                }
-              }}
-            >
-              {isSubscriptionPage ? <HomeIcon fontSize="small" /> : <SubscriptionsIcon />}
             </IconButton>
           </Tooltip>
 
-          {/* Account Button with different badge types based on user status */}
+          {/* Unified User Status / Subscription Button */}
           {isAuthenticated ? (
-            <Tooltip title={user?.email || "Authenticated User"}>
-              <IconButton
+            <Tooltip title={`PRO User: ${user?.email || 'Authenticated'}`}>
+              <GlowIconButton
                 onClick={() => startTransition(() => navigate('/profile'))}
                 sx={{
                   width: '32px',
                   height: '32px',
-                  backgroundColor: BRAND_COLORS[1], // Green for authenticated users
+                  position: 'relative',
+                  backgroundColor: BRAND_COLORS[1], // Green for PRO users
                   color: '#FFFFFF',
                   fontFamily: "'League Spartan', sans-serif",
-                  fontSize: '1rem',
-                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
                   '&:hover': {
                     backgroundColor: '#006F51', // Darker green on hover
                     transform: 'scale(1.05)'
                   }
                 }}
               >
+                {/* Crown symbol for PRO users */}
+                <Box sx={{ 
+                  position: 'absolute', 
+                  top: '-1px', 
+                  right: '-1px', 
+                  width: '12px', 
+                  height: '12px',
+                  fontSize: '12px',
+                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFC700',
+                }}>
+                  ♔
+                </Box>
                 {userInitial}
-              </IconButton>
+              </GlowIconButton>
             </Tooltip>
           ) : emailUser ? (
-            <Tooltip title={emailUser.email || "Email User"}>
+            <Tooltip title={`Popular Plan: ${emailUser.email || 'Email User'}`}>
               <GlowIconButton
-                onClick={() => startTransition(() => login())}
+                onClick={() => startTransition(() => {
+                  if (isSubscriptionPage) {
+                    const availablePlansSection = document.getElementById('available-plans');
+                    if (availablePlansSection) {
+                      availablePlansSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  } else {
+                    navigate('/subscription#available-plans');
+                  }
+                })}
                 sx={{
                   width: '32px',
                   height: '32px',
-                  backgroundColor: BRAND_COLORS[0], // Red for email-only users
+                  backgroundColor: '#D35400', // Orange for Popular plan
                   color: '#FFFFFF',
                   fontFamily: "'League Spartan', sans-serif",
-                  fontSize: '1rem',
-                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
                   '&:hover': {
-                    backgroundColor: '#B3002B',
+                    backgroundColor: '#A04000',
                     transform: 'scale(1.05)'
                   }
                 }}
               >
+                {/* Star for Popular plan */}
+                <Box sx={{ 
+                  position: 'absolute', 
+                  top: '-1px', 
+                  right: '-1px', 
+                  width: '12px', 
+                  height: '12px',
+                  fontSize: '12px',
+                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFEB3B',
+                }}>
+                  ★
+                </Box>
                 {userInitial}
               </GlowIconButton>
             </Tooltip>
           ) : (
-            <Tooltip title="Free Version">  
+            <Tooltip title="Upgrade to Popular or Pro Plan">  
               <GlowIconButton
-                onClick={() => startTransition(() => login())}
+                onClick={() => startTransition(() => {
+                  if (isSubscriptionPage) {
+                    const availablePlansSection = document.getElementById('available-plans');
+                    if (availablePlansSection) {
+                      availablePlansSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  } else {
+                    navigate('/subscription#available-plans');
+                  }
+                })}
                 sx={{
                   width: '32px',
                   height: '32px',
-                  backgroundColor: BRAND_COLORS[0], // Red for anonymous
+                  backgroundColor: BRAND_COLORS[0], // Red for free users
                   color: '#FFFFFF',
                   fontFamily: "'League Spartan', sans-serif",
-                  fontSize: '1rem',
-                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
                   '&:hover': {
                     backgroundColor: '#B3002B',
                     transform: 'scale(1.05)'
                   }
                 }}
               >
+                {/* No badge for free version */}
                 F
               </GlowIconButton>
             </Tooltip>
