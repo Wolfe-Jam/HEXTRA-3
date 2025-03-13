@@ -278,7 +278,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
   return (
     <Dialog 
       open={open} 
-      onClose={handleClose}
+      onClose={onClose}
       aria-labelledby="email-collection-dialog-title"
       PaperProps={{
         sx: {
