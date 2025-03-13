@@ -144,7 +144,8 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       const submitButton = document.createElement('input');
       submitButton.type = 'submit';
       submitButton.name = 'subscribe';
-      submitButton.value = 'Subscribe';
+      submitButton.value = 'Join';
+      submitButton.style.display = 'none';
       form.appendChild(submitButton);
       
       // Add the form to the document
@@ -240,7 +241,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
     console.log('[DEBUG] Dialog - MailChimp subscribe result:', subscribeResult);
     
     // Set success message for user feedback - simple and clear on two lines
-    setSuccessMessage('Success!\nYour download is ready.');
+    setSuccessMessage('Thank you!\nYour download is ready.');
     
     if (!subscribeResult) {
       console.log('[DEBUG] Dialog - MailChimp subscription failed, but continuing');
@@ -277,7 +278,8 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
   return (
     <Dialog 
       open={open} 
-      onClose={onClose}
+      onClose={handleClose}
+      aria-labelledby="email-collection-dialog-title"
       PaperProps={{
         sx: {
           maxWidth: '450px',
@@ -295,14 +297,26 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
       <DialogTitle sx={{ 
         fontSize: '1.5rem', 
         fontWeight: 600,
-        pb: 1 
+        pb: 1,
+        textAlign: 'center'
       }}>
-        Download Your Image
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 1 }}>
+          <img 
+            src="/images/HEXTRA-3-logo-Blk.svg" 
+            alt="HEXTRA Logo" 
+            style={{ 
+              width: '80px', 
+              height: 'auto',
+              marginBottom: '12px'
+            }} 
+          />
+          Join the HEXTRA Community
+        </Box>
       </DialogTitle>
       
       <DialogContent>
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          Please enter your email to download this image. We'll keep you updated with new features and improvements.
+        <Typography variant="body1" sx={{ mb: 2, textAlign: 'center' }}>
+          Get access to your download and stay updated with the latest features, tips, and exclusive HEXTRA content.
         </Typography>
         
         {successMessage ? (
@@ -325,7 +339,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
                 mb: 1
               }}
             >
-              Success!
+              Thank you!
             </Typography>
             <Typography 
               variant="body1" 
@@ -340,7 +354,7 @@ const EmailCollectionDialog = ({ open, onClose, onSubmit }) => {
           <TextField
             autoFocus
             margin="dense"
-            label="Email Address"
+            label="Your Email Address"
             type="email"
             fullWidth
             value={email}
