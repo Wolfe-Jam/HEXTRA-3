@@ -343,11 +343,26 @@ const SwatchDropdownField = forwardRef(({
         }
       }}
       PopperProps={{
-        placement: 'bottom-start',
+        placement: 'bottom',
+        style: { zIndex: 9999 }, // Highest z-index to ensure visibility
+        disablePortal: false, // Allow the dropdown to be portaled to the body
         modifiers: [
           {
             name: 'flip',
             enabled: false, // Disable the flip behavior to force dropdown to always open downward
+            options: {
+              fallbackPlacements: [], // No fallback placements allowed
+            }
+          },
+          {
+            name: 'preventOverflow',
+            enabled: false, // Disable overflow prevention which can cause flipping
+          },
+          {
+            name: 'offset',
+            options: {
+              offset: [0, 10], // Add offset to push dropdown away from the input
+            },
           }
         ]
       }}

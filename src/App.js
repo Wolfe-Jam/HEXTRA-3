@@ -542,8 +542,14 @@ function App() {
     // Save to recent colors on dropdown select (deliberate user action)
     saveToRecentColors(hexColor);
     
-    // Apply the selected color immediately
-    processColor();
+    // Only process the image if Auto Apply is enabled
+    // This makes the dropdown behave like Google menus:
+    // - Auto Off: Only changes the round swatch
+    // - Auto On: Changes everything (like hitting Apply button)
+    if (autoApplyColors) {
+      // Process the image immediately when Auto Apply is on
+      processColor();
+    }
     
     // Try to focus the hex input
     try {
@@ -556,7 +562,7 @@ function App() {
     } catch (err) {
       console.log('Error focusing input:', err);
     }
-  }, [saveToRecentColors, processColor]);
+  }, [saveToRecentColors, processColor, autoApplyColors]);
 
   const handleImageUpload = useCallback(async (file) => {
     if (!file) {
