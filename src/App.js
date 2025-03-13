@@ -1533,9 +1533,15 @@ function App() {
                 value={selectedColor}
                 onChange={handleHexInputChange}
                 onEnterPress={(trigger) => {
+                  // Ensure we have the latest color value
                   handleHexInputChange(trigger);
+                  // Save to recent colors
                   saveToRecentColors(selectedColor);
-                  processColor();
+                  // Force immediate color processing
+                  setTimeout(() => {
+                    processColor();
+                    console.log('Color processing triggered by Enter key');
+                  }, 0);
                 }}
                 onDropdownSelect={handleDropdownSelect}
                 options={COLOR_GROUPS}

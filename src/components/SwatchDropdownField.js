@@ -149,7 +149,17 @@ const SwatchDropdownField = forwardRef(({
   const handleKeyDown = (event) => {
     if (event.key === 'Enter' && onEnterPress) {
       event.preventDefault();
+      event.stopPropagation(); // Stop event propagation to prevent other handlers from capturing it
       onEnterPress('keyboard');
+      
+      // Ensure the input maintains focus after Enter is pressed
+      if (ref && ref.current) {
+        setTimeout(() => {
+          if (ref.current) {
+            ref.current.focus();
+          }
+        }, 0);
+      }
     }
   };
   
