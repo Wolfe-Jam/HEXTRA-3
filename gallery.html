@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXTRA Gallery - Template Library</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .gallery-section {
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .template-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .template-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .template-image {
+            width: 100%;
+            height: 220px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .template-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .template-info {
+            padding: 20px;
+        }
+
+        .template-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .template-details {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: #3498db;
+            color: white;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .status-ready {
+            background: #d4edda;
+            color: #155724;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        .brand-gildan { border-left: 4px solid #e74c3c; }
+        .brand-bella { border-left: 4px solid #9b59b6; }
+        .brand-comfort { border-left: 4px solid #f39c12; }
+        .brand-next { border-left: 4px solid #27ae60; }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .template-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎯 HEXTRA Gallery</h1>
+            <p>Professional product templates ready for colorization</p>
+            
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-number">11</span>
+                    <span class="stat-label">Templates</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">4</span>
+                    <span class="stat-label">Brands</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">63</span>
+                    <span class="stat-label">Colors Available</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">29s</span>
+                    <span class="stat-label">Generation Time</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="gallery-section">
+            <h2 class="section-title">Choose Your Template</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 30px;">
+                Select a product template to begin color customization • All images from R2 CDN
+            </p>
+
+            <div class="template-grid" id="template-grid">
+                <!-- Templates will be generated here -->
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>Built with HEXTRA technology | 
+            <a href="https://catalog.hextra.io" target="_blank">Continue to Color Selection →</a></p>
+        </footer>
+    </div>
+
+    <script>
+        const R2_BASE_URL = 'https://pub-ede68c56f14241fb8ae46e9dc7be2d68.r2.dev';
+        
+        // All 11 templates with exact R2 filenames
+        const templates = [
+            {
+                id: 'bella-canvas-3483',
+                name: 'Bella Canvas 3483',
+                type: 'Unisex Short Sleeve Tee',
+                brand: 'Bella+Canvas',
+                material: '100% Combed Cotton',
+                filename: 'Bella_Canvas_3483.png',
+                brandClass: 'brand-bella'
+            },
+            {
+                id: 'bella-canvas-3945',
+                name: 'Bella Canvas 3945',
+                type: 'Unisex Soft Style Tee',
+                brand: 'Bella+Canvas',
+                material: 'Cotton/Poly Blend',
+                filename: 'Bella_Canvas_3945.png',
+                brandClass: 'brand-bella'
+            },
+            {
+                id: 'comfort-colors-1717',
+                name: 'Comfort Colors 1717',
+                type: 'Garment Dyed Tee',
+                brand: 'Comfort Colors',
+                material: '100% Cotton',
+                filename: 'Comfort_Colors_1717.png',
+                brandClass: 'brand-comfort'
+            },
+            {
+                id: 'gildan-18000',
+                name: 'Gildan 18000',
+                type: 'Heavy Blend Crewneck',
+                brand: 'Gildan',
+                material: '50/50 Cotton Poly',
+                filename: 'Gildan_18000.png',
+                brandClass: 'brand-gildan'
+            },
+            {
+                id: 'gildan-18500',
+                name: 'Gildan 18500',
+                type: 'Heavy Blend Hoodie',
+                brand: 'Gildan',
+                material: '50/50 Cotton Poly',
+                filename: 'Gildan_18500.png',
+                brandClass: 'brand-gildan'
+            },
+            {
+                id: 'gildan-2200',
+                name: 'Gildan 2200',
+                type: 'Ultra Cotton Tank',
+                brand: 'Gildan',
+                material: '100% Cotton',
+                filename: 'Gildan_2200.png',
+                brandClass: 'brand-gildan'
+            },
+            {
+                id: 'gildan-2400',
+                name: 'Gildan 2400',
+                type: 'Ultra Cotton Long Sleeve',
+                brand: 'Gildan',
+                material: '100% Cotton',
+                filename: 'Gildan_2400.png',
+                brandClass: 'brand-gildan'
+            },
+            {
+                id: 'gildan-2400-1',
+                name: 'Gildan 2400 (Alt)',
+                type: 'Ultra Cotton Long Sleeve',
+                brand: 'Gildan',
+                material: '100% Cotton',
+                filename: 'Gildan_2400_1.png',
+                brandClass: 'brand-gildan'
+            },
+            {
+                id: 'gildan-5000',
+                name: 'Gildan 5000',
+                type: 'Heavy Cotton Tee',
+                brand: 'Gildan',
+                material: '100% Cotton',
+                filename: 'Gildan_5000.png',
+                brandClass: 'brand-gildan'
+            },
+            {
+                id: 'gildan-h400',
+                name: 'Gildan H400',
+                type: 'Hammer Long Sleeve',
+                brand: 'Gildan',
+                material: '6 oz. Cotton',
+                filename: 'Gildan_H400.png',
+                brandClass: 'brand-gildan'
+            },
+            {
+                id: 'next-level-3601',
+                name: 'Next Level 3601',
+                type: 'Premium Fitted Tee',
+                brand: 'Next Level',
+                material: '60/40 Cotton Poly',
+                filename: 'Next_Level_3601.png',
+                brandClass: 'brand-next'
+            }
+        ];
+
+        function generateTemplateHTML() {
+            const grid = document.getElementById('template-grid');
+            
+            templates.forEach(template => {
+                const imageUrl = `${R2_BASE_URL}/${template.filename}`;
+                
+                const card = document.createElement('div');
+                card.className = `template-card ${template.brandClass}`;
+                card.onclick = () => selectTemplate(template);
+                
+                card.innerHTML = `
+                    <div class="template-image">
+                        <img src="${imageUrl}" 
+                             alt="${template.name}"
+                             loading="lazy">
+                    </div>
+                    <div class="template-info">
+                        <div class="template-name">
+                            ${template.name}
+                            <span class="status-ready">ready</span>
+                        </div>
+                        <div class="template-details">
+                            <strong>${template.type}</strong><br>
+                            ${template.brand} • ${template.material}
+                        </div>
+                        <button class="btn" onclick="event.stopPropagation(); selectTemplate(template)">
+                            Use Template
+                        </button>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function selectTemplate(template) {
+            console.log('Selected template:', template);
+            
+            // Store selection for handoff to catalog
+            localStorage.setItem('selectedTemplate', JSON.stringify(template));
+            
+            // Redirect to color catalog with template info
+            const catalogUrl = `https://catalog.hextra.io?template=${encodeURIComponent(template.id)}`;
+            window.open(catalogUrl, '_blank');
+        }
+
+        // Initialize gallery
+        document.addEventListener('DOMContentLoaded', function() {
+            generateTemplateHTML();
+            console.log('HEXTRA Gallery loaded with', templates.length, 'templates from R2 CDN');
+            console.log('All images using exact R2 filenames');
+        });
+    </script>
+</body>
+</html>
