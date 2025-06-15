@@ -1,5 +1,6 @@
 Deployment trigger file for Vercel
-Version: 2.2.4
-Date: 2025-03-02
-Description: Enhanced color system with expanded palette, fixed grayscale slider, and improved selection interface
-Commit: Deployed new version with expanded color palette including Amber and Chroma colors
+Version: 2.3.0
+Date: 2025-06-14
+Description: Complete R2 CDN Gallery Integration - 11 Professional Templates
+Features: Gallery with Bella+Canvas, Gildan, Comfort Colors, Next Level templates
+Commit: Gallery now serving from public/ with all R2 images working perfectly
